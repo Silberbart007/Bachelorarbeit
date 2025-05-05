@@ -1,0 +1,9 @@
+**/build/
+**/install/
+**/log/
+*.user
+*.autosave
+*.swp
+*.pyc
+/src/__pycache__/
+

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>280</x>
+      <y>60</y>
+      <width>241</width>
+      <height>71</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Add 1</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="counter_label">
+    <property name="geometry">
+     <rect>
+      <x>320</x>
+      <y>170</y>
+      <width>161</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>16</pointsize>
+     </font>
+    </property>
+    <property name="text">
+     <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:20pt;&quot;&gt;0&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>800</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuImpostor">
+    <property name="title">
+     <string>Impostor</string>
+    </property>
+   </widget>
+   <widget class="QMenu" name="menuAmonugs">
+    <property name="title">
+     <string>Amonugs</string>
+    </property>
+    <addaction name="actionsussy"/>
+    <addaction name="actionshrek"/>
+   </widget>
+   <addaction name="menuImpostor"/>
+   <addaction name="menuAmonugs"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionsussy">
+   <property name="text">
+    <string>sussy</string>
+   </property>
+  </action>
+  <action name="actionshrek">
+   <property name="text">
+    <string>shrek</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
