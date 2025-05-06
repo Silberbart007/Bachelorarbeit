@@ -18,7 +18,6 @@ MainWindow::MainWindow(QWidget *parent)
         "counter_topic",
         10,
         [this](const std_msgs::msg::Int32::SharedPtr msg) {
-            RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Bruh");
             ui->counter_label->setText(QString("Empfangen: %1").arg(msg->data));
         });
 

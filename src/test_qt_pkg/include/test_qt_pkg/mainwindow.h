@@ -5,6 +5,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/int32.hpp>
+#include "../include/test_qt_pkg/joystick.h"
 
 namespace Ui {
 class MainWindow;
@@ -26,6 +27,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    JoystickWidget *joystick;
 
     rclcpp::Node::SharedPtr node_;
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_;

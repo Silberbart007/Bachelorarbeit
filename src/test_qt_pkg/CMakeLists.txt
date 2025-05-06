@@ -20,10 +20,12 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets)
 set(SOURCES
   src/main.cpp
   src/mainwindow.cpp
+  src/joystick.cpp
 )
 
 set(HEADERS
   include/test_qt_pkg/mainwindow.h
+  include/test_qt_pkg/joystick.h
 )
 
 set(UIS
