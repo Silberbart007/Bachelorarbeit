@@ -60,6 +60,7 @@ void JoystickWidget::updateKnob(const QPointF &pos)
 
     m_knobPos = m_center + delta;
     update();
+
     emit positionChanged(normalizedPosition());
 }
 
@@ -67,5 +68,19 @@ QPointF JoystickWidget::normalizedPosition() const
 {
     QPointF delta = m_knobPos - m_center;
     qreal maxRadius = width() / 2 - 20;
+
+    // Normalisiertes Delta
+    QPointF normDelta = QPointF(delta.x() / maxRadius, delta.y() / maxRadius);
+
+    // Normalisierte Distanz
+    qreal normDistance = std::hypot(normDelta.x(), normDelta.y());
+
+    // Berechnung der Bewegungsrichtung (Winkel)
+    qreal angle = std::atan2(normDelta.y(), normDelta.x());
+    qreal angleInDegrees = qRadiansToDegrees(angle);  // Umrechnung in Grad
+
+    // Ausgabe von Geschwindigkeit und Winkel
+    qDebug() << "Joystick Speed:" << normDistance << "Joystick Angle:" << angleInDegrees;
+
     return QPointF(delta.x() / maxRadius, delta.y() / maxRadius);
 }

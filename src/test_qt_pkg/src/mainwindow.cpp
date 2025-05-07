@@ -41,11 +41,21 @@ void MainWindow::on_pushButton_clicked()
 // Speed Slider
 void MainWindow::on_speed_slider_valueChanged(int value) {
     // Als Debug Nachricht ausgeben
-    qDebug() << "Neue Geschwindigkeit: " << value;
+    qDebug() << "Speed Slider Geschwindigkeit: " << value;
 }
 
 // Rotation Slider
 void MainWindow::on_rotation_slider_valueChanged(int value) {
     // Als Debug Nachricht ausgeben
-    qDebug() << "Neue Rotationsgeschwindigkeit: " << value;
+    qDebug() << "Rotation Slider Geschwindigkeit: " << value;
 }
+
+
+// Speed Buttons
+//
+
+void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; }
+void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; }
+void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; }
+void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; }
+void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; }

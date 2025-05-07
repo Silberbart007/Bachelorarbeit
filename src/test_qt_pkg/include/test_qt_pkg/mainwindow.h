@@ -27,6 +27,13 @@ private slots:
     void on_speed_slider_valueChanged(int value);
     void on_rotation_slider_valueChanged(int value);
 
+    // Speed Buttons
+    void on_fast_button_clicked();
+    void on_slow_button_clicked();
+    void on_stop_button_clicked();
+    void on_back_slow_button_clicked();
+    void on_back_fast_button_clicked();
+
 
 private:
     Ui::MainWindow *ui;
