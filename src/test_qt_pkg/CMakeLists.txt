@@ -22,12 +22,14 @@ set(SOURCES
   src/mainwindow.cpp
   src/joystick.cpp
   src/wheel.cpp
+  src/movable_widget.cpp
 )
 
 set(HEADERS
   include/test_qt_pkg/mainwindow.h
   include/test_qt_pkg/joystick.h
   include/test_qt_pkg/wheel.h
+  include/test_qt_pkg/movable_widget.h
 )
 
 set(UIS

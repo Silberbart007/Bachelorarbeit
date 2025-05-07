@@ -23,9 +23,16 @@ public:
     rclcpp::Node::SharedPtr getNode() const { return node_; }
 
 private slots:
+    // Add Button
     void on_pushButton_clicked();
+
+    // Speed/rotation slider
     void on_speed_slider_valueChanged(int value);
     void on_rotation_slider_valueChanged(int value);
+
+    // Optionen-Liste
+    void on_mode_list_itemSelectionChanged();
+    void on_modes_button_clicked();
 
     // Speed Buttons
     void on_fast_button_clicked();

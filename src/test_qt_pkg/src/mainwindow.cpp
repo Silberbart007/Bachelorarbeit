@@ -22,7 +22,17 @@ MainWindow::MainWindow(QWidget *parent)
             ui->counter_label->setText(QString("%1").arg(msg->data));
         });
 
+    // UI "aktivieren"
     ui->setupUi(this);
+
+    // Steuerungen verstecken
+    ui->wheels->setVisible(false);
+    ui->joysticks->setVisible(false);
+    ui->sliders->setVisible(false);
+    ui->buttons->setVisible(false);
+
+    // Optionsmenü verstecken
+    ui->mode_list->setVisible(false);
 }
 
 MainWindow::~MainWindow()
@@ -30,6 +40,46 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// Optionen-Fenster
+void MainWindow::on_mode_list_itemSelectionChanged()
+{
+    // Hole alle aktuell ausgewählten Items
+    QList<QListWidgetItem*> selectedItems = ui->mode_list->selectedItems();
+
+    // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
+    bool showWheel = false;
+    bool showJoystick = false;
+    bool showButtons = false;
+    bool showSliders = false;
+
+    // Prüfe die ausgewählten Items
+    for (QListWidgetItem *item : selectedItems) {
+        QString text = item->text();
+        if (text == "Lenkrad") {
+            showWheel = true;
+        } else if (text == "Joystick") {
+            showJoystick = true;
+        } else if (text == "Buttons") {
+            showButtons = true;
+        } else if (text == "Slider") {
+            showSliders = true;
+        }
+    }
+
+    // Steuerungswidgets sichtbar oder unsichtbar machen
+    ui->wheels->setVisible(showWheel);
+    ui->joysticks->setVisible(showJoystick);
+    ui->sliders->setVisible(showSliders);
+    ui->buttons->setVisible(showButtons);
+}
+
+// Optionen Button
+void MainWindow::on_modes_button_clicked() {
+    // Mode-List aktivieren/deaktivieren
+    ui->mode_list->setVisible(!ui->mode_list->isVisible());
+}
+
+// Add Button (zum testen)
 void MainWindow::on_pushButton_clicked()
 {
     RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Add Button gedrueckt (dies ist eine Ros-Nachricht)");
@@ -54,8 +104,8 @@ void MainWindow::on_rotation_slider_valueChanged(int value) {
 // Speed Buttons
 //
 
-void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; }
-void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; }
-void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; }
-void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; }
-void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; }
+void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; ui->speed_slider->setValue(100);}
+void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; ui->speed_slider->setValue(75);}
+void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; ui->speed_slider->setValue(50);}
+void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; ui->speed_slider->setValue(25);}
+void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; ui->speed_slider->setValue(0);}

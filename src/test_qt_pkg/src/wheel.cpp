@@ -43,6 +43,7 @@ void WheelWidget::paintEvent(QPaintEvent *)
 }
 
 
+// Wenn Maus gedrückt wird
 void WheelWidget::mousePressEvent(QMouseEvent *event)
 {
     QPointF center(width() / 2, height() / 2);
@@ -56,6 +57,7 @@ void WheelWidget::mousePressEvent(QMouseEvent *event)
 }
 
 
+// Wenn Maus bewegt wird
 void WheelWidget::mouseMoveEvent(QMouseEvent *event)
 {
     if (m_isDragging) {
@@ -87,7 +89,7 @@ void WheelWidget::mouseMoveEvent(QMouseEvent *event)
 }
 
 
-
+// Wenn Maus losgelassen wird
 void WheelWidget::mouseReleaseEvent(QMouseEvent *)
 {
     m_isDragging = false; // Ende des Ziehens
