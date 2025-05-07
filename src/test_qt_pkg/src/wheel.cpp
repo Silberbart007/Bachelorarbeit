@@ -28,7 +28,7 @@ void WheelWidget::paintEvent(QPaintEvent *)
     qreal angleRad = qDegreesToRadians(m_currentAngle);
 
     // Liste der Speichenwinkel relativ zum aktuellen Winkel (z.B. 0°, 120°, 240°)
-    QVector<qreal> spokeAngles = { 0, 120, 240 };
+    QVector<qreal> spokeAngles = { 0+28, 120+28, 240+28 };
 
     painter.setPen(QPen(Qt::black, 3));
 
@@ -68,28 +68,22 @@ void WheelWidget::mouseMoveEvent(QMouseEvent *event)
         // Berechne Delta in Grad
         qreal deltaDeg = (currentAngleRad - m_startAngle) * 180.0 / M_PI;
 
-        // Winkel in Bereich [-180°, +180°] normalisieren
-        while (deltaDeg > 180) deltaDeg -= 360;
-        while (deltaDeg < -180) deltaDeg += 360;
+        // Änderung eingrenzen
+        deltaDeg = qBound(-5.0, deltaDeg, 5.0);
 
-        qreal newAngle = m_lastAngle + deltaDeg;
+        m_currentAngle = m_lastAngle + deltaDeg;
 
-        // Begrenzung des Winkels auf den gewünschten Bereich, falls gewünscht
-        newAngle = qBound(-180.0, newAngle, 180.0);
+        // Maximaler Lenkrad-Winkel begrenzen
+        m_currentAngle = qBound(-450.0, m_currentAngle, 450.0);
 
-        // Optional: Begrenzen auf sinnvolle Werte, z. B. [-180°, +180°]
-        if (newAngle > 180) newAngle = 180;
-        if (newAngle < -180) newAngle = -180;
+        qDebug() << "deltaDeg: " << deltaDeg;
+        qDebug() << "newAngle: " << m_currentAngle;
 
-        qDebug() << "newAngle: " << newAngle;
+        update();
+        emit angleChanged(m_currentAngle);
 
-        // Nur aktualisieren, wenn sich der Winkel verändert
-        if (!qFuzzyCompare(newAngle, m_currentAngle)) {
-            m_currentAngle = newAngle;
-            update();
-            emit angleChanged(m_currentAngle);
-        }
-
+        m_startAngle = currentAngleRad;
+        m_lastAngle = m_currentAngle;
     }
 }
 
