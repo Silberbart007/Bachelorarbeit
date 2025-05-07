@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
         "counter_topic",
         10,
         [this](const std_msgs::msg::Int32::SharedPtr msg) {
-            ui->counter_label->setText(QString("Empfangen: %1").arg(msg->data));
+            ui->counter_label->setText(QString("%1").arg(msg->data));
         });
 
     ui->setupUi(this);
