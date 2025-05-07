@@ -1,5 +1,6 @@
 #include "../include/test_qt_pkg/mainwindow.h"
 #include "../ui/ui_mainwindow.h"
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -31,8 +32,20 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
+    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Add Button gedrueckt (dies ist eine Ros-Nachricht)");
     std_msgs::msg::Int32 msg;
     msg.data = counter_++;
     publisher_->publish(msg);
 }
 
+// Speed Slider
+void MainWindow::on_speed_slider_valueChanged(int value) {
+    // Als Debug Nachricht ausgeben
+    qDebug() << "Neue Geschwindigkeit: " << value;
+}
+
+// Rotation Slider
+void MainWindow::on_rotation_slider_valueChanged(int value) {
+    // Als Debug Nachricht ausgeben
+    qDebug() << "Neue Rotationsgeschwindigkeit: " << value;
+}

@@ -24,6 +24,9 @@ public:
 
 private slots:
     void on_pushButton_clicked();
+    void on_speed_slider_valueChanged(int value);
+    void on_rotation_slider_valueChanged(int value);
+
 
 private:
     Ui::MainWindow *ui;

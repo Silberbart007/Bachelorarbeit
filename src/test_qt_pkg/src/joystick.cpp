@@ -2,12 +2,12 @@
 #include <QPainter>
 #include <QMouseEvent>
 #include <QtMath>
+#include <QDebug>
 #include "rclcpp/rclcpp.hpp"
 
 JoystickWidget::JoystickWidget(QWidget *parent)
     : QWidget(parent)
 {
-    RCLCPP_INFO(rclcpp::get_logger("rclcpp"), "Bruhhhh");
     setMinimumSize(150, 150);
     setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_center = QPointF(width() / 2, height() / 2);
