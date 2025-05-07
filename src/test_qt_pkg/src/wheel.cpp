@@ -76,8 +76,7 @@ void WheelWidget::mouseMoveEvent(QMouseEvent *event)
         // Maximaler Lenkrad-Winkel begrenzen
         m_currentAngle = qBound(-450.0, m_currentAngle, 450.0);
 
-        qDebug() << "deltaDeg: " << deltaDeg;
-        qDebug() << "newAngle: " << m_currentAngle;
+        qDebug() << "Lenkrad Winkel: " << m_currentAngle;
 
         update();
         emit angleChanged(m_currentAngle);
