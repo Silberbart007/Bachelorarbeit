@@ -198,6 +198,14 @@
     <property name="movement">
      <enum>QListView::Snap</enum>
     </property>
+    <property name="currentRow">
+     <number>-1</number>
+    </property>
+    <item>
+     <property name="text">
+      <string>Slider</string>
+     </property>
+    </item>
     <item>
      <property name="text">
       <string>Lenkrad</string>
@@ -206,11 +214,6 @@
     <item>
      <property name="text">
       <string>Buttons</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Slider</string>
      </property>
     </item>
     <item>
@@ -298,6 +301,25 @@
      </property>
     </widget>
    </widget>
+   <widget class="ObstacleMapWidget" name="obstacle_map_widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>100</y>
+      <width>441</width>
+      <height>341</height>
+     </rect>
+    </property>
+   </widget>
+   <zorder>obstacle_map_widget</zorder>
+   <zorder>gridLayoutWidget</zorder>
+   <zorder>modes_button</zorder>
+   <zorder>buttons</zorder>
+   <zorder>sliders</zorder>
+   <zorder>mode_list</zorder>
+   <zorder>wheels</zorder>
+   <zorder>joysticks</zorder>
+   <zorder>cam_widget</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -338,6 +360,12 @@
    <class>MovableWidget</class>
    <extends>QWidget</extends>
    <header>../include/test_qt_pkg/movable_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>ObstacleMapWidget</class>
+   <extends>QWidget</extends>
+   <header>../include/test_qt_pkg/obstacle_map_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

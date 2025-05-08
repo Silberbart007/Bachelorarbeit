@@ -43,6 +43,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Slider Default Werte
     ui->rotation_slider->setValue(50);
+
+    // Erstes Element standardmäßig auswählen
+    ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
 }
 
 MainWindow::~MainWindow()

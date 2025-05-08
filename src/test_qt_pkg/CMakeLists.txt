@@ -28,6 +28,7 @@ set(SOURCES
   src/wheel.cpp
   src/movable_widget.cpp
   src/cam.cpp
+  src/obstacle_map_widget.cpp
 )
 
 set(HEADERS
@@ -36,6 +37,7 @@ set(HEADERS
   include/test_qt_pkg/wheel.h
   include/test_qt_pkg/movable_widget.h
   include/test_qt_pkg/cam.h
+  include/test_qt_pkg/obstacle_map_widget.h
 )
 
 set(UIS
