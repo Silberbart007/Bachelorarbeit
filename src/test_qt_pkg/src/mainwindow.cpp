@@ -40,6 +40,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Optionsmenü verstecken
     ui->mode_list->setVisible(false);
+
+    // Slider Default Werte
+    ui->rotation_slider->setValue(50);
 }
 
 MainWindow::~MainWindow()
@@ -53,6 +56,41 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
     try {
         cv::Mat frame = cv_bridge::toCvCopy(msg, "bgr8")->image;
         if (!frame.empty()) {
+
+            // Vektorpfeil Beispiel mit Slider
+            // Beispiel: Pfeil zeichnen basierend auf Sliderwerten
+            int speed_value = ui->speed_slider->value();     // 0–100
+            int rotation_value = ui->rotation_slider->value(); // 0–100
+
+            // Werte normalisieren
+            float rotation = (rotation_value-25) * 360.0 / 99.0;
+
+            // Startpunkt z. B. in der Bildmitte
+            cv::Point start((frame.cols-20) / 2, frame.rows-100);
+
+            // Umrechnen der Rotation in Bogenmaß (0–360° → 0–2π)
+            double angle_rad = rotation * CV_PI / 180.0;
+
+            // Richtung als Einheitsvektor
+            cv::Point2f dir(std::cos(angle_rad), -std::sin(angle_rad));  // Y-Achse invertieren (nach oben im Bild ist -Y)
+
+            // Länge durch Speed skalieren
+            // Logarithmische Länge berechnen
+            float max_length = 200.0f;  // max. Pfeillänge in Pixel
+            float speed_log = std::log10(speed_value + 1) * 25.0f; // Logarithmische Skalierung, +1 um Logarithmus von 0 zu vermeiden
+            float length = std::min(speed_log, max_length);  // Maximale Länge begrenzen
+
+            // Pfeil Zentrum bestimmen (unten am Bildschirm)
+            cv::Point end = start + cv::Point(dir.x * length / 100.0 * max_length,
+                                            dir.y * length / 100.0 * max_length);
+
+            // Pfeil zeichnen (rot)
+            int thickness = 6;
+
+            cv::arrowedLine(frame, start, end, cv::Scalar(255, 0, 0), thickness);
+            // Ende Vektorpfeil
+
+
             cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);  // Qt verwendet RGB
 
             QImage qimg(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
