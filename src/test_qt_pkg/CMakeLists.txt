@@ -9,6 +9,10 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(cv_bridge REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(image_transport REQUIRED)
+
 
 # Qt5
 set(CMAKE_AUTOMOC ON)
@@ -23,6 +27,7 @@ set(SOURCES
   src/joystick.cpp
   src/wheel.cpp
   src/movable_widget.cpp
+  src/cam.cpp
 )
 
 set(HEADERS
@@ -30,6 +35,7 @@ set(HEADERS
   include/test_qt_pkg/joystick.h
   include/test_qt_pkg/wheel.h
   include/test_qt_pkg/movable_widget.h
+  include/test_qt_pkg/cam.h
 )
 
 set(UIS
@@ -39,10 +45,15 @@ set(UIS
 # Executable
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${UIS})
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_link_libraries(${PROJECT_NAME} Qt5::Widgets)
+target_link_libraries(${PROJECT_NAME}
+    Qt5::Widgets
+    ${OpenCV_LIBS})
 ament_target_dependencies(${PROJECT_NAME} 
     rclcpp
     std_msgs
+    sensor_msgs
+    cv_bridge
+    image_transport
 )
 
 install(TARGETS
