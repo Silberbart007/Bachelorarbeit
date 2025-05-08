@@ -2,9 +2,14 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QImage>
+#include <QPixmap>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_msgs/msg/int32.hpp>
+#include "sensor_msgs/msg/image.hpp"
+#include <opencv2/opencv.hpp>
+#include "cv_bridge/cv_bridge.hpp"
 #include "../include/test_qt_pkg/joystick.h"
 
 namespace Ui {
@@ -47,8 +52,15 @@ private:
     JoystickWidget *joystick;
 
     rclcpp::Node::SharedPtr node_;
+
+    // Test sub/pub für Adder
     rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_;
     rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_;
+
+    // Subscriber für cam
+    rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
+    void image_callback(const sensor_msgs::msg::Image::SharedPtr msg);
+
     int counter_;
 };
 

@@ -272,6 +272,32 @@
      </layout>
     </widget>
    </widget>
+   <widget class="MovableWidget" name="cam_widget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>450</x>
+      <y>20</y>
+      <width>621</width>
+      <height>451</height>
+     </rect>
+    </property>
+    <widget class="QLabel" name="cam_label">
+     <property name="geometry">
+      <rect>
+       <x>30</x>
+       <y>30</y>
+       <width>551</width>
+       <height>391</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Kein Bild</string>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
