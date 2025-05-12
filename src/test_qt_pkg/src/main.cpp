@@ -8,7 +8,8 @@ int main(int argc, char *argv[])
     rclcpp::init(argc, argv);
 
     QApplication app(argc, argv);
-    
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
     MainWindow window;
     window.show();
 

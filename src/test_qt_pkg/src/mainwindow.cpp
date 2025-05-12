@@ -48,9 +48,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
 
     // Cursor verstecken wegen Touch-Display
-    QCursor cursor(Qt::BlankCursor);
-    QApplication::setOverrideCursor(cursor);
-    QApplication::changeOverrideCursor(cursor);
+    //QCursor cursor(Qt::BlankCursor);
+    //QApplication::setOverrideCursor(cursor);
+    //QApplication::changeOverrideCursor(cursor);
+
+    // Auf vollen Bildschirm (4k) aktivieren
+    this->resize(3840, 2160);
 }
 
 MainWindow::~MainWindow()

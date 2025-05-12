@@ -9,349 +9,280 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1533</width>
-    <height>933</height>
+    <width>1402</width>
+    <height>808</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1342</width>
+    <height>808</height>
+   </size>
+  </property>
+  <property name="tabletTracking">
+   <bool>false</bool>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="Res" stdset="0">
+   <pixmap/>
+  </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QWidget" name="gridLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>1110</x>
-      <y>20</y>
-      <width>91</width>
-      <height>91</height>
-     </rect>
-    </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QPushButton" name="pushButton">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>1342</width>
+     <height>753</height>
+    </size>
+   </property>
+   <property name="baseSize">
+    <size>
+     <width>3840</width>
+     <height>2160</height>
+    </size>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="5" column="3">
+     <widget class="QWidget" name="sliders" native="true">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QSlider" name="rotation_slider">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSlider" name="speed_slider">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="JoystickWidget" name="joysticks" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="4">
+     <widget class="QWidget" name="cam_widget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <widget class="QLabel" name="cam_label">
+       <property name="geometry">
+        <rect>
+         <x>0</x>
+         <y>160</y>
+         <width>54</width>
+         <height>17</height>
+        </rect>
+       </property>
        <property name="text">
-        <string>Add 1</string>
+        <string>TextLabel</string>
        </property>
       </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="counter_label">
-       <property name="font">
-        <font>
-         <pointsize>16</pointsize>
-        </font>
-       </property>
+     </widget>
+    </item>
+    <item row="5" column="4">
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QLabel" name="counter_label">
+        <property name="text">
+         <string>Sum:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="pushButton">
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0">
+     <widget class="QListWidget" name="mode_list">
+      <item>
        <property name="text">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:11pt;&quot;&gt;0&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>Slider</string>
        </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
-   <widget class="QPushButton" name="modes_button">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>141</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Optionen</string>
-    </property>
-   </widget>
-   <widget class="MovableWidget" name="buttons" native="true">
-    <property name="geometry">
-     <rect>
-      <x>630</x>
-      <y>490</y>
-      <width>151</width>
-      <height>241</height>
-     </rect>
-    </property>
-    <widget class="QWidget" name="verticalLayoutWidget_2">
-     <property name="geometry">
-      <rect>
-       <x>20</x>
-       <y>20</y>
-       <width>111</width>
-       <height>201</height>
-      </rect>
-     </property>
-     <layout class="QVBoxLayout" name="buttons_layout">
-      <property name="spacing">
-       <number>0</number>
-      </property>
-      <property name="leftMargin">
-       <number>0</number>
-      </property>
-      <property name="bottomMargin">
-       <number>0</number>
-      </property>
-      <item>
-       <widget class="QPushButton" name="fast_button">
-        <property name="text">
-         <string>Fast</string>
-        </property>
-       </widget>
+       <property name="flags">
+        <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
+       </property>
       </item>
       <item>
-       <widget class="QPushButton" name="slow_button">
-        <property name="text">
-         <string>Slow</string>
-        </property>
-       </widget>
+       <property name="text">
+        <string>Lenkrad</string>
+       </property>
+       <property name="flags">
+        <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
+       </property>
       </item>
       <item>
-       <widget class="QPushButton" name="stop_button">
-        <property name="text">
-         <string>Stop</string>
-        </property>
-       </widget>
+       <property name="text">
+        <string>Buttons</string>
+       </property>
+       <property name="flags">
+        <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
+       </property>
       </item>
       <item>
-       <widget class="QPushButton" name="back_slow_button">
-        <property name="text">
-         <string>Back Slow</string>
-        </property>
-       </widget>
+       <property name="text">
+        <string>Joystick</string>
+       </property>
+       <property name="flags">
+        <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
+       </property>
       </item>
-      <item>
-       <widget class="QPushButton" name="back_fast_button">
-        <property name="text">
-         <string>Back Fast</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
-   <widget class="MovableWidget" name="sliders" native="true">
-    <property name="geometry">
-     <rect>
-      <x>750</x>
-      <y>490</y>
-      <width>271</width>
-      <height>231</height>
-     </rect>
-    </property>
-    <widget class="QWidget" name="horizontalLayoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>20</y>
-       <width>211</width>
-       <height>201</height>
-      </rect>
-     </property>
-     <layout class="QHBoxLayout" name="slider_layout">
-      <item>
-       <widget class="QSlider" name="rotation_slider">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Rotation</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QSlider" name="speed_slider">
-        <property name="orientation">
-         <enum>Qt::Vertical</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Tempo</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </widget>
-   <widget class="QListWidget" name="mode_list">
-    <property name="geometry">
-     <rect>
-      <x>140</x>
-      <y>60</y>
-      <width>256</width>
-      <height>192</height>
-     </rect>
-    </property>
-    <property name="mouseTracking">
-     <bool>false</bool>
-    </property>
-    <property name="dragEnabled">
-     <bool>false</bool>
-    </property>
-    <property name="dragDropOverwriteMode">
-     <bool>false</bool>
-    </property>
-    <property name="selectionMode">
-     <enum>QAbstractItemView::MultiSelection</enum>
-    </property>
-    <property name="movement">
-     <enum>QListView::Snap</enum>
-    </property>
-    <property name="currentRow">
-     <number>-1</number>
-    </property>
-    <item>
-     <property name="text">
-      <string>Slider</string>
-     </property>
+     </widget>
     </item>
-    <item>
-     <property name="text">
-      <string>Lenkrad</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Buttons</string>
-     </property>
-    </item>
-    <item>
-     <property name="text">
-      <string>Joystick</string>
-     </property>
-    </item>
-   </widget>
-   <widget class="MovableWidget" name="wheels" native="true">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>150</y>
-      <width>1311</width>
-      <height>691</height>
-     </rect>
-    </property>
-    <widget class="QWidget" name="verticalLayoutWidget_3">
-     <property name="geometry">
-      <rect>
-       <x>60</x>
-       <y>30</y>
-       <width>201</width>
-       <height>161</height>
-      </rect>
-     </property>
-     <layout class="QVBoxLayout" name="wheel_layout"/>
-    </widget>
-    <widget class="WheelWidget" name="wheel" native="true">
-     <property name="geometry">
-      <rect>
-       <x>440</x>
-       <y>280</y>
-       <width>681</width>
-       <height>481</height>
-      </rect>
-     </property>
-    </widget>
-   </widget>
-   <widget class="MovableWidget" name="joysticks" native="true">
-    <property name="geometry">
-     <rect>
-      <x>990</x>
-      <y>510</y>
-      <width>251</width>
-      <height>201</height>
-     </rect>
-    </property>
-    <widget class="QWidget" name="verticalLayoutWidget">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>20</y>
-       <width>181</width>
-       <height>171</height>
-      </rect>
-     </property>
-     <layout class="QVBoxLayout" name="joystick_layout">
-      <property name="leftMargin">
-       <number>0</number>
+    <item row="2" column="3">
+     <widget class="ObstacleMapWidget" name="obstacle_map_widget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
-      <item>
-       <widget class="JoystickWidget" name="joystick" native="true"/>
-      </item>
-     </layout>
-    </widget>
-   </widget>
-   <widget class="MovableWidget" name="cam_widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>450</x>
-      <y>20</y>
-      <width>621</width>
-      <height>451</height>
-     </rect>
-    </property>
-    <widget class="QLabel" name="cam_label">
-     <property name="geometry">
-      <rect>
-       <x>30</x>
-       <y>30</y>
-       <width>551</width>
-       <height>391</height>
-      </rect>
-     </property>
-     <property name="text">
-      <string>Kein Bild</string>
-     </property>
-     <property name="scaledContents">
-      <bool>false</bool>
-     </property>
-    </widget>
-   </widget>
-   <widget class="ObstacleMapWidget" name="obstacle_map_widget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>100</y>
-      <width>441</width>
-      <height>341</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="TouchTestWidget" name="touchWidget" native="true">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>738</y>
-      <width>1231</width>
-      <height>61</height>
-     </rect>
-    </property>
-   </widget>
-   <zorder>obstacle_map_widget</zorder>
-   <zorder>gridLayoutWidget</zorder>
-   <zorder>modes_button</zorder>
-   <zorder>buttons</zorder>
-   <zorder>sliders</zorder>
-   <zorder>mode_list</zorder>
-   <zorder>wheels</zorder>
-   <zorder>joysticks</zorder>
-   <zorder>cam_widget</zorder>
-   <zorder>touchWidget</zorder>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="QWidget" name="buttons" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QPushButton" name="fast_button">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>PushButton</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="slow_button">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>PushButton</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="stop_button">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>PushButton</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="back_slow_button">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>PushButton</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="back_fast_button">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>PushButton</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="5" column="2">
+     <widget class="WheelWidget" name="wheels" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QPushButton" name="modes_button">
+      <property name="text">
+       <string>Options</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1533</width>
+     <width>1402</width>
      <height>22</height>
     </rect>
    </property>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
   <action name="actionsussy">
    <property name="text">
     <string>sussy</string>
@@ -377,21 +308,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>MovableWidget</class>
-   <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/movable_widget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>ObstacleMapWidget</class>
    <extends>QWidget</extends>
    <header>../include/test_qt_pkg/obstacle_map_widget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>TouchTestWidget</class>
-   <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/touch_test.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
