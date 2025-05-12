@@ -46,6 +46,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Erstes Element standardmäßig auswählen
     ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
+
+    // Cursor verstecken wegen Touch-Display
+    QCursor cursor(Qt::BlankCursor);
+    QApplication::setOverrideCursor(cursor);
+    QApplication::changeOverrideCursor(cursor);
 }
 
 MainWindow::~MainWindow()

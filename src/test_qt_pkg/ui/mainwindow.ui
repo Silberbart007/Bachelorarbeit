@@ -2,12 +2,15 @@
 <ui version="4.0">
  <class>MainWindow</class>
  <widget class="QMainWindow" name="MainWindow">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1232</width>
-    <height>813</height>
+    <width>1533</width>
+    <height>933</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,6 +27,13 @@
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>Add 1</string>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="0">
       <widget class="QLabel" name="counter_label">
        <property name="font">
@@ -33,13 +43,6 @@
        </property>
        <property name="text">
         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p align=&quot;center&quot;&gt;&lt;span style=&quot; font-size:11pt;&quot;&gt;0&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="0">
-      <widget class="QPushButton" name="pushButton">
-       <property name="text">
-        <string>Add 1</string>
        </property>
       </widget>
      </item>
@@ -225,10 +228,10 @@
    <widget class="MovableWidget" name="wheels" native="true">
     <property name="geometry">
      <rect>
-      <x>330</x>
-      <y>500</y>
-      <width>311</width>
-      <height>221</height>
+      <x>20</x>
+      <y>150</y>
+      <width>1311</width>
+      <height>691</height>
      </rect>
     </property>
     <widget class="QWidget" name="verticalLayoutWidget_3">
@@ -240,11 +243,17 @@
        <height>161</height>
       </rect>
      </property>
-     <layout class="QVBoxLayout" name="wheel_layout">
-      <item>
-       <widget class="WheelWidget" name="wheel" native="true"/>
-      </item>
-     </layout>
+     <layout class="QVBoxLayout" name="wheel_layout"/>
+    </widget>
+    <widget class="WheelWidget" name="wheel" native="true">
+     <property name="geometry">
+      <rect>
+       <x>440</x>
+       <y>280</y>
+       <width>681</width>
+       <height>481</height>
+      </rect>
+     </property>
     </widget>
    </widget>
    <widget class="MovableWidget" name="joysticks" native="true">
@@ -311,6 +320,16 @@
      </rect>
     </property>
    </widget>
+   <widget class="TouchTestWidget" name="touchWidget" native="true">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>738</y>
+      <width>1231</width>
+      <height>61</height>
+     </rect>
+    </property>
+   </widget>
    <zorder>obstacle_map_widget</zorder>
    <zorder>gridLayoutWidget</zorder>
    <zorder>modes_button</zorder>
@@ -320,14 +339,15 @@
    <zorder>wheels</zorder>
    <zorder>joysticks</zorder>
    <zorder>cam_widget</zorder>
+   <zorder>touchWidget</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1232</width>
-     <height>34</height>
+     <width>1533</width>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -366,6 +386,12 @@
    <class>ObstacleMapWidget</class>
    <extends>QWidget</extends>
    <header>../include/test_qt_pkg/obstacle_map_widget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>TouchTestWidget</class>
+   <extends>QWidget</extends>
+   <header>../include/test_qt_pkg/touch_test.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

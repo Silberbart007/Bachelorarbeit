@@ -17,8 +17,8 @@ find_package(image_transport REQUIRED)
 # Qt5
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-set(CMAKE_AUTOUIC ON)
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
+set(CMAKE_AUTOUIC ON)
 
 # Quellen
 set(SOURCES
@@ -29,6 +29,7 @@ set(SOURCES
   src/movable_widget.cpp
   src/cam.cpp
   src/obstacle_map_widget.cpp
+  src/touch_test.cpp
 )
 
 set(HEADERS
@@ -38,6 +39,7 @@ set(HEADERS
   include/test_qt_pkg/movable_widget.h
   include/test_qt_pkg/cam.h
   include/test_qt_pkg/obstacle_map_widget.h
+  include/test_qt_pkg/touch_test.h
 )
 
 set(UIS
