@@ -58,8 +58,8 @@ MainWindow::MainWindow(QWidget *parent)
     .arg(sliderSize * 3)
     .arg(sliderSize * 1.5);
 
-    ui->speed_slider->setAttribute(Qt::WA_StyledBackground);
-    ui->rotation_slider->setAttribute(Qt::WA_StyledBackground);
+    //ui->speed_slider->setAttribute(Qt::WA_StyledBackground);
+    //ui->rotation_slider->setAttribute(Qt::WA_StyledBackground);
         //ui->speed_slider->setMinimumSize(100,100);
     //ui->speed_slider->setStyleSheet(style);
     //ui->rotation_slider->setStyleSheet(style);
@@ -104,9 +104,11 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
 
             // Länge durch Speed skalieren
             // Logarithmische Länge berechnen
-            float max_length = 200.0f;  // max. Pfeillänge in Pixel
-            float speed_log = std::log10(speed_value + 1) * 25.0f; // Logarithmische Skalierung, +1 um Logarithmus von 0 zu vermeiden
-            float length = std::min(speed_log, max_length);  // Maximale Länge begrenzen
+            float max_speed = 100.0f;  // max erwartete Geschwindigkeit (z. B. 100)
+            float max_length = 120.0f; // max. Pfeillänge in Pixel
+
+            // Lineare Skalierung
+            float length = std::min((speed_value / max_speed) * max_length, max_length);
 
             // Pfeil Zentrum bestimmen (unten am Bildschirm)
             cv::Point end = start + cv::Point(dir.x * length / 100.0 * max_length,

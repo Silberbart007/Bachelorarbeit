@@ -1,39 +1,45 @@
-#include "../include/test_qt_pkg/touch_slider.h"
+#include "../include/test_qt_pkg/touch_slider_horizontal.h"
 #include <QPainter>
 #include <QDebug>
 
-CustomTouchSlider::CustomTouchSlider(QWidget *parent)
+CustomTouchSliderHorizontal::CustomTouchSliderHorizontal(QWidget *parent)
     : QWidget(parent), m_value(0)
 {
     setAttribute(Qt::WA_AcceptTouchEvents, true);  // Touch-Ereignisse akzeptieren
 }
 
-int CustomTouchSlider::getValue() const
+int CustomTouchSliderHorizontal::getValue() const
 {
     return m_value;  // Gibt den aktuellen Sliderwert zurück
 }
 
-void CustomTouchSlider::paintEvent(QPaintEvent *)
+void CustomTouchSliderHorizontal::paintEvent(QPaintEvent *)
 {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    // Hintergrund zeichnen (Slider-Spur)
+    qreal dpi = this->devicePixelRatioF();
+
+    const int margin = 10 * dpi;
+    const int sliderWidth = 60 * dpi;
+    const int sliderHeight = 60 * dpi;
+
+    // Spur zeichnen
     painter.setPen(QPen(Qt::black, 2));
     painter.setBrush(Qt::lightGray);
-    painter.drawRect(width() / 2 - 10, 10, 20, height() - 20);
+    painter.drawRect(margin, height() / 2 - sliderHeight / 2, width() - 2 * margin, sliderHeight);
 
-    // Schieberegler zeichnen
+    // Schieberegler zeichnen (Mittelpunkt auf Position!)
     painter.setBrush(Qt::blue);
+    int usableWidth = width() - 2 * margin - sliderWidth;
+    int centerX = margin + (usableWidth * m_value / 100) + sliderWidth / 2;
 
-    int sliderHeight = 30;
-    int sliderY = height() - 10 - ((m_value * (height() - 20 - sliderHeight)) / 100);
-
-    painter.drawRect(width() / 2 - 15, sliderY, 30, sliderHeight);
+    // Ziehe die Hälfte der Sliderbreite ab, um zentriert zu zeichnen
+    painter.drawRect(centerX - sliderWidth / 2, height() / 2 - sliderHeight / 2, sliderWidth, sliderHeight);
 }
 
 
-bool CustomTouchSlider::event(QEvent *event)
+bool CustomTouchSliderHorizontal::event(QEvent *event)
 {
     if (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate || event->type() == QEvent::TouchEnd) {
         QTouchEvent *touchEvent = static_cast<QTouchEvent *>(event);
@@ -42,7 +48,7 @@ bool CustomTouchSlider::event(QEvent *event)
         for (const QTouchEvent::TouchPoint &point : touchPoints) {
             QPointF touchPos = point.pos();  // Position des Touchpoints
             if (rect().contains(touchPos.toPoint())) {  // Überprüfen, ob der Touchpunkt im Widget-Bereich liegt
-                int newValue = std::clamp(mapToSliderValue(touchPos.y()), 0, 100);  // Berechnet den neuen Wert basierend auf der X-Position
+                int newValue = std::clamp(mapToSliderValue(touchPos.x()), 0, 100);  // Berechnet den neuen Wert basierend auf der X-Position
                 setValue(newValue);
             }
         }
@@ -51,7 +57,7 @@ bool CustomTouchSlider::event(QEvent *event)
     return QWidget::event(event);  // Anderen Ereignissen Standardverhalten geben
 }
 
-void CustomTouchSlider::mousePressEvent(QMouseEvent *event)
+void CustomTouchSliderHorizontal::mousePressEvent(QMouseEvent *event)
 {
     if (rect().contains(event->pos())) {  // Überprüfen, ob der Mauszeiger im Widget-Bereich ist
         int newValue = mapToSliderValue(event->x());  // Berechnet den neuen Wert basierend auf der X-Position
@@ -59,28 +65,36 @@ void CustomTouchSlider::mousePressEvent(QMouseEvent *event)
     }
 }
 
-void CustomTouchSlider::mouseMoveEvent(QMouseEvent *event)
+void CustomTouchSliderHorizontal::mouseMoveEvent(QMouseEvent *event)
 {
     if (rect().contains(event->pos())) {  // Überprüfen, ob der Mauszeiger im Widget-Bereich ist
         int newValue = mapToSliderValue(event->x());  // Berechnet den neuen Wert basierend auf der X-Position
         setValue(newValue);
+        //qDebug() << "Value: " << newValue;
     }
 }
 
-void CustomTouchSlider::mouseReleaseEvent(QMouseEvent *)
+void CustomTouchSliderHorizontal::mouseReleaseEvent(QMouseEvent *)
 {
     // Optional: Hier kann man spezielle Logik nach dem Loslassen der Maus hinzufügen, falls gewünscht.
 }
 
-int CustomTouchSlider::mapToSliderValue(int y)
+int CustomTouchSliderHorizontal::mapToSliderValue(int x)
 {
-    int usableHeight = height() - 20 - 30;  // Abzug: Ränder und Slider-Höhe
-    int relativeY = std::clamp(y - 10, 0, usableHeight);
-    int value = 100 - (relativeY * 100 / usableHeight);
+    const int margin = 10;
+    const int sliderWidth = 60;
+    int usableWidth = width() - 2 * margin - sliderWidth;
+
+    // Korrigiere x: Mittelpunkt der Maus/Touchposition ist entscheidend
+    x = std::clamp(x, margin + sliderWidth / 2, margin + usableWidth + sliderWidth / 2);
+    int relativeX = x - margin - sliderWidth / 2;
+
+    int value = (relativeX * 100) / usableWidth;
     return std::clamp(value, 0, 100);
 }
 
-void CustomTouchSlider::setValue(int newValue)
+
+void CustomTouchSliderHorizontal::setValue(int newValue)
 {
     if (newValue != m_value) {
         m_value = newValue;

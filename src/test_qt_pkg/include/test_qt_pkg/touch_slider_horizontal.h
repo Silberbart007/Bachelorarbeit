@@ -1,17 +1,17 @@
-#ifndef TOUCH_SLIDER_H
-#define TOUCH_SLIDER_H
+#ifndef TOUCH_SLIDER_HORIZONTAL_H
+#define TOUCH_SLIDER_HORIZONTAL_H
 
 #include <QWidget>
 #include <QTouchEvent>
 #include <QMouseEvent>
 #include <QPainter>
 
-class CustomTouchSlider : public QWidget
+class CustomTouchSliderHorizontal : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit CustomTouchSlider(QWidget *parent = nullptr);
+    explicit CustomTouchSliderHorizontal(QWidget *parent = nullptr);
 
     int getValue() const;  // Gibt den aktuellen Sliderwert zurück
     void setValue(int newValue);  // Setzt den Sliderwert und aktualisiert das Widget
@@ -29,4 +29,4 @@ private:
     int mapToSliderValue(int x);  // Mapped die X-Position auf den Sliderwert
 };
 
-#endif // TOUCH_SLIDER_H
+#endif // TOUCH_SLIDER_HORIZONTAL_H

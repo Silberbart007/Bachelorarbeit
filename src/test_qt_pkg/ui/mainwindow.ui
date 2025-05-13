@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>1342</width>
-    <height>808</height>
+    <height>814</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -54,44 +54,6 @@
     </size>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="5" column="3">
-     <widget class="QWidget" name="sliders" native="true">
-      <property name="maximumSize">
-       <size>
-        <width>200</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>9</number>
-       </property>
-       <item>
-        <widget class="CustomTouchSlider" name="rotation_slider" native="true">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="CustomTouchSlider" name="speed_slider" native="true">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
     <item row="2" column="0">
      <widget class="QListWidget" name="mode_list">
       <property name="enabled">
@@ -149,6 +111,85 @@
         <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
        </property>
       </item>
+     </widget>
+    </item>
+    <item row="2" column="6">
+     <widget class="QWidget" name="cam_widget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_2">
+       <item row="0" column="0">
+        <widget class="QLabel" name="cam_label">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>800</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>No cam</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="5" column="5">
+     <widget class="JoystickWidget" name="joysticks" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="3" colspan="3">
+     <widget class="ObstacleMapWidget" name="obstacle_map_widget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>0</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="2">
+     <widget class="WheelWidget" name="wheels" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
      </widget>
     </item>
     <item row="0" column="0">
@@ -271,28 +312,8 @@
       </layout>
      </widget>
     </item>
-    <item row="5" column="1">
-     <widget class="JoystickWidget" name="joysticks" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-     </widget>
-    </item>
-    <item row="5" column="2">
-     <widget class="WheelWidget" name="wheels" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
-     <widget class="ObstacleMapWidget" name="obstacle_map_widget" native="true">
+    <item row="5" column="6">
+     <widget class="QWidget" name="sliders" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
@@ -301,51 +322,56 @@
       </property>
       <property name="minimumSize">
        <size>
-        <width>0</width>
+        <width>500</width>
         <height>0</height>
        </size>
       </property>
-     </widget>
-    </item>
-    <item row="2" column="2">
-     <widget class="QWidget" name="cam_widget" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
-      <property name="minimumSize">
+      <property name="maximumSize">
        <size>
-        <width>0</width>
-        <height>0</height>
+        <width>200</width>
+        <height>16777215</height>
        </size>
       </property>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="0" column="0">
-        <widget class="QLabel" name="cam_label">
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>9</number>
+       </property>
+       <item>
+        <widget class="CustomTouchSliderHorizontal" name="rotation_slider" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
-         <property name="text">
-          <string>No cam</string>
+         <property name="minimumSize">
+          <size>
+           <width>300</width>
+           <height>0</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="CustomTouchSliderVertical" name="speed_slider" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>250</height>
+          </size>
          </property>
         </widget>
        </item>
       </layout>
-     </widget>
-    </item>
-    <item row="2" column="3">
-     <widget class="TouchTestWidget" name="widget" native="true">
-      <property name="sizePolicy">
-       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-        <horstretch>0</horstretch>
-        <verstretch>0</verstretch>
-       </sizepolicy>
-      </property>
      </widget>
     </item>
    </layout>
@@ -403,15 +429,15 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>TouchTestWidget</class>
+   <class>CustomTouchSliderVertical</class>
    <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/touch_test.h</header>
+   <header>../include/test_qt_pkg/touch_slider_vertical.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>CustomTouchSlider</class>
+   <class>CustomTouchSliderHorizontal</class>
    <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/touch_slider.h</header>
+   <header>../include/test_qt_pkg/touch_slider_horizontal.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
