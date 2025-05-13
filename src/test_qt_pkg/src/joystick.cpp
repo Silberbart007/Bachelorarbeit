@@ -8,10 +8,25 @@
 JoystickWidget::JoystickWidget(QWidget *parent)
     : QWidget(parent)
 {
-    setMinimumSize(150, 150);
-    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    //setMinimumSize(150, 150);
+    //setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_center = QPointF(width() / 2, height() / 2);
     m_knobPos = m_center;
+}
+
+void JoystickWidget::resizeEvent(QResizeEvent *event)
+{
+    QSize newSize = event->size();
+    int side = qMin(newSize.width(), newSize.height());  // Wähle die kleinere Dimension
+    this->resize(side, side);  // Setze Breite und Höhe auf denselben Wert
+
+    // Center neu berechnen
+    m_center = QPointF(width() / 2, height() / 2);
+
+    // Korrekte Knob-Position setzen
+    if (!m_dragging)
+        m_knobPos = m_center;
+    QWidget::resizeEvent(event);  // Event weiterleiten
 }
 
 void JoystickWidget::paintEvent(QPaintEvent *)
@@ -25,7 +40,7 @@ void JoystickWidget::paintEvent(QPaintEvent *)
 
     // Knopf (Joystick-Position)
     p.setBrush(Qt::blue);
-    p.drawEllipse(m_knobPos, 20, 20);
+    p.drawEllipse(m_knobPos, 40, 40);
 }
 
 void JoystickWidget::mousePressEvent(QMouseEvent *event)

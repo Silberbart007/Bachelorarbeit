@@ -7,10 +7,14 @@ int main(int argc, char *argv[])
 {
     rclcpp::init(argc, argv);
 
-    QApplication app(argc, argv);
+    // Eigenschaften setzen: Skalierung
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 
+    QApplication app(argc, argv);
+
     MainWindow window;
+    // Touch events aktivieren
+    //window.setAttribute(Qt::WA_AcceptTouchEvents);
     window.show();
 
      // ROS-Thread für die Qt-Node starten

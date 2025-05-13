@@ -9,6 +9,8 @@
 #include <std_msgs/msg/int32.hpp>
 #include "sensor_msgs/msg/image.hpp"
 #include <opencv2/opencv.hpp>
+#include <QSlider>
+#include <QTouchEvent>
 #include "cv_bridge/cv_bridge.hpp"
 #include "../include/test_qt_pkg/joystick.h"
 
@@ -28,12 +30,6 @@ public:
     rclcpp::Node::SharedPtr getNode() const { return node_; }
 
 private slots:
-    // Add Button
-    void on_pushButton_clicked();
-
-    // Speed/rotation slider
-    void on_speed_slider_valueChanged(int value);
-    void on_rotation_slider_valueChanged(int value);
 
     // Optionen-Liste
     void on_mode_list_itemSelectionChanged();
@@ -45,7 +41,6 @@ private slots:
     void on_stop_button_clicked();
     void on_back_slow_button_clicked();
     void on_back_fast_button_clicked();
-
 
 private:
     Ui::MainWindow *ui;
@@ -60,6 +55,9 @@ private:
     // Subscriber für cam
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
     void image_callback(const sensor_msgs::msg::Image::SharedPtr msg);
+
+    // Hilfsfunktion zum Mappen der Position auf den Sliderwert
+    int mapToSliderValue(int pos, QSlider* slider);
 
     int counter_;
 };

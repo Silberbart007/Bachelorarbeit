@@ -22,6 +22,9 @@ public:
     void addObstacle(int x, int y, int width, int height);
     void updateObstacles();
 
+protected:
+    void resizeEvent(QResizeEvent *) override;
+
 private:
     Ui::ObstacleMapWidget *ui;
     QGraphicsScene *scene_;

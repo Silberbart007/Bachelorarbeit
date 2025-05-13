@@ -30,6 +30,7 @@ set(SOURCES
   src/cam.cpp
   src/obstacle_map_widget.cpp
   src/touch_test.cpp
+  src/touch_slider.cpp
 )
 
 set(HEADERS
@@ -40,6 +41,7 @@ set(HEADERS
   include/test_qt_pkg/cam.h
   include/test_qt_pkg/obstacle_map_widget.h
   include/test_qt_pkg/touch_test.h
+  include/test_qt_pkg/touch_slider.h
 )
 
 set(UIS

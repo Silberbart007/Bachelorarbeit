@@ -2,30 +2,41 @@
 #include <QGraphicsRectItem>
 #include <QRandomGenerator>
 #include <QTimer>
+#include <QVBoxLayout>  // wichtig
 
 ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     QWidget(parent),
     scene_(new QGraphicsScene(this)),
     view_(new QGraphicsView(scene_, this))
 {
-    // Setze die Szene
+    // Szenegröße bleibt fix, z. B. 800x600
     scene_->setSceneRect(0, 0, 800, 600);
     view_->setRenderHint(QPainter::Antialiasing);
     view_->setRenderHint(QPainter::SmoothPixmapTransform);
 
-    // Setze den Layout des Views
-    view_->setGeometry(0, 0, 800, 600);
+    // View in Layout einfügen
+    QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->addWidget(view_);
+    layout->setContentsMargins(0, 0, 0, 0);
+    setLayout(layout);
 
     // Timer für Hindernisaktualisierungen
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &ObstacleMapWidget::updateObstacles);
-    timer->start(20);  // alle 1000 ms Hindernisse aktualisieren
+    timer->start(20);
 }
+
 
 ObstacleMapWidget::~ObstacleMapWidget()
 {
     delete scene_;
     delete view_;
+}
+
+void ObstacleMapWidget::resizeEvent(QResizeEvent *event)
+{
+    QWidget::resizeEvent(event);
+    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);  // optional: oder Qt::IgnoreAspectRatio
 }
 
 void ObstacleMapWidget::addObstacle(int x, int y, int width, int height)
