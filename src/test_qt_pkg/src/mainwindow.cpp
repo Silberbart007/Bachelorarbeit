@@ -25,6 +25,10 @@ MainWindow::MainWindow(QWidget *parent)
     // UI "aktivieren"
     ui->setupUi(this);
 
+    // robot Node an nötige Widgets übergeben
+    ui->rotation_slider->setRobotNode(m_robot_node);
+    ui->speed_slider->setRobotNode(m_robot_node);
+
     // Steuerungen verstecken
     ui->wheels->setVisible(false);
     ui->joysticks->setVisible(false);
@@ -63,8 +67,8 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
 
             // Vektorpfeil Beispiel mit Slider
             // Beispiel: Pfeil zeichnen basierend auf Sliderwerten
-            int speed_value = ui->speed_slider->getValue();     // 0–100
-            int rotation_value = ui->rotation_slider->getValue(); // 0–100
+            int speed_value = m_robot_node->getVelocity();     // 0–100
+            int rotation_value = m_robot_node->getRotation(); // 0–100
 
             // Werte normalisieren
             float rotation = 270 - ((rotation_value) * 360.0 / 100.0);

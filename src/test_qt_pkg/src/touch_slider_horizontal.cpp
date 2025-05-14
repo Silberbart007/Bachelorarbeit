@@ -100,6 +100,10 @@ void CustomTouchSliderHorizontal::setValue(int newValue)
 {
     if (newValue != m_value) {
         m_value = newValue;
+
+        // An Roboter publishen
+        m_robot_node->publish_velocity(m_robot_node->getVelocity(), m_value);
+
         update();  // Widget neu zeichnen, um die Slider-Position zu aktualisieren
     }
 }

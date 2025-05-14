@@ -3,14 +3,21 @@
 
 RobotNode::RobotNode() : Node("robot_node")
 {
-    cmd_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
+    //Eigenschaften des Roboters setzen
+    m_vel = 0.0;
+    m_rot = 0.0;
 
-    scan_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+    // cmd_vel Publisher
+    m_cmd_pub = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
+
+    // Scan subscriber
+    m_scan_sub = this->create_subscription<sensor_msgs::msg::LaserScan>(
         "scan", 10,
         std::bind(&RobotNode::scan_callback, this, std::placeholders::_1)
     );
 
-    image_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
+    // Kamera Subscriber
+    m_image_sub = this->create_subscription<sensor_msgs::msg::Image>(
         "camera/image_raw", 10,
         std::bind(&RobotNode::image_callback, this, std::placeholders::_1)
     );
@@ -18,10 +25,17 @@ RobotNode::RobotNode() : Node("robot_node")
 
 void RobotNode::publish_velocity(double speed, double rotation)
 {
+    // Message vorbereiten
     auto msg = geometry_msgs::msg::Twist();
     msg.linear.x = speed;
     msg.angular.z = rotation;
-    cmd_pub_->publish(msg);
+
+    // Variablen des Roboters setzen
+    m_vel = speed;
+    m_rot = rotation;
+
+    // Daten an topic publishen
+    m_cmd_pub->publish(msg);
 }
 
 void RobotNode::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)

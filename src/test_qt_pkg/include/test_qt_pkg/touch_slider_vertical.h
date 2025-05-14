@@ -5,6 +5,7 @@
 #include <QTouchEvent>
 #include <QMouseEvent>
 #include <QPainter>
+#include "mainwindow.h"
 
 class CustomTouchSliderVertical : public QWidget
 {
@@ -15,6 +16,7 @@ public:
 
     int getValue() const;  // Gibt den aktuellen Sliderwert zurück
     void setValue(int newValue);  // Setzt den Sliderwert und aktualisiert das Widget
+    void setRobotNode(std::shared_ptr<RobotNode> robot_node) { m_robot_node = robot_node; };
 
 protected:
     void paintEvent(QPaintEvent *) override;  // Zum Zeichnen des Sliders
@@ -25,6 +27,7 @@ protected:
 
 private:
     int m_value;  // Der aktuelle Wert des Sliders
+    std::shared_ptr<RobotNode> m_robot_node;
 
     int mapToSliderValue(int y);  // Mapped die X-Position auf den Sliderwert
 };
