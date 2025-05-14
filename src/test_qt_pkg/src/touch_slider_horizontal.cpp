@@ -70,7 +70,7 @@ void CustomTouchSliderHorizontal::mouseMoveEvent(QMouseEvent *event)
     if (rect().contains(event->pos())) {  // Überprüfen, ob der Mauszeiger im Widget-Bereich ist
         int newValue = mapToSliderValue(event->x());  // Berechnet den neuen Wert basierend auf der X-Position
         setValue(newValue);
-        //qDebug() << "Value: " << newValue;
+        qDebug() << "Value: " << newValue;
     }
 }
 
@@ -81,8 +81,10 @@ void CustomTouchSliderHorizontal::mouseReleaseEvent(QMouseEvent *)
 
 int CustomTouchSliderHorizontal::mapToSliderValue(int x)
 {
-    const int margin = 10;
-    const int sliderWidth = 60;
+    qreal dpi = this->devicePixelRatioF();
+
+    const int margin = 10 * dpi;
+    const int sliderWidth = 60 * dpi;
     int usableWidth = width() - 2 * margin - sliderWidth;
 
     // Korrigiere x: Mittelpunkt der Maus/Touchposition ist entscheidend

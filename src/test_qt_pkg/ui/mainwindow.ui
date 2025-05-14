@@ -47,12 +47,6 @@
      <height>0</height>
     </size>
    </property>
-   <property name="baseSize">
-    <size>
-     <width>3840</width>
-     <height>2160</height>
-    </size>
-   </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <layout class="QHBoxLayout" name="TopLayout">
@@ -70,7 +64,7 @@
         <property name="leftMargin">
          <number>0</number>
         </property>
-        <item>
+        <item alignment="Qt::AlignTop">
          <widget class="QPushButton" name="modes_button">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -92,6 +86,9 @@
          <widget class="QListWidget" name="mode_list">
           <property name="enabled">
            <bool>true</bool>
+          </property>
+          <property name="selectionMode">
+           <enum>QAbstractItemView::MultiSelection</enum>
           </property>
           <item>
            <property name="text">
@@ -354,7 +351,7 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>200</width>
+             <width>500</width>
              <height>0</height>
             </size>
            </property>
@@ -371,7 +368,7 @@
            <property name="minimumSize">
             <size>
              <width>100</width>
-             <height>100</height>
+             <height>400</height>
             </size>
            </property>
            <property name="maximumSize">
@@ -395,7 +392,7 @@
         </property>
        </widget>
       </item>
-      <item alignment="Qt::AlignHCenter|Qt::AlignVCenter">
+      <item>
        <widget class="JoystickWidget" name="joysticks" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">

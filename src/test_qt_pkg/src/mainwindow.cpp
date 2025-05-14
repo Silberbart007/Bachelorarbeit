@@ -91,9 +91,9 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
             int rotation_value = ui->rotation_slider->getValue(); // 0–100
 
             // Werte normalisieren
-            float rotation = (rotation_value-25) * 360.0 / 99.0;
+            float rotation = 270 - ((rotation_value) * 360.0 / 100.0);
 
-            // Startpunkt z. B. in der Bildmitte
+            // Startpunkt z. B. in der Bildmitte (etwas weiter unten)
             cv::Point start((frame.cols-20) / 2, frame.rows-100);
 
             // Umrechnen der Rotation in Bogenmaß (0–360° → 0–2π)

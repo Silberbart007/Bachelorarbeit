@@ -26,6 +26,7 @@ protected:
 private:
     QPointF m_center;
     QPointF m_knobPos;
+    float m_maxRadius; 
     bool m_dragging = false;
 
     void updateKnob(const QPointF &pos);
