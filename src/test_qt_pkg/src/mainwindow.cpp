@@ -7,27 +7,20 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     {
     // Variablen Initialisieren
-    counter_ = 0;
+    m_counter = 0;
 
-    // ROS 2 Node erstellen
-    node_ = rclcpp::Node::make_shared("qt_gui_node");
+    // Robot Node erstellen
+    m_robot_node = std::make_shared<RobotNode>();
 
-    // Test pub
-    // Publisher erstellen
-    // publisher_ = node_->create_publisher<std_msgs::msg::Int32>("counter_topic", 10);
+    // Kamera-Callback registrieren
+    m_robot_node->on_image_received = [this](const sensor_msgs::msg::Image::SharedPtr msg) {
+        this->image_callback(msg);  // ruft Funktion von MainWindow auf
+    };
 
-    // // Test sub
-    // subscription_ = node_->create_subscription<std_msgs::msg::Int32>(
-    //     "counter_topic",
-    //     10,
-    //     [this](const std_msgs::msg::Int32::SharedPtr msg) {
-    //         ui->counter_label->setText(QString("%1").arg(msg->data));
-    //     });
-
-    // Kamera Sub
-    image_sub_ = node_->create_subscription<sensor_msgs::msg::Image>(
-    "camera/image_raw", 10,
-    std::bind(&MainWindow::image_callback, this, std::placeholders::_1));
+    // Scan-Callback registrieren
+    m_robot_node->on_scan_received = [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
+        qDebug() << "Lasercallback aus Mainwindow";
+    };
 
     // UI "aktivieren"
     ui->setupUi(this);
@@ -46,23 +39,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Erstes Element standardmäßig auswählen
     ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
-
-    // Slider Größe skalieren mt der Display-Auflösung
-    qreal dpi = this->logicalDpiY();  // z. B. 96 auf Standardbildschirm
-    int sliderSize = dpi / 3;         // Skaliere proportional
-
-    QString style = QString(
-    "QSlider::groove:vertical { background: #ccc; width: %1px; }"
-    "QSlider::handle:vertical { background: #007acc; height: %2px; width: %2px; border-radius: %3px; margin: -5px 0; }")
-    .arg(sliderSize * 2)
-    .arg(sliderSize * 3)
-    .arg(sliderSize * 1.5);
-
-    //ui->speed_slider->setAttribute(Qt::WA_StyledBackground);
-    //ui->rotation_slider->setAttribute(Qt::WA_StyledBackground);
-        //ui->speed_slider->setMinimumSize(100,100);
-    //ui->speed_slider->setStyleSheet(style);
-    //ui->rotation_slider->setStyleSheet(style);
 
     // Cursor verstecken wegen Touch-Display
     //QCursor cursor(Qt::BlankCursor);
@@ -114,7 +90,7 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
             cv::Point end = start + cv::Point(dir.x * length / 100.0 * max_length,
                                             dir.y * length / 100.0 * max_length);
 
-            // Pfeil zeichnen (rot)
+            // Pfeil-Dicke
             int thickness = 6;
 
             cv::arrowedLine(frame, start, end, cv::Scalar(255, 0, 0), thickness);
@@ -136,7 +112,7 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
             }, Qt::QueuedConnection);
         }
     } catch (cv_bridge::Exception &e) {
-        RCLCPP_ERROR(node_->get_logger(), "cv_bridge exception: %s", e.what());
+        RCLCPP_ERROR(m_robot_node->get_logger(), "cv_bridge exception: %s", e.what());
     }
 }
 

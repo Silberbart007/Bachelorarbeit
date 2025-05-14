@@ -17,9 +17,9 @@ int main(int argc, char *argv[])
     //window.setAttribute(Qt::WA_AcceptTouchEvents);
     window.show();
 
-     // ROS-Thread für die Qt-Node starten
+     // ROS-Thread starten
     std::thread qt_thread([&]() {
-        rclcpp::spin(window.getNode());  // Hier wird der ROS 2 Node aus dem MainWindow abgerufen
+        rclcpp::spin(window.getRobotNode());  // Hier wird der die Robot Node in einem seperaten Thread aufgerufen
     });
 
     // ROS-Thread für den Kamera-Publisher starten

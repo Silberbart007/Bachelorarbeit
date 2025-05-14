@@ -11,8 +11,10 @@
 #include <opencv2/opencv.hpp>
 #include <QSlider>
 #include <QTouchEvent>
+#include <functional>
 #include "cv_bridge/cv_bridge.hpp"
 #include "../include/test_qt_pkg/joystick.h"
+#include "../include/test_qt_pkg/robot_node.h"
 
 namespace Ui {
 class MainWindow;
@@ -27,7 +29,7 @@ public:
     ~MainWindow();
 
     // Getter für den Node
-    rclcpp::Node::SharedPtr getNode() const { return node_; }
+    rclcpp::Node::SharedPtr getRobotNode() const { return m_robot_node; }
 
 private slots:
 
@@ -46,20 +48,15 @@ private:
     Ui::MainWindow *ui;
     JoystickWidget *joystick;
 
-    rclcpp::Node::SharedPtr node_;
-
-    // Test sub/pub für Adder
-    rclcpp::Publisher<std_msgs::msg::Int32>::SharedPtr publisher_;
-    rclcpp::Subscription<std_msgs::msg::Int32>::SharedPtr subscription_;
-
-    // Subscriber für cam
-    rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr image_sub_;
+    std::shared_ptr<RobotNode> m_robot_node;
+    
+    // Konkrete Callback Funktionen
     void image_callback(const sensor_msgs::msg::Image::SharedPtr msg);
 
     // Hilfsfunktion zum Mappen der Position auf den Sliderwert
     int mapToSliderValue(int pos, QSlider* slider);
 
-    int counter_;
+    int m_counter;
 };
 
 #endif // MAINWINDOW_H
