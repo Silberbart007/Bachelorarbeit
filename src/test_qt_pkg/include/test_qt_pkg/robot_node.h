@@ -15,8 +15,12 @@ public:
     void publish_velocity(double speed, double rotation);
 
     // Getter
-    double getVelocity()    { return m_vel; };
+    double getSpeed()       { return m_speed; };
     double getRotation()    { return m_rot; };
+    double getSpeedNormalized();
+    double getRotationNormalized();
+    double getMaxSpeed()    { return m_max_speed;};
+    double getMaxRotation() { return m_max_rotation;};
 
     // GUI-Callback-Funktionen
     std::function<void(const sensor_msgs::msg::Image::SharedPtr&)> on_image_received;
@@ -24,8 +28,10 @@ public:
 
 private:
     // Robot attributes
-    double m_vel;
+    double m_speed;
     double m_rot;
+    double m_max_speed;
+    double m_max_rotation;
 
     // Publisher
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr m_cmd_pub;

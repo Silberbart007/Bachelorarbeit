@@ -15,7 +15,7 @@ public:
     explicit CustomTouchSliderVertical(QWidget *parent = nullptr);
 
     int getValue() const;  // Gibt den aktuellen Sliderwert zurück
-    void setValue(int newValue);  // Setzt den Sliderwert und aktualisiert das Widget
+    void setValue(double newValue);  // Setzt den Sliderwert und aktualisiert das Widget
     void setRobotNode(std::shared_ptr<RobotNode> robot_node) { m_robot_node = robot_node; };
 
 protected:
@@ -26,10 +26,10 @@ protected:
     void mouseReleaseEvent(QMouseEvent *) override;  // Optional für Release-Events
 
 private:
-    int m_value;  // Der aktuelle Wert des Sliders
+    double m_value;  // Der aktuelle Wert des Sliders
     std::shared_ptr<RobotNode> m_robot_node;
 
-    int mapToSliderValue(int y);  // Mapped die X-Position auf den Sliderwert
+    double mapToSliderValue(double y);  // Mapped die X-Position auf den Sliderwert
 };
 
 #endif // TOUCH_SLIDER_VERTICAL_H

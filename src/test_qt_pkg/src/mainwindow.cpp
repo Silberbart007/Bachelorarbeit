@@ -39,7 +39,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->mode_list->setVisible(false);
 
     // Slider Default Werte
-    ui->rotation_slider->setValue(50);
+    ui->rotation_slider->setValue(0.0);
+    ui->rotation_slider->setValue(0.0);
 
     // Erstes Element standardmäßig auswählen
     ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
@@ -65,39 +66,45 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
         cv::Mat frame = cv_bridge::toCvCopy(msg, "bgr8")->image;
         if (!frame.empty()) {
 
-            // Vektorpfeil Beispiel mit Slider
-            // Beispiel: Pfeil zeichnen basierend auf Sliderwerten
-            int speed_value = m_robot_node->getVelocity();     // 0–100
-            int rotation_value = m_robot_node->getRotation(); // 0–100
+            // Aktuelle Steuerwerte holen (-1.0 bis 1.0)
+            double speed_value = m_robot_node->getSpeedNormalized();       // -1.0 = rückwärts, 1.0 = vorwärts
+            double rotation_value = m_robot_node->getRotationNormalized(); // -1.0 = links, 1.0 = rechts
 
-            // Werte normalisieren
-            float rotation = 270 - ((rotation_value) * 360.0 / 100.0);
+            if (speed_value < 0.0) {
+                rotation_value = -rotation_value; // Lenkradspiegelung rückwärts
+            }
 
-            // Startpunkt z. B. in der Bildmitte (etwas weiter unten)
-            cv::Point start((frame.cols-20) / 2, frame.rows-100);
+            // Winkel berechnen (0° = rechts, 90° = oben, 180° = links, 270° = unten)
+            // Ziel: 1.0 = 180°,  0.0 = 270°, -1.0 = 360°
+            double rotation = 270.0 - rotation_value * 90.0;
 
-            // Umrechnen der Rotation in Bogenmaß (0–360° → 0–2π)
+            // Startpunkt für Pfeil – z. B. untere Bildmitte
+            cv::Point start((frame.cols - 20) / 2, frame.rows - 100);
+
+            // Rotation in Bogenmaß umwandeln
             double angle_rad = rotation * CV_PI / 180.0;
 
-            // Richtung als Einheitsvektor
-            cv::Point2f dir(std::cos(angle_rad), -std::sin(angle_rad));  // Y-Achse invertieren (nach oben im Bild ist -Y)
+            // Richtungseinheitsvektor (Y-Achse im Bild nach oben = negativ)
+            cv::Point2f dir(-std::cos(angle_rad), std::sin(angle_rad));
 
-            // Länge durch Speed skalieren
-            // Logarithmische Länge berechnen
-            float max_speed = 100.0f;  // max erwartete Geschwindigkeit (z. B. 100)
-            float max_length = 120.0f; // max. Pfeillänge in Pixel
+            // Maximale Pfeillänge in Pixeln
+            double max_length = 120.0;
 
-            // Lineare Skalierung
-            float length = std::min((speed_value / max_speed) * max_length, max_length);
+            // Geschwindigkeit in Pfeillänge skalieren (auch negativ möglich!)
+            double length = speed_value * max_length;
 
-            // Pfeil Zentrum bestimmen (unten am Bildschirm)
-            cv::Point end = start + cv::Point(dir.x * length / 100.0 * max_length,
-                                            dir.y * length / 100.0 * max_length);
+            // Endpunkt berechnen
+            cv::Point end = start + cv::Point(dir.x * length, dir.y * length);
 
-            // Pfeil-Dicke
-            int thickness = 6;
+            // Pfeilfarbe je nach Richtung: Blau für vorwärts, Rot für rückwärts
+            cv::Scalar arrow_color = (speed_value >= 0.0) ? cv::Scalar(255, 0, 0)   // Blau (BGR)
+                                                        : cv::Scalar(0, 0, 255);  // Rot
 
-            cv::arrowedLine(frame, start, end, cv::Scalar(255, 0, 0), thickness);
+            // Optional: minimale sichtbare Länge, damit bei kleinen Werten noch etwas angezeigt wird
+            if (std::abs(speed_value) > 0.01) {
+                int thickness = 6;
+                cv::arrowedLine(frame, start, end, arrow_color, thickness);
+            }
             // Ende Vektorpfeil
 
             // Kamera-Bild anzeigen
@@ -162,8 +169,8 @@ void MainWindow::on_modes_button_clicked() {
 // Speed Buttons
 //
 
-void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; ui->speed_slider->setValue(100);}
-void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; ui->speed_slider->setValue(75);}
-void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; ui->speed_slider->setValue(50);}
-void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; ui->speed_slider->setValue(25);}
-void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; ui->speed_slider->setValue(0);}
+void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; m_robot_node->publish_velocity(1.0, m_robot_node->getRotation());}
+void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; m_robot_node->publish_velocity(0.5, m_robot_node->getRotation());}
+void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; m_robot_node->publish_velocity(0.0, m_robot_node->getRotation());}
+void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; m_robot_node->publish_velocity(-0.5, m_robot_node->getRotation());}
+void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; m_robot_node->publish_velocity(-1.0, m_robot_node->getRotation());}
