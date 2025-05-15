@@ -28,9 +28,28 @@ MainWindow::MainWindow(QWidget *parent)
     // robot Node an nötige Widgets übergeben
     ui->rotation_slider->setRobotNode(m_robot_node);
     ui->speed_slider->setRobotNode(m_robot_node);
+    ui->wheels->setRobotNode(m_robot_node);
+    ui->speed_slider_wheels->setRobotNode(m_robot_node);
+
+    // Synchronisierung von Steuerungsinterfaces durch timer (Damit z.b. Slider auf aktuelle speed gesetzt werden immer)
+    QTimer* syncTimer = new QTimer(this);
+    connect(syncTimer, &QTimer::timeout, this, [=]() {
+    if (m_robot_node) {
+        double speedNorm = m_robot_node->getSpeedNormalized();
+        double rotNorm = m_robot_node->getRotationNormalized();
+
+        // Werte im Bereich [-1, 1]
+        ui->speed_slider->setValue(speedNorm);
+        ui->rotation_slider->setValue(rotNorm);
+        ui->speed_slider_wheels->setValue(speedNorm);
+        ui->wheels->setValue(rotNorm);
+    }
+    });
+    syncTimer->start(50); // alle 50 ms aktualisieren
 
     // Steuerungen verstecken
     ui->wheels->setVisible(false);
+    ui->speed_slider_wheels->setVisible(false);
     ui->joysticks->setVisible(false);
     ui->sliders->setVisible(false);
     ui->buttons->setVisible(false);
@@ -38,9 +57,13 @@ MainWindow::MainWindow(QWidget *parent)
     // Optionsmenü verstecken
     ui->mode_list->setVisible(false);
 
+    // Hinderniskarte verstecken
+    ui->obstacle_map_widget->setVisible(false);
+
     // Slider Default Werte
     ui->rotation_slider->setValue(0.0);
-    ui->rotation_slider->setValue(0.0);
+    ui->speed_slider->setValue(0.0);
+    ui->speed_slider_wheels->setValue(0.0);
 
     // Erstes Element standardmäßig auswählen
     ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
@@ -155,6 +178,7 @@ void MainWindow::on_mode_list_itemSelectionChanged()
 
     // Steuerungswidgets sichtbar oder unsichtbar machen
     ui->wheels->setVisible(showWheel);
+    ui->speed_slider_wheels->setVisible(showWheel);
     ui->joysticks->setVisible(showJoystick);
     ui->sliders->setVisible(showSliders);
     ui->buttons->setVisible(showButtons);
@@ -169,8 +193,8 @@ void MainWindow::on_modes_button_clicked() {
 // Speed Buttons
 //
 
-void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; m_robot_node->publish_velocity(1.0, m_robot_node->getRotation());}
-void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; m_robot_node->publish_velocity(0.5, m_robot_node->getRotation());}
-void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; m_robot_node->publish_velocity(0.0, m_robot_node->getRotation());}
-void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; m_robot_node->publish_velocity(-0.5, m_robot_node->getRotation());}
-void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; m_robot_node->publish_velocity(-1.0, m_robot_node->getRotation());}
+void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; m_robot_node->publish_velocity(1.0, m_robot_node->getRotationNormalized());}
+void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; m_robot_node->publish_velocity(0.5, m_robot_node->getRotationNormalized());}
+void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; m_robot_node->publish_velocity(0.0, m_robot_node->getRotationNormalized());}
+void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; m_robot_node->publish_velocity(-0.5, m_robot_node->getRotationNormalized());}
+void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; m_robot_node->publish_velocity(-1.0, m_robot_node->getRotationNormalized());}

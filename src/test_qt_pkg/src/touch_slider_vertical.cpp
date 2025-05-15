@@ -52,7 +52,7 @@ bool CustomTouchSliderVertical::event(QEvent *event)
         for (const QTouchEvent::TouchPoint &point : touchPoints) {
             QPointF touchPos = point.pos();  // Position des Touchpoints
             if (rect().contains(touchPos.toPoint())) {  // Überprüfen, ob der Touchpunkt im Widget-Bereich liegt
-                double newValue = std::clamp(mapToSliderValue(touchPos.y()), 0.0, 1.0);  // Berechnet den neuen Wert basierend auf der X-Position
+                double newValue = std::clamp(mapToSliderValue(touchPos.y()), -1.0, 1.0);  // Berechnet den neuen Wert basierend auf der X-Position
                 setValue(newValue);
             }
         }

@@ -9,6 +9,7 @@ WheelWidget::WheelWidget(QWidget *parent)
     : QWidget(parent)
 {
     setMinimumSize(150, 150);
+    setAttribute(Qt::WA_AcceptTouchEvents, true);  // Touch-Ereignisse akzeptieren
 }
 
 void WheelWidget::paintEvent(QPaintEvent *)
@@ -40,6 +41,62 @@ void WheelWidget::paintEvent(QPaintEvent *)
         );
         painter.drawLine(center, end);
     }
+}
+
+// Exakt wie bei Maus-Events, aber speziell für Touch
+bool WheelWidget::event(QEvent *event)
+{
+    if (event->type() == QEvent::TouchBegin ||
+        event->type() == QEvent::TouchUpdate ||
+        event->type() == QEvent::TouchEnd)
+    {
+        QTouchEvent *touchEvent = static_cast<QTouchEvent *>(event);
+        const QList<QTouchEvent::TouchPoint> touchPoints = touchEvent->touchPoints();
+
+        if (!touchPoints.isEmpty()) {
+            const QTouchEvent::TouchPoint &point = touchPoints.first();
+
+            // Positionen bestimmen
+            QPointF center(width() / 2, height() / 2);
+            QPointF pos = point.pos();
+            qreal dx = pos.x() - center.x();
+            qreal dy = pos.y() - center.y();
+            qreal angle = qAtan2(-dy, dx);  // Radiant
+
+            // Lenkrad wird berührt
+            if (event->type() == QEvent::TouchBegin) {
+                m_startAngle = angle;
+                m_lastAngle = m_currentAngle;
+                m_isDragging = true;
+            }
+            // Lenkrad wird bewegt
+            else if (event->type() == QEvent::TouchUpdate && m_isDragging) {
+                qreal deltaDeg = (angle - m_startAngle) * 180.0 / M_PI;
+                deltaDeg = qBound(-5.0, deltaDeg, 5.0); // Hier kann man 5.0 höher/runter machen, je nachdem wie schnell das Lenkrad drehen soll
+
+                m_currentAngle = m_lastAngle + deltaDeg;
+                m_currentAngle = qBound(-450.0, m_currentAngle, 450.0); // Hier 450.0 ändern, für kleineren/größeren Drehwinkel
+
+                qDebug() << "Touch-Winkel: " << m_currentAngle;
+
+                update();
+
+                m_startAngle = angle;
+                m_lastAngle = m_currentAngle;
+
+                double normRot = -m_currentAngle / 450.0;
+                m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), normRot);
+            }
+            // Finger wird hochgehoben
+            else if (event->type() == QEvent::TouchEnd) {
+                m_isDragging = false;
+            }
+        }
+
+        return true;  // Touch wurde behandelt
+    }
+
+    return QWidget::event(event);  // Weitergabe an Basis
 }
 
 
@@ -81,10 +138,14 @@ void WheelWidget::mouseMoveEvent(QMouseEvent *event)
         qDebug() << "Lenkrad Winkel: " << m_currentAngle;
 
         update();
-        emit angleChanged(m_currentAngle);
 
         m_startAngle = currentAngleRad;
         m_lastAngle = m_currentAngle;
+
+        // Daten an Robot Node senden
+        // Auf -1 bis 1 normieren
+        double normRot = -m_currentAngle / 450.0;
+        m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), normRot);
     }
 }
 
@@ -93,6 +154,13 @@ void WheelWidget::mouseMoveEvent(QMouseEvent *event)
 void WheelWidget::mouseReleaseEvent(QMouseEvent *)
 {
     m_isDragging = false; // Ende des Ziehens
+}
+
+// Value (von außerhalb dieses Skripts) setzen
+void WheelWidget::setValue(double newValue) {
+    m_currentAngle = -newValue * 450.0;
+    m_lastAngle = m_currentAngle;
+    update();
 }
 
 
