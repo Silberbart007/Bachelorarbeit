@@ -9,10 +9,16 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     scene_(new QGraphicsScene(this)),
     view_(new QGraphicsView(scene_, this))
 {
+    drawing_ = false;
+    temp_path_item_ = nullptr;
+
     // Szenegröße bleibt fix, z. B. 800x600
     scene_->setSceneRect(0, 0, 800, 600);
     view_->setRenderHint(QPainter::Antialiasing);
     view_->setRenderHint(QPainter::SmoothPixmapTransform);
+
+    // Maus Events korrekt verarbeiten:
+    view_->viewport()->installEventFilter(this);
 
     // View in Layout einfügen
     QVBoxLayout *layout = new QVBoxLayout(this);
@@ -68,6 +74,64 @@ ObstacleMapWidget::~ObstacleMapWidget()
 {
     delete scene_;
     delete view_;
+}
+
+// Alle Events abfangen -> Pfad zeichnen
+bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == view_->viewport()) {
+        if (event->type() == QEvent::MouseButtonPress) {
+            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+            drawing_ = true;
+            path_points_.clear();
+            QPointF scenePos = view_->mapToScene(mouseEvent->pos());
+            path_points_.push_back(scenePos);
+            if (temp_path_item_) {
+                scene_->removeItem(temp_path_item_);
+                delete temp_path_item_;
+                temp_path_item_ = nullptr;
+            }
+            return true;  // Event verarbeitet
+        }
+        else if (event->type() == QEvent::MouseMove) {
+            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+            if (!drawing_) return false; // Nicht verarbeiten, wenn nicht am Zeichnen
+
+            QPointF scenePos = view_->mapToScene(mouseEvent->pos());
+            path_points_.push_back(scenePos);
+
+            QPainterPath path;
+            path.moveTo(path_points_.first());
+            for (const auto& pt : path_points_)
+                path.lineTo(pt);
+
+            if (temp_path_item_) {
+                scene_->removeItem(temp_path_item_);
+                delete temp_path_item_;
+            }
+
+            temp_path_item_ = scene_->addPath(path, QPen(Qt::blue, 2));
+
+            return true;  // Event verarbeitet
+        }
+        else if (event->type() == QEvent::MouseButtonRelease) {
+            drawing_ = false;
+
+            if (temp_path_item_) {
+                scene_->removeItem(temp_path_item_);
+                delete temp_path_item_;
+                temp_path_item_ = nullptr;
+            }
+
+            if (path_points_.size() >= 2) {
+                pathDrawn(path_points_);
+            }
+
+            return true;  // Event verarbeitet
+        }
+    }
+    // Alle anderen Events normal weiterreichen
+    return QWidget::eventFilter(obj, event);
 }
 
 void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
@@ -163,3 +227,89 @@ bool ObstacleMapWidget::isNearObstacle(float x, float y)
 
     return false;
 }   
+
+// Pfad zu Ende gezeichnet - Signal
+void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {
+    current_path_ = resamplePath(points, 10.0);  // alle 5 Pixel ein Punkt
+    current_target_index_ = 0;
+    goToNextPoint();
+}
+
+void ObstacleMapWidget::goToNextPoint() {
+    if (current_target_index_ >= current_path_.size()) {
+        m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+        return;
+    }
+
+    QPointF target = current_path_[current_target_index_];
+    double dx = target.x() - robot_x_;
+    double dy = target.y() - robot_y_;
+    double distance = std::sqrt(dx * dx + dy * dy);
+
+    if (distance < 5.0) {  // Zielpunkt erreicht
+        current_target_index_++;
+        if (current_target_index_ >= current_path_.size()) {
+            m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+            return;
+        }
+        target = current_path_[current_target_index_];
+        dx = target.x() - robot_x_;
+        dy = target.y() - robot_y_;
+    }
+
+    double angle_to_target = std::atan2(dy, dx);
+    double angle_diff = angle_to_target - robot_theta_;
+    angle_diff = std::atan2(std::sin(angle_diff), std::cos(angle_diff)); // Normalisieren
+
+    double Kp_rot = 2.0;
+    double rotation = Kp_rot * angle_diff;
+    rotation = std::clamp(rotation, -1.0, 1.0);
+
+    double max_speed = 1.0;
+    double speed = max_speed * (1.0 - std::min(std::abs(angle_diff) / 0.5, 1.0));
+
+    RobotNode::RobotSpeed cmd;
+    cmd.x = speed;
+    cmd.y = 0.0;
+
+    m_robot_node->publish_velocity(cmd, rotation);
+
+    // Timer für nächsten Aufruf
+    QTimer::singleShot(50, this, &ObstacleMapWidget::goToNextPoint);
+}
+
+QVector<QPointF> ObstacleMapWidget::resamplePath(const QVector<QPointF>& originalPoints, double spacing = 5.0) {
+    if (originalPoints.size() < 2)
+        return originalPoints;
+
+    QVector<QPointF> newPoints;
+    newPoints.push_back(originalPoints.first());
+
+    double accumulatedDist = 0.0;
+    for (int i = 1; i < originalPoints.size(); ++i) {
+        QPointF p0 = originalPoints[i - 1];
+        QPointF p1 = originalPoints[i];
+        double segmentLength = QLineF(p0, p1).length();
+
+        while (accumulatedDist + segmentLength >= spacing) {
+            double t = (spacing - accumulatedDist) / segmentLength;
+            QPointF newPoint = p0 + t * (p1 - p0);
+            newPoints.push_back(newPoint);
+
+            // neuer Startpunkt für nächsten Interpolationsschritt
+            p0 = newPoint;
+            segmentLength = QLineF(p0, p1).length();
+            accumulatedDist = 0;
+        }
+        accumulatedDist += segmentLength;
+    }
+    // Optional: letzten Punkt anfügen
+    if (!newPoints.last().isNull() && newPoints.last() != originalPoints.last())
+        newPoints.push_back(originalPoints.last());
+
+    return newPoints;
+}
+
+
+
+
