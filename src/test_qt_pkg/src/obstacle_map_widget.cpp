@@ -28,16 +28,29 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
 
     QTimer *move_timer = new QTimer(this);
     connect(move_timer, &QTimer::timeout, this, [this]() {
-        float new_x = robot_x_ + 1;
-        float new_y = robot_y_ + 0.5;
+        double dt = 0.05; // 50 ms
 
-        // z.B. langsames Drehen
-        float new_theta = robot_theta_ + 0.1;  // Radiant, ca. 6° pro Tick
+        // Geschwindigkeit und Drehgeschwindigkeit vom RobotNode holen
+        RobotNode::RobotSpeed v = m_robot_node->getSpeed(); // lokale Geschwindigkeit (vorwärts x, seitlich y)
+        double omega = m_robot_node->getRotation(); // Winkelgeschwindigkeit in rad/s
 
-        if (new_theta > 2 * M_PI)
-            new_theta -= 2 * M_PI;
+        // Orientierung nur aktualisieren, wenn Drehgeschwindigkeit ungleich 0 ist
+        if (std::abs(omega) > 1e-6) {
+            double direction = (v.x >= 0) ? 1.0 : -1.0;
+            robot_theta_ += direction * omega * dt;
+            if (robot_theta_ > 2 * M_PI) robot_theta_ -= 2 * M_PI;
+            else if (robot_theta_ < 0) robot_theta_ += 2 * M_PI;
+        }
 
-        updateRobotPosition(new_x, new_y, new_theta);
+        // Lokale Geschwindigkeit in Weltkoordinaten umrechnen
+        double dx = v.x * std::cos(robot_theta_) - v.y * std::sin(robot_theta_);
+        double dy = v.x * std::sin(robot_theta_) + v.y * std::cos(robot_theta_);
+
+        // Neue Position berechnen
+        robot_x_ += dx * dt;
+        robot_y_ += dy * dt;
+
+        updateRobotPosition(robot_x_, robot_y_, robot_theta_);
     });
     move_timer->start(50);
 
@@ -57,7 +70,7 @@ ObstacleMapWidget::~ObstacleMapWidget()
     delete view_;
 }
 
-void ObstacleMapWidget::updateRobotPosition(float x, float y, float theta)
+void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
 {
     // Begrenzung wie gehabt
     if (x < 10) x = 10;
@@ -67,6 +80,8 @@ void ObstacleMapWidget::updateRobotPosition(float x, float y, float theta)
 
     if (isNearObstacle(x, y)) {
         qDebug() << "Emergency Stop! Roboter zu nah am Hindernis.";
+        robot_x_ = 400.0;
+        robot_y_ = 300.0;
     } else {
         robot_x_ = x;
         robot_y_ = y;
@@ -77,9 +92,9 @@ void ObstacleMapWidget::updateRobotPosition(float x, float y, float theta)
         }
         if (orientationLine_) {
             // Linie vom Mittelpunkt zu Ausrichtungspunkt neu setzen
-            float length = 20;
-            float endX = robot_x_ + length * std::cos(robot_theta_);
-            float endY = robot_y_ + length * std::sin(robot_theta_);
+            double length = 20;
+            double endX = robot_x_ + length * std::cos(robot_theta_);
+            double endY = robot_y_ + length * std::sin(robot_theta_);
             orientationLine_->setLine(robot_x_, robot_y_, endX, endY);
         }
     }

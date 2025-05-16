@@ -7,9 +7,9 @@ RobotNode::RobotNode() : Node("robot_node")
     m_speed.x = 0.0;
     m_speed.y = 0.0;
     m_rot = 0.0;
-    m_max_speed.x = 10.0;
-    m_max_speed.y = 10.0;
-    m_max_rotation = 10.0;
+    m_max_speed.x = 25.0;
+    m_max_speed.y = 25.0;
+    m_max_rotation = 1.5;
 
     // cmd_vel Publisher
     m_cmd_pub = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);

@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->speed_slider_wheels->setRobotNode(m_robot_node);
     ui->rotation_slider_joystick->setRobotNode(m_robot_node);
     ui->joysticks->setRobotNode(m_robot_node);
+    ui->obstacle_map_widget->setRobotNode(m_robot_node);
 
     // Synchronisierung von Steuerungsinterfaces durch timer (Damit z.b. Slider auf aktuelle speed gesetzt werden immer)
     QTimer* syncTimer = new QTimer(this);
