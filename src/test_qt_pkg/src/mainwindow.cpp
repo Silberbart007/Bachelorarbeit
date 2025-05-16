@@ -35,13 +35,13 @@ MainWindow::MainWindow(QWidget *parent)
     QTimer* syncTimer = new QTimer(this);
     connect(syncTimer, &QTimer::timeout, this, [=]() {
     if (m_robot_node) {
-        double speedNorm = m_robot_node->getSpeedNormalized();
+        RobotNode::RobotSpeed speedNorm = m_robot_node->getSpeedNormalized();
         double rotNorm = m_robot_node->getRotationNormalized();
 
         // Werte im Bereich [-1, 1]
-        ui->speed_slider->setValue(speedNorm);
+        ui->speed_slider->setValue(speedNorm.x);
         ui->rotation_slider->setValue(rotNorm);
-        ui->speed_slider_wheels->setValue(speedNorm);
+        ui->speed_slider_wheels->setValue(speedNorm.x);
         ui->wheels->setValue(rotNorm);
     }
     });
@@ -90,10 +90,10 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
         if (!frame.empty()) {
 
             // Aktuelle Steuerwerte holen (-1.0 bis 1.0)
-            double speed_value = m_robot_node->getSpeedNormalized();       // -1.0 = rückwärts, 1.0 = vorwärts
+            RobotNode::RobotSpeed speed_value = m_robot_node->getSpeedNormalized();       // -1.0 = rückwärts, 1.0 = vorwärts bei linear.x
             double rotation_value = m_robot_node->getRotationNormalized(); // -1.0 = links, 1.0 = rechts
 
-            if (speed_value < 0.0) {
+            if (speed_value.x < 0.0) {
                 rotation_value = -rotation_value; // Lenkradspiegelung rückwärts
             }
 
@@ -114,17 +114,17 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
             double max_length = 120.0;
 
             // Geschwindigkeit in Pfeillänge skalieren (auch negativ möglich!)
-            double length = speed_value * max_length;
+            double length = speed_value.x * max_length;
 
             // Endpunkt berechnen
             cv::Point end = start + cv::Point(dir.x * length, dir.y * length);
 
             // Pfeilfarbe je nach Richtung: Blau für vorwärts, Rot für rückwärts
-            cv::Scalar arrow_color = (speed_value >= 0.0) ? cv::Scalar(255, 0, 0)   // Blau (BGR)
+            cv::Scalar arrow_color = (speed_value.x >= 0.0) ? cv::Scalar(255, 0, 0)   // Blau (BGR)
                                                         : cv::Scalar(0, 0, 255);  // Rot
 
             // Optional: minimale sichtbare Länge, damit bei kleinen Werten noch etwas angezeigt wird
-            if (std::abs(speed_value) > 0.01) {
+            if (std::abs(speed_value.x) > 0.01) {
                 int thickness = 6;
                 cv::arrowedLine(frame, start, end, arrow_color, thickness);
             }
@@ -193,8 +193,8 @@ void MainWindow::on_modes_button_clicked() {
 // Speed Buttons
 //
 
-void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; m_robot_node->publish_velocity(1.0, m_robot_node->getRotationNormalized());}
-void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; m_robot_node->publish_velocity(0.5, m_robot_node->getRotationNormalized());}
-void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; m_robot_node->publish_velocity(0.0, m_robot_node->getRotationNormalized());}
-void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; m_robot_node->publish_velocity(-0.5, m_robot_node->getRotationNormalized());}
-void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; m_robot_node->publish_velocity(-1.0, m_robot_node->getRotationNormalized());}
+void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; m_robot_node->publish_velocity({1.0,0.0}, m_robot_node->getRotationNormalized());}
+void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; m_robot_node->publish_velocity({0.5,0.0}, m_robot_node->getRotationNormalized());}
+void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; m_robot_node->publish_velocity({0.0,0.0}, m_robot_node->getRotationNormalized());}
+void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; m_robot_node->publish_velocity({-0.5,0.0}, m_robot_node->getRotationNormalized());}
+void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; m_robot_node->publish_velocity({-1.0,0.0}, m_robot_node->getRotationNormalized());}

@@ -107,8 +107,13 @@ void CustomTouchSliderVertical::setValue(double newValue)
     if (newValue != m_value) {
         m_value = newValue;
 
-        // An Roboter publishen
-        m_robot_node->publish_velocity(m_value, m_robot_node->getRotationNormalized());
+        // Roboterdaten kriegen
+        RobotNode::RobotSpeed currentSpeed = m_robot_node->getSpeedNormalized();
+        double currentRot = m_robot_node->getRotationNormalized();
+
+        // Korrekte Daten publishen
+        currentSpeed.x = m_value;
+        m_robot_node->publish_velocity(currentSpeed, currentRot);
 
         update();  // Widget neu zeichnen, um die Slider-Position zu aktualisieren
     }

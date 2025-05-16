@@ -11,15 +11,22 @@ class RobotNode : public rclcpp::Node {
 public:
     RobotNode();
 
+    struct RobotSpeed
+    {
+        double x;
+        double y;
+    };
+    
+
     // Publish Funktionen
-    void publish_velocity(double speed, double rotation);
+    void publish_velocity(RobotSpeed speed, double rotation);
 
     // Getter
-    double getSpeed()       { return m_speed; };
+    RobotSpeed getSpeed()   { return m_speed; };
     double getRotation()    { return m_rot; };
-    double getSpeedNormalized();
+    RobotSpeed getSpeedNormalized();
     double getRotationNormalized();
-    double getMaxSpeed()    { return m_max_speed;};
+    RobotSpeed getMaxSpeed()    { return m_max_speed;};
     double getMaxRotation() { return m_max_rotation;};
 
     // GUI-Callback-Funktionen
@@ -28,9 +35,9 @@ public:
 
 private:
     // Robot attributes
-    double m_speed;
+    RobotSpeed m_speed;
     double m_rot;
-    double m_max_speed;
+    RobotSpeed m_max_speed;
     double m_max_rotation;
 
     // Publisher
