@@ -33,6 +33,7 @@ set(SOURCES
   src/touch_slider_vertical.cpp
   src/touch_slider_horizontal.cpp
   src/robot_node.cpp
+  src/map_simulator.cpp
 )
 
 set(HEADERS
@@ -46,6 +47,7 @@ set(HEADERS
   include/test_qt_pkg/touch_slider_vertical.h
   include/test_qt_pkg/touch_slider_horizontal.h
   include/test_qt_pkg/robot_node.h
+  include/test_qt_pkg/map_simulator.h
 )
 
 set(UIS

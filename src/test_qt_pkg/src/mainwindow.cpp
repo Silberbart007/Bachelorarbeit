@@ -19,7 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Scan-Callback registrieren
     m_robot_node->on_scan_received = [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
-        qDebug() << "Lasercallback aus Mainwindow";
+        //qDebug() << "Lasercallback aus Mainwindow";
     };
 
     // UI "aktivieren"
@@ -63,7 +63,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->mode_list->setVisible(false);
 
     // Hinderniskarte verstecken
-    ui->obstacle_map_widget->setVisible(false);
+    //ui->obstacle_map_widget->setVisible(false);
 
     // Slider Default Werte
     ui->rotation_slider->setValue(0.0);

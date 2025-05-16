@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "../include/test_qt_pkg/cam.h"
 #include "../include/test_qt_pkg/mainwindow.h"
+#include "../include/test_qt_pkg/map_simulator.h"
 #include "rclcpp/rclcpp.hpp"
 
 int main(int argc, char *argv[])
@@ -25,6 +26,11 @@ int main(int argc, char *argv[])
     // ROS-Thread für den Kamera-Publisher starten
     std::thread camera_thread([&]() {
         start_camera_node();  // Cam publisher Node aufrufen
+    });
+
+    // ROS-Thread für den Map Simulator starten
+    std::thread map_simulator_thread([&]() {
+        start_map_simulator_node();  // Map Simulator Node aufrufen
     });
 
     // Qt Event-Loop starten
