@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QPointF>
+#include "robot_node.h"
 
 class JoystickWidget : public QWidget
 {
@@ -12,9 +13,8 @@ public:
     explicit JoystickWidget(QWidget *parent = nullptr);
 
     QPointF normalizedPosition() const; // x und y von -1 bis +1
-
-signals:
-    void positionChanged(QPointF);
+    void setRobotNode(std::shared_ptr<RobotNode> robot_node) { m_robot_node = robot_node; };
+    void setValue(const RobotNode::RobotSpeed &speed);
 
 protected:
     void paintEvent(QPaintEvent *) override;
@@ -22,12 +22,16 @@ protected:
     void mouseMoveEvent(QMouseEvent *) override;
     void mouseReleaseEvent(QMouseEvent *) override;
     void resizeEvent(QResizeEvent *) override;
+    
+    bool event(QEvent *event) override;  // Zum Verarbeiten von Touch- und Maus-Ereignissen
 
 private:
     QPointF m_center;
     QPointF m_knobPos;
     float m_maxRadius; 
     bool m_dragging = false;
+
+    std::shared_ptr<RobotNode> m_robot_node;
 
     void updateKnob(const QPointF &pos);
 };

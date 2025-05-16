@@ -12,6 +12,8 @@ JoystickWidget::JoystickWidget(QWidget *parent)
     //setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_center = QPointF(width() / 2, height() / 2);
     m_knobPos = m_center;
+
+    setAttribute(Qt::WA_AcceptTouchEvents, true);  // Touch-Ereignisse akzeptieren
 }
 
 void JoystickWidget::resizeEvent(QResizeEvent *event)
@@ -52,6 +54,44 @@ void JoystickWidget::paintEvent(QPaintEvent *)
     p.drawEllipse(m_knobPos, 40, 40);
 }
 
+// Exakt wie Mausevents, aber hier für Touch
+bool JoystickWidget::event(QEvent *event)
+{
+    if (event->type() == QEvent::TouchBegin || 
+        event->type() == QEvent::TouchUpdate || 
+        event->type() == QEvent::TouchEnd) {
+
+        QTouchEvent *touchEvent = static_cast<QTouchEvent *>(event);
+        const QList<QTouchEvent::TouchPoint> &touchPoints = touchEvent->touchPoints();
+
+        if (!touchPoints.isEmpty()) {
+            const QTouchEvent::TouchPoint &point = touchPoints.first();
+            QPointF touchPos = point.pos();
+
+            if (event->type() == QEvent::TouchBegin) {
+                if ((touchPos - m_knobPos).manhattanLength() < 40) {
+                    m_dragging = true;
+                }
+            }
+
+            if (event->type() == QEvent::TouchUpdate) {
+                if (m_dragging) {
+                    updateKnob(touchPos);
+                }
+            }
+
+            if (event->type() == QEvent::TouchEnd) {
+                m_dragging = false;
+                updateKnob(m_center);  // zurück zur Mitte
+            }
+        }
+
+        return true;  // Touch-Ereignis verarbeitet
+    }
+
+    return QWidget::event(event);  // Standardverhalten für andere Events
+}
+
 
 void JoystickWidget::mousePressEvent(QMouseEvent *event)
 {
@@ -84,17 +124,40 @@ void JoystickWidget::updateKnob(const QPointF &pos)
 
     m_knobPos = m_center + delta;
     update();
-    emit positionChanged(normalizedPosition());
+
+    QPointF norm = normalizedPosition();
+
+    // Mappe joystick-Koordinaten auf Roboter-Geschwindigkeit
+    double x_speed = -norm.y();  // y-Achse invertiert → x-Speed
+    double y_speed = norm.x();   // x-Achse → y-Speed
+
+    RobotNode::RobotSpeed speed = {x_speed, y_speed};
+
+    // an RobotNode senden
+    m_robot_node->publish_velocity(speed, m_robot_node->getRotationNormalized());
 }
 
 QPointF JoystickWidget::normalizedPosition() const
 {
     QPointF delta = m_knobPos - m_center;
     QPointF normDelta = QPointF(delta.x() / m_maxRadius, delta.y() / m_maxRadius);
-    qreal normDistance = std::hypot(normDelta.x(), normDelta.y());
-    qreal angle = std::atan2(normDelta.y(), normDelta.x());
-    qreal angleInDegrees = qRadiansToDegrees(angle);
+    //qreal normDistance = std::hypot(normDelta.x(), normDelta.y());
+    //qreal angle = std::atan2(normDelta.y(), normDelta.x());
+    //qreal angleInDegrees = qRadiansToDegrees(angle);
 
-    qDebug() << "Joystick Speed:" << normDistance << "Joystick Angle:" << angleInDegrees;
+    //qDebug() << "Joystick Speed:" << normDistance << "Joystick Angle:" << angleInDegrees;
     return normDelta;
+}
+
+void JoystickWidget::setValue(const RobotNode::RobotSpeed &speed)
+{
+    // speed.x ist die "vertikale" Geschwindigkeit (oben +1, unten -1)
+    // speed.y ist die "horizontale" Geschwindigkeit (rechts +1, links -1)
+    
+    QPointF pos;
+    pos.setX(m_center.x() + speed.y * m_maxRadius);    // horizontal
+    pos.setY(m_center.y() - speed.x * m_maxRadius);    // vertikal (invertiert)
+
+    m_knobPos = pos;
+    update();
 }

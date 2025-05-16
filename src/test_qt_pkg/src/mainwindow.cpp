@@ -30,6 +30,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->speed_slider->setRobotNode(m_robot_node);
     ui->wheels->setRobotNode(m_robot_node);
     ui->speed_slider_wheels->setRobotNode(m_robot_node);
+    ui->rotation_slider_joystick->setRobotNode(m_robot_node);
+    ui->joysticks->setRobotNode(m_robot_node);
 
     // Synchronisierung von Steuerungsinterfaces durch timer (Damit z.b. Slider auf aktuelle speed gesetzt werden immer)
     QTimer* syncTimer = new QTimer(this);
@@ -42,15 +44,18 @@ MainWindow::MainWindow(QWidget *parent)
         ui->speed_slider->setValue(speedNorm.x);
         ui->rotation_slider->setValue(rotNorm);
         ui->speed_slider_wheels->setValue(speedNorm.x);
+        ui->rotation_slider_joystick->setValue(rotNorm);
         ui->wheels->setValue(rotNorm);
+        ui->joysticks->setValue(speedNorm);
     }
     });
     syncTimer->start(50); // alle 50 ms aktualisieren
 
     // Steuerungen verstecken
-    ui->wheels->setVisible(false);
-    ui->speed_slider_wheels->setVisible(false);
-    ui->joysticks->setVisible(false);
+    //ui->wheels->setVisible(false);
+    //ui->speed_slider_wheels->setVisible(false);
+    ui->WheelsLayout->setVisible(false);
+    ui->JoystickLayout->setVisible(false);
     ui->sliders->setVisible(false);
     ui->buttons->setVisible(false);
 
@@ -64,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->rotation_slider->setValue(0.0);
     ui->speed_slider->setValue(0.0);
     ui->speed_slider_wheels->setValue(0.0);
+    ui->rotation_slider_joystick->setValue(0.0);
 
     // Erstes Element standardmäßig auswählen
     ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
@@ -177,9 +183,10 @@ void MainWindow::on_mode_list_itemSelectionChanged()
     }
 
     // Steuerungswidgets sichtbar oder unsichtbar machen
-    ui->wheels->setVisible(showWheel);
-    ui->speed_slider_wheels->setVisible(showWheel);
-    ui->joysticks->setVisible(showJoystick);
+    //ui->wheels->setVisible(showWheel);
+    //ui->speed_slider_wheels->setVisible(showWheel);
+    ui->WheelsLayout->setVisible(showWheel);
+    ui->JoystickLayout->setVisible(showJoystick);
     ui->sliders->setVisible(showSliders);
     ui->buttons->setVisible(showButtons);
 }

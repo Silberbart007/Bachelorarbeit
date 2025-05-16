@@ -122,6 +122,19 @@
           </property>
           <item>
            <property name="text">
+            <string>Joystick</string>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>20</pointsize>
+            </font>
+           </property>
+           <property name="flags">
+            <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
+           </property>
+          </item>
+          <item>
+           <property name="text">
             <string>Slider</string>
            </property>
            <property name="font">
@@ -149,19 +162,6 @@
           <item>
            <property name="text">
             <string>Buttons</string>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>20</pointsize>
-            </font>
-           </property>
-           <property name="flags">
-            <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Joystick</string>
            </property>
            <property name="font">
             <font>
@@ -244,6 +244,9 @@
       </property>
       <item>
        <widget class="QWidget" name="buttons" native="true">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -415,9 +418,71 @@
         </layout>
        </widget>
       </item>
+      <item>
+       <widget class="QWidget" name="JoystickLayout" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>600</width>
+          <height>300</height>
+         </size>
+        </property>
+        <property name="contextMenuPolicy">
+         <enum>Qt::DefaultContextMenu</enum>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <property name="spacing">
+          <number>50</number>
+         </property>
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <item alignment="Qt::AlignRight">
+          <widget class="CustomTouchSliderHorizontal" name="rotation_slider_joystick" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>450</width>
+             <height>200</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item alignment="Qt::AlignLeft">
+          <widget class="JoystickWidget" name="joysticks" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>600</width>
+             <height>600</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
       <item alignment="Qt::AlignHCenter">
        <widget class="QWidget" name="WheelsLayout" native="true">
-        <layout class="QHBoxLayout" name="wheelsLayout">
+        <layout class="QHBoxLayout" name="wheelsLayout" stretch="0,0">
+         <property name="spacing">
+          <number>20</number>
+         </property>
          <property name="leftMargin">
           <number>1</number>
          </property>
@@ -465,22 +530,6 @@
         </layout>
        </widget>
       </item>
-      <item>
-       <widget class="JoystickWidget" name="joysticks" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-       </widget>
-      </item>
      </layout>
     </item>
    </layout>
@@ -491,7 +540,7 @@
      <x>0</x>
      <y>0</y>
      <width>1342</width>
-     <height>22</height>
+     <height>34</height>
     </rect>
    </property>
   </widget>
