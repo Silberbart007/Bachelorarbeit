@@ -36,6 +36,7 @@ private slots:
 
     // Optionen-Liste
     void on_mode_list_itemSelectionChanged();
+    void on_mode_list_view_itemSelectionChanged();
     void on_modes_button_clicked();
 
     // Speed Buttons
@@ -44,6 +45,12 @@ private slots:
     void on_stop_button_clicked();
     void on_back_slow_button_clicked();
     void on_back_fast_button_clicked();
+
+    // Reset Rotation button
+    void on_reset_rotation_button_clicked();
+
+    // Obstacle Map List
+    void on_obstacle_map_list_itemSelectionChanged();
 
 private:
     Ui::MainWindow *ui;

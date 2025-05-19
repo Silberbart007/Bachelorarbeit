@@ -58,10 +58,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->WheelsLayout->setVisible(false);
     ui->JoystickLayout->setVisible(false);
     ui->sliders->setVisible(false);
-    ui->buttons->setVisible(false);
+    ui->ButtonsLayoutHorizontal->setVisible(false);
 
     // Optionsmenü verstecken
-    ui->mode_list->setVisible(false);
+    ui->AllOptionsLayout->setVisible(false);
 
     // Hinderniskarte verstecken
     //ui->obstacle_map_widget->setVisible(false);
@@ -74,6 +74,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Erstes Element standardmäßig auswählen
     ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
+    ui->mode_list_view->item(0)->setSelected(true);
+    ui->mode_list_view->item(1)->setSelected(true);
 
     // Cursor verstecken wegen Touch-Display
     //QCursor cursor(Qt::BlankCursor);
@@ -157,7 +159,7 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
     }
 }
 
-// Optionen-Fenster
+// Optionen-Fenster für Steuerungen
 void MainWindow::on_mode_list_itemSelectionChanged()
 {
     // Hole alle aktuell ausgewählten Items
@@ -189,13 +191,65 @@ void MainWindow::on_mode_list_itemSelectionChanged()
     ui->WheelsLayout->setVisible(showWheel);
     ui->JoystickLayout->setVisible(showJoystick);
     ui->sliders->setVisible(showSliders);
-    ui->buttons->setVisible(showButtons);
+    ui->ButtonsLayoutHorizontal->setVisible(showButtons);
 }
+
+// Optionen Fenster für Anzeigenp
+void MainWindow::on_mode_list_view_itemSelectionChanged() 
+{
+    // Hole alle aktuell ausgewählten Items
+    QList<QListWidgetItem*> selectedItems = ui->mode_list_view->selectedItems();
+
+    // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
+    bool showCam = false;
+    bool showMap = false;
+
+
+    // Prüfe die ausgewählten Items
+    for (QListWidgetItem *item : selectedItems) {
+        QString text = item->text();
+        if (text == "Camera") {
+            showCam = true;
+        } else if (text == "Map") {
+            showMap = true;
+        }
+    }
+
+    // Anzeigewidgets sichtbar oder unsichtbar machen
+    ui->cam_widget->setVisible(showCam);
+    ui->ObstacleMapLayout->setVisible(showMap);
+}
+
+// Optionen Fenster der obstacle map, zum Auswählen der Funktionen
+void MainWindow::on_obstacle_map_list_itemSelectionChanged()
+{
+    // Hole alle aktuell ausgewählten Items
+    QList<QListWidgetItem*> selectedItems = ui->obstacle_map_list->selectedItems();
+
+    // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
+    bool drawPathMode = false;
+    bool beamMode = false;
+
+    // Prüfe die ausgewählten Items
+    for (QListWidgetItem *item : selectedItems) {
+        QString text = item->text();
+        if (text == "Draw path") {
+            drawPathMode = true;
+        } else if (text == "Beam") {
+            beamMode = true;
+        }
+    }
+
+    // Anzeigewidgets sichtbar oder unsichtbar machen
+    ui->obstacle_map_widget->setDrawPathMode(drawPathMode);
+    ui->obstacle_map_widget->setBeamMode(beamMode);
+}
+
 
 // Optionen Button
 void MainWindow::on_modes_button_clicked() {
     // Mode-List aktivieren/deaktivieren
-    ui->mode_list->setVisible(!ui->mode_list->isVisible());
+    ui->AllOptionsLayout->setVisible(!ui->AllOptionsLayout->isVisible());
 }
 
 // Speed Buttons
@@ -206,3 +260,9 @@ void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit:
 void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; m_robot_node->publish_velocity({0.0,0.0}, m_robot_node->getRotationNormalized());}
 void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; m_robot_node->publish_velocity({-0.5,0.0}, m_robot_node->getRotationNormalized());}
 void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; m_robot_node->publish_velocity({-1.0,0.0}, m_robot_node->getRotationNormalized());}
+
+// Reset Rotation Button
+void MainWindow::on_reset_rotation_button_clicked() {
+    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
+}
+

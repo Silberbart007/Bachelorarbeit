@@ -1,8 +1,4 @@
-#include "../include/test_qt_pkg/obstacle_map_widget.h"
-#include <QGraphicsRectItem>
-#include <QRandomGenerator>
-#include <QTimer>
-#include <QVBoxLayout>  // wichtig
+#include "../include/test_qt_pkg/obstacle_map_widget.h" 
 
 ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     QWidget(parent),
@@ -20,6 +16,10 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     // Maus Events korrekt verarbeiten:
     view_->viewport()->installEventFilter(this);
 
+    // Gesten erkennen
+    view_->viewport()->grabGesture(Qt::PinchGesture);
+    //view_->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
+
     // View in Layout einfügen
     QVBoxLayout *layout = new QVBoxLayout(this);
     layout->addWidget(view_);
@@ -32,6 +32,7 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     // Linie mit Länge 10 als Ausrichtungspfeil (rot)  
     orientationLine_ = scene_->addLine(robot_x_, robot_y_, robot_x_ + 20, robot_y_, QPen(Qt::blue, 2));
 
+    // Roboterbewegung initiieren
     QTimer *move_timer = new QTimer(this);
     connect(move_timer, &QTimer::timeout, this, [this]() {
         double dt = 0.05; // 50 ms
@@ -67,6 +68,11 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &ObstacleMapWidget::updateObstacles);
     timer->start(20);
+
+    // Timer für Strahlenanzeige
+    QTimer *beam_timer = new QTimer(this);
+    connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateDummyData);
+    beam_timer->start(100); // alle 100 ms
 }
 
 
@@ -76,58 +82,126 @@ ObstacleMapWidget::~ObstacleMapWidget()
     delete view_;
 }
 
+
+void ObstacleMapWidget::generateDummyData() {
+    if (beamMode_) {
+        latestDistances_.clear();
+        for (int i = 0; i < 10; ++i) {
+            latestDistances_.push_back(0.5f + static_cast<float>(rand()) / RAND_MAX * 1.5f);
+        }
+
+        // Alte Strahlen löschen
+        for (auto item : beam_items_) {
+            scene_->removeItem(item);
+            delete item;
+        }
+        beam_items_.clear();
+
+        // Neue Strahlen hinzufügen
+        int numRays = 10;
+        float maxLength = 30.0f;
+        float angleStep = M_PI / (numRays - 1);
+
+        for (int i = 0; i < numRays; ++i) {
+            float angle = -M_PI/2 + i * angleStep;
+            float dist = latestDistances_[i];
+            float length = dist * maxLength;
+
+            float endX = robot_x_ + length * std::cos(angle + robot_theta_);
+            float endY = robot_y_ + length * std::sin(angle + robot_theta_);
+
+            QGraphicsLineItem *line = scene_->addLine(robot_x_, robot_y_, endX, endY, QPen(Qt::red));
+            beam_items_.push_back(line);
+        }
+    }
+}
+
 // Alle Events abfangen -> Pfad zeichnen
 bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == view_->viewport()) {
+        // Klick - anfang
         if (event->type() == QEvent::MouseButtonPress) {
             QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-            drawing_ = true;
-            path_points_.clear();
-            QPointF scenePos = view_->mapToScene(mouseEvent->pos());
-            path_points_.push_back(scenePos);
-            if (temp_path_item_) {
-                scene_->removeItem(temp_path_item_);
-                delete temp_path_item_;
-                temp_path_item_ = nullptr;
+
+            // Pfad Zeichnen - Modus
+            if (drawPathMode_) {
+                drawing_ = true;
+                path_points_.clear();
+                QPointF scenePos = view_->mapToScene(mouseEvent->pos());
+                path_points_.push_back(scenePos);
+                if (temp_path_item_) {
+                    scene_->removeItem(temp_path_item_);
+                    delete temp_path_item_;
+                    temp_path_item_ = nullptr;
+                }
             }
+
             return true;  // Event verarbeitet
         }
+        // Klick - Prozess
         else if (event->type() == QEvent::MouseMove) {
             QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-            if (!drawing_) return false; // Nicht verarbeiten, wenn nicht am Zeichnen
 
-            QPointF scenePos = view_->mapToScene(mouseEvent->pos());
-            path_points_.push_back(scenePos);
+            // Pfad zeichnen - Modus 
+            if (drawPathMode_) {
+                if (!drawing_) return false; // Nicht verarbeiten, wenn nicht am Zeichnen
 
-            QPainterPath path;
-            path.moveTo(path_points_.first());
-            for (const auto& pt : path_points_)
-                path.lineTo(pt);
+                QPointF scenePos = view_->mapToScene(mouseEvent->pos());
+                path_points_.push_back(scenePos);
 
-            if (temp_path_item_) {
-                scene_->removeItem(temp_path_item_);
-                delete temp_path_item_;
+                QPainterPath path;
+                path.moveTo(path_points_.first());
+                for (const auto& pt : path_points_)
+                    path.lineTo(pt);
+
+                if (temp_path_item_) {
+                    scene_->removeItem(temp_path_item_);
+                    delete temp_path_item_;
+                }
+
+                temp_path_item_ = scene_->addPath(path, QPen(Qt::blue, 2));
             }
-
-            temp_path_item_ = scene_->addPath(path, QPen(Qt::blue, 2));
 
             return true;  // Event verarbeitet
         }
+        // Klick - Ende
         else if (event->type() == QEvent::MouseButtonRelease) {
-            drawing_ = false;
 
-            if (temp_path_item_) {
-                scene_->removeItem(temp_path_item_);
-                delete temp_path_item_;
-                temp_path_item_ = nullptr;
-            }
+            // Pfad zeichnen - Modus
+            if (drawPathMode_) {
+                drawing_ = false;
 
-            if (path_points_.size() >= 2) {
-                pathDrawn(path_points_);
+                if (temp_path_item_) {
+                    scene_->removeItem(temp_path_item_);
+                    delete temp_path_item_;
+                    temp_path_item_ = nullptr;
+                }
+
+                if (path_points_.size() >= 2) {
+                    pathDrawn(path_points_);
+                }
             }
 
             return true;  // Event verarbeitet
+        }
+        // Gesten
+        else if (event->type() == QEvent::Gesture) {
+            QGestureEvent* gestureEvent = static_cast<QGestureEvent*>(event);
+
+            // Zoomen
+            if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
+                QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
+                
+                if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
+                    qreal scaleFactor = pinch->scaleFactor(); 
+                    
+                    // -> Zoom auf die View anwenden
+                    view_->scale(scaleFactor, scaleFactor);
+
+                    return true;  // Event verarbeitet
+                }
+            }
         }
     }
     // Alle anderen Events normal weiterreichen
@@ -195,9 +269,7 @@ void ObstacleMapWidget::setupStaticObstacles()
 
 void ObstacleMapWidget::updateObstacles()
 {
-    static int counter = 0;
-    
-    counter++;
+    // Logik hier
 }
 
 bool ObstacleMapWidget::isNearObstacle(float x, float y)
@@ -230,7 +302,7 @@ bool ObstacleMapWidget::isNearObstacle(float x, float y)
 
 // Pfad zu Ende gezeichnet - Signal
 void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {
-    current_path_ = resamplePath(points, 10.0);  // alle 5 Pixel ein Punkt
+    current_path_ = resamplePath(points, 7.0);  // alle 7 Pixel ein Punkt
     current_target_index_ = 0;
     goToNextPoint();
 }
@@ -261,12 +333,14 @@ void ObstacleMapWidget::goToNextPoint() {
     double angle_diff = angle_to_target - robot_theta_;
     angle_diff = std::atan2(std::sin(angle_diff), std::cos(angle_diff)); // Normalisieren
 
-    double Kp_rot = 2.0;
-    double rotation = Kp_rot * angle_diff;
-    rotation = std::clamp(rotation, -1.0, 1.0);
+    double gain_rot = 2.0;
+    double rotation = std::tanh(gain_rot * angle_diff);  // sanfte Begrenzung auf [-1, 1]
 
+    // Geschwindigkeit
     double max_speed = 1.0;
-    double speed = max_speed * (1.0 - std::min(std::abs(angle_diff) / 0.5, 1.0));
+    double gain = 2.0;  // Steuerparameter
+    double angle_factor = 1.0 - std::tanh(gain * std::abs(angle_diff));
+    double speed = max_speed * std::max(angle_factor, 0.1);  // Niemals ganz 0
 
     RobotNode::RobotSpeed cmd;
     cmd.x = speed;
