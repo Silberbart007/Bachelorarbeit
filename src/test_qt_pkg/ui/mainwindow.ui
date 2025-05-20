@@ -182,7 +182,7 @@
               </item>
               <item>
                <property name="text">
-                <string>Lenkrad</string>
+                <string>Default Lenkrad</string>
                </property>
                <property name="font">
                 <font>
@@ -191,6 +191,16 @@
                </property>
                <property name="flags">
                 <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Rennauto Lenkrad</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>20</pointsize>
+                </font>
                </property>
               </item>
               <item>
@@ -722,7 +732,7 @@
       </item>
       <item alignment="Qt::AlignHCenter">
        <widget class="QWidget" name="WheelsLayout" native="true">
-        <layout class="QHBoxLayout" name="wheelsLayout" stretch="0,0">
+        <layout class="QHBoxLayout" name="wheelsLayout" stretch="0,0,0">
          <property name="spacing">
           <number>20</number>
          </property>
@@ -750,6 +760,22 @@
             <size>
              <width>16777215</width>
              <height>500</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="WheelWidget" name="wheels_2" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>700</width>
+             <height>700</height>
             </size>
            </property>
           </widget>

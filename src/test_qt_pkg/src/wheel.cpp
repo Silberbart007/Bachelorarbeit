@@ -17,31 +17,49 @@ void WheelWidget::paintEvent(QPaintEvent *)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    // Mittelpunkt und Radius
+    // Mittelpunkt
     QPointF center(width() / 2, height() / 2);
-    qreal radius = qMin(width(), height()) / 2 - 10;
 
-    // Hintergrund-Kreis
-    painter.setBrush(QBrush(Qt::lightGray));
-    painter.drawEllipse(center, radius, radius);
+    // Außenradius: Pass auf, dass der Rand vom Stift berücksichtigt wird
+    qreal outerRadius = qMin(width(), height()) / 2 - m_style.outerRingWidth;
+    qreal innerRadius = m_style.centerCircleRadius;
 
-    // Winkel in Radiant
-    qreal angleRad = qDegreesToRadians(m_currentAngle);
+    // Transformation auf Mittelpunkt
+    painter.translate(center);
+    painter.rotate(-m_currentAngle);
 
-    // Liste der Speichenwinkel relativ zum aktuellen Winkel (z.B. 0°, 120°, 240°)
-    QVector<qreal> spokeAngles = { 0+28, 120+28, 240+28 };
+    // Außenring zeichnen
+    painter.setPen(QPen(m_style.outerRingColor, m_style.outerRingWidth));
+    painter.setBrush(Qt::NoBrush);
+    painter.drawEllipse(QPointF(0, 0), outerRadius, outerRadius);
 
-    painter.setPen(QPen(Qt::black, 3));
-
-    for (qreal spoke : spokeAngles) {
-        qreal totalAngle = angleRad + qDegreesToRadians(spoke);
+    // Speichen zeichnen
+    painter.setPen(QPen(m_style.spokeColor, m_style.spokeWidth, Qt::SolidLine, Qt::RoundCap));
+    for (int angle : m_style.spokeAnglesDegrees) {
+        qreal angleRad = qDegreesToRadians(double(angle));
         QPointF end(
-            center.x() + radius * std::cos(totalAngle),
-            center.y() - radius * std::sin(totalAngle)
+            outerRadius * std::cos(angleRad),
+            outerRadius * std::sin(angleRad)
         );
-        painter.drawLine(center, end);
+        painter.drawLine(QPointF(0, 0), end);
+    }
+
+    // Mittelkreis zeichnen
+    painter.setBrush(m_style.centerCircleColor);
+    painter.setPen(Qt::NoPen);
+    painter.drawEllipse(QPointF(0, 0), innerRadius, innerRadius);
+
+    // Text im Mittelkreis
+    if (!m_style.centerText.isEmpty()) {
+        painter.setPen(Qt::black);  // Farbe kannst du ggf. auch im Style definieren
+        painter.setFont(m_style.centerFont);
+        QRectF textRect(-innerRadius, -innerRadius/2, innerRadius * 2, innerRadius);
+        painter.drawText(textRect, Qt::AlignCenter, m_style.centerText);
     }
 }
+
+
+
 
 // Exakt wie bei Maus-Events, aber speziell für Touch
 bool WheelWidget::event(QEvent *event)
@@ -75,7 +93,7 @@ bool WheelWidget::event(QEvent *event)
                 deltaDeg = qBound(-5.0, deltaDeg, 5.0); // Hier kann man 5.0 höher/runter machen, je nachdem wie schnell das Lenkrad drehen soll
 
                 m_currentAngle = m_lastAngle + deltaDeg;
-                m_currentAngle = qBound(-450.0, m_currentAngle, 450.0); // Hier 450.0 ändern, für kleineren/größeren Drehwinkel
+                m_currentAngle = qBound(-m_style.MaxAngle, m_currentAngle, m_style.MaxAngle); // Hier m_style.MaxAngle ändern, für kleineren/größeren Drehwinkel
 
                 qDebug() << "Touch-Winkel: " << m_currentAngle;
 
@@ -84,7 +102,7 @@ bool WheelWidget::event(QEvent *event)
                 m_startAngle = angle;
                 m_lastAngle = m_currentAngle;
 
-                double normRot = -m_currentAngle / 450.0;
+                double normRot = -m_currentAngle / m_style.MaxAngle;
                 m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), normRot);
             }
             // Finger wird hochgehoben
@@ -133,7 +151,7 @@ void WheelWidget::mouseMoveEvent(QMouseEvent *event)
         m_currentAngle = m_lastAngle + deltaDeg;
 
         // Maximaler Lenkrad-Winkel begrenzen
-        m_currentAngle = qBound(-450.0, m_currentAngle, 450.0);
+        m_currentAngle = qBound(-m_style.MaxAngle, m_currentAngle, m_style.MaxAngle);
 
         qDebug() << "Lenkrad Winkel: " << m_currentAngle;
 
@@ -144,7 +162,7 @@ void WheelWidget::mouseMoveEvent(QMouseEvent *event)
 
         // Daten an Robot Node senden
         // Auf -1 bis 1 normieren
-        double normRot = -m_currentAngle / 450.0;
+        double normRot = -m_currentAngle / m_style.MaxAngle;
         m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), normRot);
     }
 }
@@ -158,9 +176,15 @@ void WheelWidget::mouseReleaseEvent(QMouseEvent *)
 
 // Value (von außerhalb dieses Skripts) setzen
 void WheelWidget::setValue(double newValue) {
-    m_currentAngle = -newValue * 450.0;
+    m_currentAngle = -newValue * m_style.MaxAngle;
     m_lastAngle = m_currentAngle;
     update();
+}
+
+// Wheelstyle setzen
+void WheelWidget::setStyle(const WheelStyle &style) {
+    m_style = style;
+    update(); // neu zeichnen
 }
 
 

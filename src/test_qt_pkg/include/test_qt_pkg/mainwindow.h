@@ -16,6 +16,7 @@
 #include "cv_bridge/cv_bridge.hpp"
 #include "joystick.h"
 #include "robot_node.h"
+#include "wheel.h"
 
 namespace Ui {
 class MainWindow;

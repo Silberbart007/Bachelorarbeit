@@ -30,10 +30,28 @@ MainWindow::MainWindow(QWidget *parent)
     ui->rotation_slider->setRobotNode(m_robot_node);
     ui->speed_slider->setRobotNode(m_robot_node);
     ui->wheels->setRobotNode(m_robot_node);
+    ui->wheels_2->setRobotNode(m_robot_node);
     ui->speed_slider_wheels->setRobotNode(m_robot_node);
     ui->rotation_slider_joystick->setRobotNode(m_robot_node);
     ui->joysticks->setRobotNode(m_robot_node);
     ui->obstacle_map_widget->setRobotNode(m_robot_node);
+
+
+    // Lenkräder Styles bestimmen
+    //
+    WheelStyle formula1Style;
+    formula1Style.outerRingColor = QColor(30, 30, 30);         // sehr dunkles Grau/Schwarz
+    formula1Style.outerRingWidth = 15;                         // dickerer Außenring
+    formula1Style.spokeColor = QColor(200, 0, 0);              // rot, für sportliches Design
+    formula1Style.spokeWidth = 8;                              // dickere Speichen
+    formula1Style.centerCircleColor = QColor(10, 10, 10);      // sehr dunkler Mittelkreis
+    formula1Style.centerCircleRadius = 40;                     // etwas kleinerer Mittelkreis
+    formula1Style.centerText = "";                              // kein Text oder z.B. ein Rennlogo (könnte als Bild kommen)
+    formula1Style.centerFont = QFont("Arial", 12, QFont::Bold);
+    formula1Style.spokeAnglesDegrees = {90, 0, 180};          // Speichen unten, rechts, links
+    ui->wheels_2->setStyle(formula1Style);
+    // Ende Lenkräder Styles
+    //
 
     // Synchronisierung von Steuerungsinterfaces durch timer (Damit z.b. Slider auf aktuelle speed gesetzt werden immer)
     QTimer* syncTimer = new QTimer(this);
@@ -48,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent)
         ui->speed_slider_wheels->setValue(speedNorm.x);
         ui->rotation_slider_joystick->setValue(rotNorm);
         ui->wheels->setValue(rotNorm);
+        ui->wheels_2->setValue(rotNorm);
         ui->joysticks->setValue(speedNorm);
     }
     });
@@ -168,6 +187,8 @@ void MainWindow::on_mode_list_itemSelectionChanged()
 
     // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
     bool showWheel = false;
+    bool defaultWheel = false;
+    bool raceWheel = false;
     bool showJoystick = false;
     bool showButtons = false;
     bool showSliders = false;
@@ -175,8 +196,12 @@ void MainWindow::on_mode_list_itemSelectionChanged()
     // Prüfe die ausgewählten Items
     for (QListWidgetItem *item : selectedItems) {
         QString text = item->text();
-        if (text == "Lenkrad") {
+        if (text == "Default Lenkrad") {
             showWheel = true;
+            defaultWheel = true;
+        } else if (text == "Rennauto Lenkrad") {
+            showWheel = true;
+            raceWheel = true;
         } else if (text == "Joystick") {
             showJoystick = true;
         } else if (text == "Buttons") {
@@ -190,6 +215,8 @@ void MainWindow::on_mode_list_itemSelectionChanged()
     //ui->wheels->setVisible(showWheel);
     //ui->speed_slider_wheels->setVisible(showWheel);
     ui->WheelsLayout->setVisible(showWheel);
+    ui->wheels->setVisible(defaultWheel);
+    ui->wheels_2->setVisible(raceWheel);
     ui->JoystickLayout->setVisible(showJoystick);
     ui->sliders->setVisible(showSliders);
     ui->ButtonsLayoutHorizontal->setVisible(showButtons);

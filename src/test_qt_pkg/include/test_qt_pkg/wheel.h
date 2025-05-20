@@ -7,6 +7,7 @@
 #include <QTouchEvent>
 #include <QMouseEvent>
 #include "robot_node.h"
+#include "wheelstyle.h"
 
 class WheelWidget : public QWidget
 {
@@ -19,6 +20,8 @@ public:
     // Robot Node setzen
     void setRobotNode(std::shared_ptr<RobotNode> robot_node) { m_robot_node = robot_node; };
     void setValue(double newValue);
+
+    void setStyle(const WheelStyle &style);
 
 protected:
     // Paint-Event, um das Lenkrad zu zeichnen
@@ -42,6 +45,9 @@ private:
 
     // Flag, das angibt, ob die Maus gezogen wird
     bool m_isDragging = false;
+
+    // Style des Lenkrads
+    WheelStyle m_style;
 };
 
 #endif // WHEEL_H
