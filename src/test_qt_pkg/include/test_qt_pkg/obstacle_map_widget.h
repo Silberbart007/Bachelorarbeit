@@ -74,6 +74,7 @@ private:
     QGraphicsPathItem* temp_path_item_;
     int current_target_index_ = 0;  // Index des aktuellen Zielpunkts
     QVector<QPointF> current_path_; // Der Pfad, als Liste von Punkten
+    QGraphicsEllipseItem* temp_point_item_; // Einzelnen Punkt verfolgen
 
     // Skalierung mit Fingern
     QPointF lastPinchCenterInView_;

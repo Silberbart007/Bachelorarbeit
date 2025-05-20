@@ -7,6 +7,7 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
 {
     drawing_ = false;
     temp_path_item_ = nullptr;
+    temp_point_item_ = nullptr;
 
     // Szenegröße bleibt fix, z. B. 800x600
     scene_->setSceneRect(0, 0, 800, 600);
@@ -113,6 +114,12 @@ void ObstacleMapWidget::generateDummyData() {
             QGraphicsLineItem *line = scene_->addLine(robot_x_, robot_y_, endX, endY, QPen(Qt::red));
             beam_items_.push_back(line);
         }
+    } else {
+        for (auto item : beam_items_) {
+            scene_->removeItem(item);
+            delete item;
+        }
+        beam_items_.clear();
     }
 }
 
@@ -172,6 +179,14 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
             if (drawPathMode_) {
                 drawing_ = false;
 
+                // Einzelnen Punkt entfernen, falls vorhanden
+                if (temp_point_item_) {
+                    scene_->removeItem(temp_point_item_);
+                    delete temp_point_item_;
+                    temp_point_item_ = nullptr;
+                }
+
+                // Gezeichnete Linie entfernen, falls vorhanden
                 if (temp_path_item_) {
                     scene_->removeItem(temp_path_item_);
                     delete temp_path_item_;
@@ -181,9 +196,27 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                 if (path_points_.size() >= 2) {
                     pathDrawn(path_points_);
                 }
-            }
+                // Nur ein Punkt (Follow Point mode)
+                else if (path_points_.size() == 1) {
+                    // Ein einzelner Punkt
+                    QPointF singlePoint = path_points_.front();
+
+                    // kleinen Kreis als Punkt zeichnen
+                    qreal radius = 3.0;
+                    temp_point_item_ = scene_->addEllipse(
+                        singlePoint.x() - radius,
+                        singlePoint.y() - radius,
+                        2 * radius,
+                        2 * radius,
+                        QPen(Qt::blue),
+                        QBrush(Qt::blue)
+                    );
+
+                    pathDrawn(path_points_);
+                }
 
             return true;  // Event verarbeitet
+            }
         }
         // Gesten
         else if (event->type() == QEvent::Gesture) {
