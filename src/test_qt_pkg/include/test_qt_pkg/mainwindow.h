@@ -14,8 +14,8 @@
 #include <functional>
 #include <QTimer>
 #include "cv_bridge/cv_bridge.hpp"
-#include "../include/test_qt_pkg/joystick.h"
-#include "../include/test_qt_pkg/robot_node.h"
+#include "joystick.h"
+#include "robot_node.h"
 
 namespace Ui {
 class MainWindow;

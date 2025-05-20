@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/movable_widget.h"
+#include "movable_widget.h"
 #include <QMouseEvent>
 
 MovableWidget::MovableWidget(QWidget *parent)

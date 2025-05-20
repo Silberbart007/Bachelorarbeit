@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/touch_slider_horizontal.h"
+#include "touch_slider_horizontal.h"
 #include <QPainter>
 #include <QDebug>
 

@@ -1,12 +1,9 @@
 #include <QApplication>
-#include "../include/test_qt_pkg/cam.h"
-#include "../include/test_qt_pkg/mainwindow.h"
-#include "../include/test_qt_pkg/map_simulator.h"
-#include "rclcpp/rclcpp.hpp"
+#include "mainwindow.h"
 
 int main(int argc, char *argv[])
 {
-    rclcpp::init(argc, argv);
+    rclcpp::init(argc, argv);  // ROS2 Initialisierung
 
     // Eigenschaften setzen: Skalierung
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
@@ -14,30 +11,17 @@ int main(int argc, char *argv[])
     QApplication app(argc, argv);
 
     MainWindow window;
-    // Touch events aktivieren
-    //window.setAttribute(Qt::WA_AcceptTouchEvents);
     window.show();
 
-     // ROS-Thread starten
-    std::thread qt_thread([&]() {
-        rclcpp::spin(window.getRobotNode());  // Hier wird der die Robot Node in einem seperaten Thread aufgerufen
-    });
-
-    // ROS-Thread für den Kamera-Publisher starten
-    std::thread camera_thread([&]() {
-        start_camera_node();  // Cam publisher Node aufrufen
-    });
-
-    // ROS-Thread für den Map Simulator starten
-    std::thread map_simulator_thread([&]() {
-        start_map_simulator_node();  // Map Simulator Node aufrufen
+    std::thread robot_node_thread([&]() {
+        rclcpp::spin(window.getRobotNode());  // Spin in eigenem Thread
     });
 
     // Qt Event-Loop starten
     int ret = app.exec();  // Event-Loop von Qt ausführen
 
-    qt_thread.join();  // ROS-Thread beenden
-    camera_thread.join();
-    rclcpp::shutdown();  // ROS 2 sauber beenden
+    rclcpp::shutdown();
+    robot_node_thread.join();
+
     return ret;
 }

@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/wheel.h"
+#include "wheel.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QtMath>

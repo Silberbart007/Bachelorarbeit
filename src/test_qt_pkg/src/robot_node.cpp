@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/robot_node.h"
+#include "robot_node.h"
 #include <chrono>
 
 RobotNode::RobotNode() : Node("robot_node")
@@ -78,4 +78,8 @@ double RobotNode::getRotationNormalized() {
     // Rotation in [-max_rotation .. max_rotation] auf [-1..1] normieren
     if (m_max_rotation == 0) return 0.0;
     return m_rot / m_max_rotation;
+}
+
+void start_robot_node() {
+  rclcpp::spin(std::make_shared<RobotNode>());
 }

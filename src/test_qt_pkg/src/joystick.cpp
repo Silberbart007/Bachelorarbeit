@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/joystick.h"
+#include "joystick.h"
 #include <QPainter>
 #include <QMouseEvent>
 #include <QtMath>

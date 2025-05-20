@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/obstacle_map_widget.h" 
+#include "obstacle_map_widget.h" 
 
 ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     QWidget(parent),

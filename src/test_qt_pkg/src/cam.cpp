@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/cam.h"
+#include "cam.h"
 
 CameraPublisher::CameraPublisher() : Node("camera_publisher") {
   publisher_ = this->create_publisher<sensor_msgs::msg::Image>("camera/image_raw", 10);
@@ -17,4 +17,12 @@ void CameraPublisher::publish_image() {
 
 void start_camera_node() {
   rclcpp::spin(std::make_shared<CameraPublisher>());
+}
+
+int main(int argc, char **argv)
+{
+    rclcpp::init(argc, argv);
+    start_camera_node();  // deine bestehende Funktion
+    rclcpp::shutdown();
+    return 0;
 }

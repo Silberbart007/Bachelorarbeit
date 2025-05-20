@@ -783,7 +783,7 @@
      <x>0</x>
      <y>0</y>
      <width>1342</width>
-     <height>34</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>
@@ -814,31 +814,31 @@
   <customwidget>
    <class>JoystickWidget</class>
    <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/joystick.h</header>
+   <header>joystick.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>WheelWidget</class>
    <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/wheel.h</header>
+   <header>wheel.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>ObstacleMapWidget</class>
    <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/obstacle_map_widget.h</header>
+   <header>obstacle_map_widget.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>CustomTouchSliderVertical</class>
    <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/touch_slider_vertical.h</header>
+   <header>touch_slider_vertical.h</header>
    <container>1</container>
   </customwidget>
   <customwidget>
    <class>CustomTouchSliderHorizontal</class>
    <extends>QWidget</extends>
-   <header>../include/test_qt_pkg/touch_slider_horizontal.h</header>
+   <header>touch_slider_horizontal.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

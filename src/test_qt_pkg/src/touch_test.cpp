@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/touch_test.h"
+#include "touch_test.h"
 #include <QTouchEvent>
 #include <QPainter>
 #include <QDebug>

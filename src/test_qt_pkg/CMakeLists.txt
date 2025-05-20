@@ -17,8 +17,12 @@ find_package(image_transport REQUIRED)
 # Qt5
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
-find_package(Qt5 REQUIRED COMPONENTS Widgets)
 set(CMAKE_AUTOUIC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)  # wichtig für ui-Dateien
+set(CMAKE_AUTOUIC_SEARCH_PATHS ui)
+
+find_package(Qt5 REQUIRED COMPONENTS Widgets)
+
 
 # Quellen
 set(SOURCES
@@ -33,7 +37,6 @@ set(SOURCES
   src/touch_slider_vertical.cpp
   src/touch_slider_horizontal.cpp
   src/robot_node.cpp
-  src/map_simulator.cpp
 )
 
 set(HEADERS
@@ -47,31 +50,69 @@ set(HEADERS
   include/test_qt_pkg/touch_slider_vertical.h
   include/test_qt_pkg/touch_slider_horizontal.h
   include/test_qt_pkg/robot_node.h
-  include/test_qt_pkg/map_simulator.h
 )
 
 set(UIS
     ui/mainwindow.ui
     )
 
-# Executable
-add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${UIS})
-target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_link_libraries(${PROJECT_NAME}
-    Qt5::Widgets
-    ${OpenCV_LIBS})
-ament_target_dependencies(${PROJECT_NAME} 
-    rclcpp
-    std_msgs
-    sensor_msgs
-    cv_bridge
-    image_transport
+
+# GUI Executable (mit main.cpp)
+add_executable(gui_main
+  src/main.cpp
+  src/robot_node.cpp
+  src/mainwindow.cpp
+  src/joystick.cpp
+  src/wheel.cpp
+  src/movable_widget.cpp
+  src/obstacle_map_widget.cpp
+  src/touch_test.cpp
+  src/touch_slider_vertical.cpp
+  src/touch_slider_horizontal.cpp
+  ui/mainwindow.ui
+  ${HEADERS}
 )
 
+target_link_libraries(gui_main
+  Qt5::Widgets
+  ${OpenCV_LIBS}
+)
+
+ament_target_dependencies(gui_main
+  rclcpp
+  std_msgs
+  sensor_msgs
+  cv_bridge
+  image_transport
+)
+
+# Camera Node
+add_executable(camera_node src/cam.cpp)
+ament_target_dependencies(camera_node
+  rclcpp
+  std_msgs
+  sensor_msgs
+  cv_bridge
+  image_transport
+  OpenCV
+)
+
+# Header files für die executables
+target_include_directories(gui_main PUBLIC include/test_qt_pkg ${CMAKE_CURRENT_BINARY_DIR})
+target_include_directories(camera_node PUBLIC include/test_qt_pkg)
+
+# Installation
 install(TARGETS
-  ${PROJECT_NAME}
+  gui_main
+  camera_node
   DESTINATION lib/${PROJECT_NAME}
 )
+
+# Launch files
+install(DIRECTORY launch
+  DESTINATION share/${PROJECT_NAME}/
+)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

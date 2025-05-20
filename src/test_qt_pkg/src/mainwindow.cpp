@@ -1,6 +1,7 @@
-#include "../include/test_qt_pkg/mainwindow.h"
-#include "../ui/ui_mainwindow.h"
+#include "mainwindow.h"
 #include <QDebug>
+#include "ui_mainwindow.h"
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -266,3 +267,4 @@ void MainWindow::on_reset_rotation_button_clicked() {
     m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
 }
 
+#include "mainwindow.moc"

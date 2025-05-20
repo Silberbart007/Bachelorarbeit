@@ -1,4 +1,4 @@
-#include "../include/test_qt_pkg/touch_slider_vertical.h"
+#include "touch_slider_vertical.h"
 #include <QPainter>
 #include <QDebug>
 
