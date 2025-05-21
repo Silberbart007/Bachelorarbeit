@@ -30,19 +30,13 @@ public:
     explicit ObstacleMapWidget(QWidget *parent = nullptr);
     ~ObstacleMapWidget();
 
-    void addObstacle(int x, int y, int width, int height);
-    void updateObstacles();
-    void updateRobotPosition(double x, double y, double theta);
-    void setupStaticObstacles();
-    bool isNearObstacle(float x, float y);
-
     // Setter
     void setRobotNode(std::shared_ptr<RobotNode> robot_node) { m_robot_node = robot_node; };
     void setDrawPathMode(bool isEnabled) { drawPathMode_ = isEnabled; };
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
 
     // Map to Image
-    //QImage toImage();
+    QImage toImage();
 
 protected:
     void resizeEvent(QResizeEvent *) override;
@@ -55,7 +49,13 @@ private:
     void goToNextPoint();
     void pathDrawn(const QVector<QPointF>& points);
     void generateDummyData();
+    void updateObstaclesFromMap();
     QVector<QPointF> resamplePath(const QVector<QPointF>& originalPoints, double spacing);
+    void addObstacle(int x, int y, int width, int height);
+    void updateObstacles();
+    void updateRobotPosition(double x, double y, double theta);
+    void setupStaticObstacles();
+    bool isNearObstacle(float x, float y);
 
     Ui::ObstacleMapWidget *ui;
     QGraphicsScene *scene_;
@@ -91,6 +91,9 @@ private:
 
     // Roboter Node
     std::shared_ptr<RobotNode> m_robot_node;
+
+    // Map 
+    nav_msgs::msg::OccupancyGrid m_map;
 
 };
 

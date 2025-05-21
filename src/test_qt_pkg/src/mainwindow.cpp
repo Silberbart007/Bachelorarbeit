@@ -36,7 +36,6 @@ MainWindow::MainWindow(QWidget *parent)
     ui->joysticks->setRobotNode(m_robot_node);
     ui->obstacle_map_widget->setRobotNode(m_robot_node);
 
-
     // Lenkräder Styles bestimmen
     //
     WheelStyle formula1Style;

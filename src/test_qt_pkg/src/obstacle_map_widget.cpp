@@ -63,12 +63,12 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     move_timer->start(50);
 
     // Parcour aufbauen (künstlich)
-    setupStaticObstacles();
+    //setupStaticObstacles();
 
     // Timer für Hindernisaktualisierungen
     QTimer *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &ObstacleMapWidget::updateObstacles);
-    timer->start(20);
+    timer->start(100);
 
     // Timer für Strahlenanzeige
     QTimer *beam_timer = new QTimer(this);
@@ -278,32 +278,68 @@ void ObstacleMapWidget::resizeEvent(QResizeEvent *event)
     view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);  // optional: oder Qt::IgnoreAspectRatio
 }
 
-// QImage ObstacleMapWidget::toImage()
-// {
-//     if (!map) return QImage();
+QImage ObstacleMapWidget::toImage()
+{
+    m_map = m_robot_node->get_map();
 
-//     int width = map->info.width;
-//     int height = map->info.height;
-//     QImage image(width, height, QImage::Format_RGB888);
+    if (!m_robot_node->has_map()) return QImage();
 
-//     for (int y = 0; y < height; ++y) {
-//         for (int x = 0; x < width; ++x) {
-//             int i = x + (height - y - 1) * width;  // Y invertieren, damit Ursprung unten links
+    int width = m_map.info.width;
+    int height = m_map.info.height;
+    QImage image(width, height, QImage::Format_RGB888);
 
-//             int val = map_->data[i];
-//             QColor color;
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int i = x + (height - y - 1) * width;  // Y invertieren, damit Ursprung unten links
 
-//             if (val == 0)         color = Qt::white;     // frei
-//             else if (val == 100)  color = Qt::black;     // belegt
-//             else                  color = Qt::gray;      // unbekannt
+            int val = m_map.data[i];
+            QColor color;
 
-//             image.setPixelColor(x, y, color);
-//         }
-//     }
+            if (val == 0)         color = Qt::white;     // frei
+            else if (val == 100)  color = Qt::black;     // belegt
+            else                  color = Qt::gray;      // unbekannt
 
-//     return image;
-// }
+            image.setPixelColor(x, y, color);
+        }
+    }
 
+    return image;
+}
+
+
+void ObstacleMapWidget::updateObstaclesFromMap()
+{
+    if (!m_robot_node->has_map()) return;
+
+    // Erst alle bisherigen Hindernisse löschen
+    QList<QGraphicsItem*> items = scene_->items();
+    for (auto item : items) {
+        // Optional: nur rote Rechtecke löschen, falls du statische Wände behalten willst
+        if (QGraphicsRectItem* rect = dynamic_cast<QGraphicsRectItem*>(item)) {
+            scene_->removeItem(rect);
+            delete rect;
+        }
+    }
+
+    // Map auslesen
+    m_map = m_robot_node->get_map();
+    int width = m_map.info.width;
+    int height = m_map.info.height;
+
+    // Zellgröße in Szene (Pixel) bestimmen (anpassen!)
+    double cellSize = 5.0;  // Beispiel: 1 Zelle = 5x5 Pixel
+
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int i = x + y * width;  // hier normale Reihenfolge
+
+            if (m_map.data[i] == 100) { // Hindernis
+                // Rechteck an Position zeichnen
+                addObstacle(x * cellSize, y * cellSize, cellSize, cellSize);
+            }
+        }
+    }
+}
 
 void ObstacleMapWidget::addObstacle(int x, int y, int width, int height)
 {
@@ -329,7 +365,7 @@ void ObstacleMapWidget::setupStaticObstacles()
 
 void ObstacleMapWidget::updateObstacles()
 {
-    // Logik hier
+    updateObstaclesFromMap();
 }
 
 bool ObstacleMapWidget::isNearObstacle(float x, float y)

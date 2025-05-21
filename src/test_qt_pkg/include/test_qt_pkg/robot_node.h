@@ -5,6 +5,7 @@
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <functional>
+#include <nav_msgs/msg/occupancy_grid.hpp>
 
 
 class RobotNode : public rclcpp::Node {
@@ -29,6 +30,10 @@ public:
     RobotSpeed getMaxSpeed()    { return m_max_speed;};
     double getMaxRotation() { return m_max_rotation;};
 
+    // Map Funktionen
+    bool has_map() const { return m_map_received; }
+    nav_msgs::msg::OccupancyGrid get_map() const { return m_last_map; }
+
     // GUI-Callback-Funktionen
     std::function<void(const sensor_msgs::msg::Image::SharedPtr&)> on_image_received;
     std::function<void(const sensor_msgs::msg::LaserScan::SharedPtr&)> on_scan_received;
@@ -40,14 +45,20 @@ private:
     RobotSpeed m_max_speed;
     double m_max_rotation;
 
+    // Map Daten
+    bool m_map_received = false;
+    nav_msgs::msg::OccupancyGrid m_last_map;
+
     // Publisher
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr m_cmd_pub;
 
     // Subscriber
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_scan_sub;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr m_image_sub;
+    rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_map_sub;
 
     // Callback
     void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
     void image_callback(const sensor_msgs::msg::Image::SharedPtr msg);
+    void map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
 };
