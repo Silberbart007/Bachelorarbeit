@@ -40,15 +40,17 @@ MainWindow::MainWindow(QWidget *parent)
     // Lenkräder Styles bestimmen
     //
     WheelStyle formula1Style;
-    formula1Style.outerRingColor = QColor(30, 30, 30);         // sehr dunkles Grau/Schwarz
-    formula1Style.outerRingWidth = 15;                         // dickerer Außenring
-    formula1Style.spokeColor = QColor(200, 0, 0);              // rot, für sportliches Design
-    formula1Style.spokeWidth = 8;                              // dickere Speichen
-    formula1Style.centerCircleColor = QColor(10, 10, 10);      // sehr dunkler Mittelkreis
-    formula1Style.centerCircleRadius = 40;                     // etwas kleinerer Mittelkreis
-    formula1Style.centerText = "";                              // kein Text oder z.B. ein Rennlogo (könnte als Bild kommen)
-    formula1Style.centerFont = QFont("Arial", 12, QFont::Bold);
-    formula1Style.spokeAnglesDegrees = {90, 0, 180};          // Speichen unten, rechts, links
+    formula1Style.outerRingColor = QColor(20, 20, 20);  // Noch tieferes Schwarz
+    formula1Style.outerRingWidth = 30;                  // Kräftiger Rahmen
+    formula1Style.spokeColor = QColor(255, 0, 0);        // Knalliges Rennrot
+    formula1Style.spokeWidth = 30;                      // Sehr markante Speichen
+    formula1Style.centerCircleColor = QColor(50, 0, 0); // Leicht rötlicher Mittelkreis
+    formula1Style.centerCircleRadius = 35;              // Kompakter
+    formula1Style.centerText = "F1";                    // Oder Icon als Bild laden
+    formula1Style.centerFont = QFont("Orbitron", 20, QFont::Bold); 
+    formula1Style.centerTextColor = Qt::yellow;
+    formula1Style.maxAngle = 270.0;                     
+    formula1Style.isRound = false;
     ui->wheels_2->setStyle(formula1Style);
     // Ende Lenkräder Styles
     //
@@ -294,4 +296,3 @@ void MainWindow::on_reset_rotation_button_clicked() {
     m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
 }
 
-#include "mainwindow.moc"

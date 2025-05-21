@@ -14,6 +14,7 @@
 #include <QVBoxLayout>
 #include <QGesture>
 #include <QScrollBar>
+#include <QImage>
 #include "robot_node.h"
 #include "mainwindow.h"
 
@@ -39,6 +40,9 @@ public:
     void setRobotNode(std::shared_ptr<RobotNode> robot_node) { m_robot_node = robot_node; };
     void setDrawPathMode(bool isEnabled) { drawPathMode_ = isEnabled; };
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
+
+    // Map to Image
+    //QImage toImage();
 
 protected:
     void resizeEvent(QResizeEvent *) override;

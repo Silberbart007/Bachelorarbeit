@@ -1,3 +1,7 @@
+
+src/stage/
+src/stage_ros2/
+
 **/build/
 **/install/
 **/log/

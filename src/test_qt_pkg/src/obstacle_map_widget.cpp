@@ -278,6 +278,33 @@ void ObstacleMapWidget::resizeEvent(QResizeEvent *event)
     view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);  // optional: oder Qt::IgnoreAspectRatio
 }
 
+// QImage ObstacleMapWidget::toImage()
+// {
+//     if (!map) return QImage();
+
+//     int width = map->info.width;
+//     int height = map->info.height;
+//     QImage image(width, height, QImage::Format_RGB888);
+
+//     for (int y = 0; y < height; ++y) {
+//         for (int x = 0; x < width; ++x) {
+//             int i = x + (height - y - 1) * width;  // Y invertieren, damit Ursprung unten links
+
+//             int val = map_->data[i];
+//             QColor color;
+
+//             if (val == 0)         color = Qt::white;     // frei
+//             else if (val == 100)  color = Qt::black;     // belegt
+//             else                  color = Qt::gray;      // unbekannt
+
+//             image.setPixelColor(x, y, color);
+//         }
+//     }
+
+//     return image;
+// }
+
+
 void ObstacleMapWidget::addObstacle(int x, int y, int width, int height)
 {
     QGraphicsRectItem *rect = new QGraphicsRectItem(x, y, width, height);

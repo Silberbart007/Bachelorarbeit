@@ -12,6 +12,9 @@ find_package(std_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(image_transport REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(nav2_amcl REQUIRED)
+find_package(nav2_map_server REQUIRED)
 
 
 # Qt5
@@ -97,14 +100,24 @@ ament_target_dependencies(camera_node
   OpenCV
 )
 
+# Map Subscriber Node
+add_executable(map_node src/map_subscriber.cpp)
+ament_target_dependencies(map_node
+  rclcpp
+  nav_msgs
+  nav2_map_server
+)
+
 # Header files für die executables
 target_include_directories(gui_main PUBLIC include/test_qt_pkg ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(camera_node PUBLIC include/test_qt_pkg)
+target_include_directories(map_node PUBLIC include/test_qt_pkg)
 
 # Installation
 install(TARGETS
   gui_main
   camera_node
+  map_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

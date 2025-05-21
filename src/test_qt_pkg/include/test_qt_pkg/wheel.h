@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QTouchEvent>
 #include <QMouseEvent>
+#include <QPainterPath>
 #include "robot_node.h"
 #include "wheelstyle.h"
 
