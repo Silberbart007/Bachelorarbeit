@@ -8,9 +8,27 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     drawing_ = false;
     temp_path_item_ = nullptr;
     temp_point_item_ = nullptr;
+    // Startposition festsetzen:
+    robot_x_ = 20.0;  // -700 Pixel
+    robot_y_ = 20.0;  // -700 Pixel
+    robot_theta_ = 45.0 * M_PI / 180.0;  // 0.7854 Radiant
 
-    // Szenegröße bleibt fix, z. B. 800x600
-    scene_->setSceneRect(0, 0, 800, 600);
+    // Szenengröße setzen
+    int width = m_map.info.width;
+    int height = m_map.info.height;
+    double resolution = m_map.info.resolution;
+    const double pixels_per_meter = 100.0;
+    double cellSize = resolution * pixels_per_meter;
+
+    double sceneWidth = width * cellSize;
+    double sceneHeight = height * cellSize;
+
+    scene_->setSceneRect(0, 0, sceneWidth, sceneHeight);
+
+    // Danach view anpassen:
+    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);
+    view_->centerOn(scene_->sceneRect().center());
+
     view_->setRenderHint(QPainter::Antialiasing);
     view_->setRenderHint(QPainter::SmoothPixmapTransform);
 
@@ -26,6 +44,10 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     layout->addWidget(view_);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
+
+    // Zentrieren und skalieren
+    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);
+    view_->centerOn(scene_->sceneRect().center());
 
     // Roboter zeichnen
     robot_ = scene_->addEllipse(robot_x_ - 10, robot_y_ - 10, 20, 20, QPen(Qt::green), QBrush(Qt::green));
@@ -243,21 +265,19 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
 
 void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
 {
-    // Begrenzung wie gehabt
-    if (x < 10) x = 10;
-    if (x > 790) x = 790;
-    if (y < 10) y = 10;
-    if (y > 590) y = 590;
+    if (!m_robot_node->has_map()) return;
 
     if (isNearObstacle(x, y)) {
         qDebug() << "Emergency Stop! Roboter zu nah am Hindernis.";
-        robot_x_ = 400.0;
-        robot_y_ = 300.0;
+        
+        QPointF robo_pos = worldToScene(m_map.info.origin.position.x, m_map.info.origin.position.y);
+        robot_x_ = robo_pos.x();
+        robot_y_ = robo_pos.y();
     } else {
         robot_x_ = x;
         robot_y_ = y;
         robot_theta_ = theta;
-
+    }
         if (robot_) {
             robot_->setRect(robot_x_ - 10, robot_y_ - 10, 20, 20);
         }
@@ -268,7 +288,7 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
             double endY = robot_y_ + length * std::sin(robot_theta_);
             orientationLine_->setLine(robot_x_, robot_y_, endX, endY);
         }
-    }
+    
 }
 
 
@@ -278,34 +298,23 @@ void ObstacleMapWidget::resizeEvent(QResizeEvent *event)
     view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);  // optional: oder Qt::IgnoreAspectRatio
 }
 
-QImage ObstacleMapWidget::toImage()
-{
-    m_map = m_robot_node->get_map();
-
-    if (!m_robot_node->has_map()) return QImage();
-
+// Map Koordinaten in Qt-Pixel koordinaten ausrechnen
+QPointF ObstacleMapWidget::worldToScene(double x_m, double y_m) {
+    // Höhe und Breite der Karte in Zellen
     int width = m_map.info.width;
     int height = m_map.info.height;
-    QImage image(width, height, QImage::Format_RGB888);
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int i = x + (height - y - 1) * width;  // Y invertieren, damit Ursprung unten links
+    // Pixelgröße einer Zelle
+    double resolution = m_map.info.resolution;
+    const double pixels_per_meter = 100.0;
+    double cellSize = resolution * pixels_per_meter;
 
-            int val = m_map.data[i];
-            QColor color;
+    // Y-Achse invertieren (weil Szene y nach unten wächst)
+    double scene_x = x_m * pixels_per_meter;
+    double scene_y = (height * cellSize) - (y_m * pixels_per_meter);
 
-            if (val == 0)         color = Qt::white;     // frei
-            else if (val == 100)  color = Qt::black;     // belegt
-            else                  color = Qt::gray;      // unbekannt
-
-            image.setPixelColor(x, y, color);
-        }
-    }
-
-    return image;
+    return QPointF(scene_x, scene_y);
 }
-
 
 void ObstacleMapWidget::updateObstaclesFromMap()
 {
@@ -326,8 +335,10 @@ void ObstacleMapWidget::updateObstaclesFromMap()
     int width = m_map.info.width;
     int height = m_map.info.height;
 
-    // Zellgröße in Szene (Pixel) bestimmen (anpassen!)
-    double cellSize = 5.0;  // Beispiel: 1 Zelle = 5x5 Pixel
+    // Zellgröße in Szene (Pixel) bestimmen
+    const double pixels_per_meter = 100.0;
+    double resolution = m_map.info.resolution; 
+    double cellSize = resolution * pixels_per_meter;
 
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
@@ -335,7 +346,9 @@ void ObstacleMapWidget::updateObstaclesFromMap()
 
             if (m_map.data[i] == 100) { // Hindernis
                 // Rechteck an Position zeichnen
-                addObstacle(x * cellSize, y * cellSize, cellSize, cellSize);
+                double scene_height = height * cellSize;
+                double draw_y = scene_height - (y + 1) * cellSize;
+                addObstacle(x * cellSize, draw_y, cellSize, cellSize);
             }
         }
     }

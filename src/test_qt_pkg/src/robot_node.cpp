@@ -27,8 +27,11 @@ RobotNode::RobotNode() : Node("robot_node")
     );
 
     // Map Subscriber
+    auto qos = rclcpp::QoS(10);
+    qos.transient_local();  // Lässt den Subscriber auch alte Nachrichten empfangen
+    qos.reliable();        // Damit Reliability auf Reliable steht
     m_map_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-        "/map", 10,
+        "/map", qos,
         std::bind(&RobotNode::map_callback, this, std::placeholders::_1));
 }
 
@@ -69,6 +72,7 @@ void RobotNode::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
 
 void RobotNode::map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
 {
+    RCLCPP_INFO(this->get_logger(), "Map Callback");
     m_last_map = *msg;
     m_map_received = true;
     RCLCPP_INFO(this->get_logger(), "Received map: %d x %d", msg->info.width, msg->info.height);

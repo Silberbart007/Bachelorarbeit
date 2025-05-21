@@ -35,9 +35,6 @@ public:
     void setDrawPathMode(bool isEnabled) { drawPathMode_ = isEnabled; };
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
 
-    // Map to Image
-    QImage toImage();
-
 protected:
     void resizeEvent(QResizeEvent *) override;
     //void paintEvent(QPaintEvent *) override; 
@@ -56,6 +53,7 @@ private:
     void updateRobotPosition(double x, double y, double theta);
     void setupStaticObstacles();
     bool isNearObstacle(float x, float y);
+    QPointF worldToScene(double x_m, double y_m);
 
     Ui::ObstacleMapWidget *ui;
     QGraphicsScene *scene_;
