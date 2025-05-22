@@ -156,7 +156,7 @@
               </property>
               <item>
                <property name="text">
-                <string>Joystick</string>
+                <string>Slider</string>
                </property>
                <property name="font">
                 <font>
@@ -169,7 +169,7 @@
               </item>
               <item>
                <property name="text">
-                <string>Slider</string>
+                <string>Buttons</string>
                </property>
                <property name="font">
                 <font>
@@ -205,7 +205,7 @@
               </item>
               <item>
                <property name="text">
-                <string>Buttons</string>
+                <string>Joystick</string>
                </property>
                <property name="font">
                 <font>

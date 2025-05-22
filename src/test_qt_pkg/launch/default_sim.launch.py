@@ -3,6 +3,7 @@ from launch.actions import IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch.actions import ExecuteProcess
 import os
 
 def generate_launch_description():
@@ -20,14 +21,24 @@ def generate_launch_description():
             parameters=[{'yaml_filename': '/home/user/vtulkinm0/Ros_workspaces/Bachelorarbeit/src/stage_ros2/world/bitmaps/cave_map.yaml'}]
         ),
         Node(
+            package='nav2_amcl',
+            executable='amcl',
+            name='amcl',
+            output='screen',
+            parameters=[
+                {'use_sim_time': True},
+                '/home/user/vtulkinm0/Ros_workspaces/Bachelorarbeit/src/test_qt_pkg/config/amcl.yaml'
+            ]
+        ),
+        Node(
             package='nav2_lifecycle_manager',
             executable='lifecycle_manager',
             name='lifecycle_manager_map',
             output='screen',
             parameters=[{
                 'use_sim_time': True,
-                'autostart': True,  # <--- Wichtig: aktiviert alle Lifecycle-Nodes
-                'node_names': ['map_server']  # <--- Name des zu aktivierenden Nodes
+                'autostart': True,
+                'node_names': ['map_server', 'amcl']
             }]
         ),
         IncludeLaunchDescription(

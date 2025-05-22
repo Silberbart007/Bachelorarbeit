@@ -6,6 +6,7 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <functional>
 #include <nav_msgs/msg/occupancy_grid.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 
 class RobotNode : public rclcpp::Node {
@@ -37,6 +38,8 @@ public:
     // GUI-Callback-Funktionen
     std::function<void(const sensor_msgs::msg::Image::SharedPtr&)> on_image_received;
     std::function<void(const sensor_msgs::msg::LaserScan::SharedPtr&)> on_scan_received;
+    std::function<void()> map_loaded;
+    std::function<void(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr&)> on_amcl_pose_received;
 
 private:
     // Robot attributes
@@ -56,9 +59,11 @@ private:
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr m_scan_sub;
     rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr m_image_sub;
     rclcpp::Subscription<nav_msgs::msg::OccupancyGrid>::SharedPtr m_map_sub;
+    rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr m_amcl_sub;
 
     // Callback
     void scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
     void image_callback(const sensor_msgs::msg::Image::SharedPtr msg);
-    void map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);
+    void map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg);   
+    void amcl_callback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg);
 };

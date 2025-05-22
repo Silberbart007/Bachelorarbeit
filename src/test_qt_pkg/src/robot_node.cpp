@@ -7,9 +7,9 @@ RobotNode::RobotNode() : Node("robot_node")
     m_speed.x = 0.0;
     m_speed.y = 0.0;
     m_rot = 0.0;
-    m_max_speed.x = 25.0;
-    m_max_speed.y = 25.0;
-    m_max_rotation = 1.5;
+    m_max_speed.x = 0.4;
+    m_max_speed.y = 0.4;
+    m_max_rotation = 0.8;
 
     // cmd_vel Publisher
     m_cmd_pub = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
@@ -33,6 +33,12 @@ RobotNode::RobotNode() : Node("robot_node")
     m_map_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
         "/map", qos,
         std::bind(&RobotNode::map_callback, this, std::placeholders::_1));
+
+    // AMCL Subscriber
+    m_amcl_sub = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
+        "/amcl_pose", 10,
+        std::bind(&RobotNode::amcl_callback, this, std::placeholders::_1)
+    );
 }
 
 void RobotNode::publish_velocity(RobotSpeed speed, double rotation)
@@ -76,6 +82,18 @@ void RobotNode::map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
     m_last_map = *msg;
     m_map_received = true;
     RCLCPP_INFO(this->get_logger(), "Received map: %d x %d", msg->info.width, msg->info.height);
+
+    // Map Loaded ausführen (z. B. aus ObstacleMapWidget)
+    if (map_loaded)
+        map_loaded();
+}
+
+void RobotNode::amcl_callback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
+{
+    if (on_amcl_pose_received) {
+        on_amcl_pose_received(msg);
+    } else 
+        RCLCPP_INFO(this->get_logger(), "No amcl function");
 }
 
 

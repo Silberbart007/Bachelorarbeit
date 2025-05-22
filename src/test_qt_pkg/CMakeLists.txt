@@ -15,6 +15,10 @@ find_package(image_transport REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(nav2_amcl REQUIRED)
 find_package(nav2_map_server REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+find_package(tf2_ros REQUIRED)
 
 
 # Qt5
@@ -85,12 +89,17 @@ ament_target_dependencies(gui_main
   rclcpp
   std_msgs
   sensor_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
   cv_bridge
   image_transport
   nav_msgs
   nav2_amcl
   nav2_map_server
 )
+
 
 # Camera Node
 add_executable(camera_node src/cam.cpp)

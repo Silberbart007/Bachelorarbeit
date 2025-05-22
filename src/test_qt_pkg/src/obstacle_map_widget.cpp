@@ -8,26 +8,11 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     drawing_ = false;
     temp_path_item_ = nullptr;
     temp_point_item_ = nullptr;
-    // Startposition festsetzen:
-    robot_x_ = 20.0;  // -700 Pixel
-    robot_y_ = 20.0;  // -700 Pixel
-    robot_theta_ = 45.0 * M_PI / 180.0;  // 0.7854 Radiant
-
-    // Szenengröße setzen
-    int width = m_map.info.width;
-    int height = m_map.info.height;
-    double resolution = m_map.info.resolution;
-    const double pixels_per_meter = 100.0;
-    double cellSize = resolution * pixels_per_meter;
-
-    double sceneWidth = width * cellSize;
-    double sceneHeight = height * cellSize;
-
-    scene_->setSceneRect(0, 0, sceneWidth, sceneHeight);
-
-    // Danach view anpassen:
-    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);
-    view_->centerOn(scene_->sceneRect().center());
+    m_robot_x_meters = 0.0; 
+    m_robot_y_meters = 0.0; 
+    m_robot_x_pixels = 0.0; 
+    m_robot_y_pixels = 0.0; 
+    robot_theta_ = 0.0;
 
     view_->setRenderHint(QPainter::Antialiasing);
     view_->setRenderHint(QPainter::SmoothPixmapTransform);
@@ -45,57 +30,11 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 
-    // Zentrieren und skalieren
-    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);
-    view_->centerOn(scene_->sceneRect().center());
-
-    // Roboter zeichnen
-    robot_ = scene_->addEllipse(robot_x_ - 10, robot_y_ - 10, 20, 20, QPen(Qt::green), QBrush(Qt::green));
-    
-    // Linie mit Länge 10 als Ausrichtungspfeil (rot)  
-    orientationLine_ = scene_->addLine(robot_x_, robot_y_, robot_x_ + 20, robot_y_, QPen(Qt::blue, 2));
-
-    // Roboterbewegung initiieren
-    QTimer *move_timer = new QTimer(this);
-    connect(move_timer, &QTimer::timeout, this, [this]() {
-        double dt = 0.05; // 50 ms
-
-        // Geschwindigkeit und Drehgeschwindigkeit vom RobotNode holen
-        RobotNode::RobotSpeed v = m_robot_node->getSpeed(); // lokale Geschwindigkeit (vorwärts x, seitlich y)
-        double omega = m_robot_node->getRotation(); // Winkelgeschwindigkeit in rad/s
-
-        // Orientierung nur aktualisieren, wenn Drehgeschwindigkeit ungleich 0 ist
-        if (std::abs(omega) > 1e-6) {
-            double direction = (v.x >= 0) ? 1.0 : -1.0;
-            robot_theta_ += direction * omega * dt;
-            if (robot_theta_ > 2 * M_PI) robot_theta_ -= 2 * M_PI;
-            else if (robot_theta_ < 0) robot_theta_ += 2 * M_PI;
-        }
-
-        // Lokale Geschwindigkeit in Weltkoordinaten umrechnen
-        double dx = v.x * std::cos(robot_theta_) - v.y * std::sin(robot_theta_);
-        double dy = v.x * std::sin(robot_theta_) + v.y * std::cos(robot_theta_);
-
-        // Neue Position berechnen
-        robot_x_ += dx * dt;
-        robot_y_ += dy * dt;
-
-        updateRobotPosition(robot_x_, robot_y_, robot_theta_);
-    });
-    move_timer->start(50);
+    // Default Szenenskalierung
+    scene_->setSceneRect(0, 0, 1000, 1000); // früh im Konstruktor
 
     // Parcour aufbauen (künstlich)
     //setupStaticObstacles();
-
-    // Timer für Hindernisaktualisierungen
-    QTimer *timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &ObstacleMapWidget::updateObstacles);
-    timer->start(100);
-
-    // Timer für Strahlenanzeige
-    QTimer *beam_timer = new QTimer(this);
-    connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateDummyData);
-    beam_timer->start(100); // alle 100 ms
 }
 
 
@@ -103,6 +42,123 @@ ObstacleMapWidget::~ObstacleMapWidget()
 {
     delete scene_;
     delete view_;
+}
+
+// Roboter Node setzen und Map/Roboter initiieren
+void ObstacleMapWidget::setRobotNode(std::shared_ptr<RobotNode> robot_node) {
+    m_robot_node = robot_node;
+
+    // MapLoaded Funktion setzen
+    if (m_robot_node->has_map()) {
+        if (m_robot_node->has_map()) {
+            QMetaObject::invokeMethod(this, [this]() {
+                initializeRobot();
+            }, Qt::QueuedConnection);
+        }
+    } else {
+        m_robot_node->map_loaded = [this]() {
+            QMetaObject::invokeMethod(this, [this]() {
+                initializeRobot();
+            }, Qt::QueuedConnection);
+        };  
+    }
+}
+
+// Roboter und Map startklar machen, wenn Map vorhanden ist
+void ObstacleMapWidget::initializeRobot() {
+
+    // Amcl Daten verarbeiten
+    m_robot_node->on_amcl_pose_received = [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
+        // Quaternion aus msg holen
+        tf2::Quaternion tf_q;
+        tf2::fromMsg(msg->pose.pose.orientation, tf_q);
+
+        double roll, pitch, yaw;
+        tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
+
+        m_robot_x_meters = msg->pose.pose.position.x;
+        m_robot_y_meters = msg->pose.pose.position.y;
+        qDebug() << "x-real: " << m_robot_x_meters;
+        robot_theta_ = yaw;  // Winkel in Radiant
+                qDebug() << "frisches Theta: " << robot_theta_;
+
+    };
+
+    // Timer, der alle 50 ms die Roboterposition mit der letzten AMCL-Pose updatet
+    QTimer* update_pose_timer = new QTimer(this);
+    connect(update_pose_timer, &QTimer::timeout, this, [this]() {
+        updateRobotPosition(m_robot_x_meters, m_robot_y_meters, robot_theta_);
+    });
+    update_pose_timer->start(50);
+
+    // Roboter zeichnen
+    robot_ = scene_->addEllipse(m_robot_x_pixels - m_robot_size / 2,
+                           m_robot_y_pixels - m_robot_size / 2,
+                           m_robot_size,
+                           m_robot_size,
+                           QPen(Qt::green),
+                           QBrush(Qt::green));
+
+    // Orientierungslinie, die nach vorne zeigt
+    double end_x = m_robot_x_pixels + m_robot_size * cos(robot_theta_);
+    double end_y = m_robot_y_pixels - m_robot_size * sin(robot_theta_); 
+
+    orientationLine_ = scene_->addLine(m_robot_x_pixels, m_robot_y_pixels, end_x, end_y, QPen(Qt::blue, 2));
+
+    // Startposition ermitteln
+    //QPointF init_pos = worldToScene(m_map.info.origin.position.x, m_map.info.origin.position.y);
+    //robot_x_ = init_pos.x();
+    //robot_y_ = init_pos.y();
+
+    // Szene zentrieren auf die Map
+    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);
+
+    // Roboterposition aktualisieren
+    //updateRobotPosition(robot_x_, robot_y_, robot_theta_);
+
+    // Roboterbewegung initiieren
+    // QTimer *move_timer = new QTimer(this);
+    // connect(move_timer, &QTimer::timeout, this, [this]() {
+    //     double dt = 0.05; // 50 ms
+
+    //     // Geschwindigkeit und Drehgeschwindigkeit vom RobotNode holen
+    //     RobotNode::RobotSpeed v = m_robot_node->getSpeed(); // lokale Geschwindigkeit (vorwärts x, seitlich y)
+    //     double omega = m_robot_node->getRotation(); // Winkelgeschwindigkeit in rad/s
+
+    //     // Orientierung nur aktualisieren, wenn Drehgeschwindigkeit ungleich 0 ist
+    //     if (std::abs(omega) > 1e-6) {
+    //         double direction = (v.x >= 0) ? 1.0 : -1.0;
+    //         robot_theta_ += direction * omega * dt;
+    //         if (robot_theta_ > 2 * M_PI) robot_theta_ -= 2 * M_PI;
+    //         else if (robot_theta_ < 0) robot_theta_ += 2 * M_PI;
+    //     }
+
+    //     // Lokale Geschwindigkeit in Weltkoordinaten umrechnen
+    //     double dx = v.x * std::cos(robot_theta_) - v.y * std::sin(robot_theta_);
+    //     double dy = v.x * std::sin(robot_theta_) + v.y * std::cos(robot_theta_);
+
+    //     // Neue Position berechnen
+    //     robot_x_ += dx * dt * m_pixels_per_meter;
+    //     robot_y_ += dy * dt * m_pixels_per_meter;
+
+    //     //qDebug() << "x-Pixel Position: " << robot_x_;
+    //     //qDebug() << "y-Pixel Position: " << robot_y_;
+    //     updateRobotPosition(robot_x_, robot_y_, robot_theta_);
+
+    //     view_->centerOn(robot_x_, robot_y_);
+    // });
+    // move_timer->start(50);
+
+    // Timer für Hindernisaktualisierungen
+    // QTimer *timer = new QTimer(this);
+    // connect(timer, &QTimer::timeout, this, &ObstacleMapWidget::updateObstacles);
+    // timer->start(60000);
+    updateObstacles();
+
+    // Timer für Strahlenanzeige
+    QTimer *beam_timer = new QTimer(this);
+    connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateDummyData);
+    beam_timer->start(100); // alle 100 ms
 }
 
 
@@ -130,10 +186,10 @@ void ObstacleMapWidget::generateDummyData() {
             float dist = latestDistances_[i];
             float length = dist * maxLength;
 
-            float endX = robot_x_ + length * std::cos(angle + robot_theta_);
-            float endY = robot_y_ + length * std::sin(angle + robot_theta_);
+            float endX = m_robot_x_pixels + length * std::cos(angle + robot_theta_);
+            float endY = m_robot_y_pixels + length * std::sin(angle + robot_theta_);
 
-            QGraphicsLineItem *line = scene_->addLine(robot_x_, robot_y_, endX, endY, QPen(Qt::red));
+            QGraphicsLineItem *line = scene_->addLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY, QPen(Qt::red));
             beam_items_.push_back(line);
         }
     } else {
@@ -267,26 +323,31 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
 {
     if (!m_robot_node->has_map()) return;
 
-    if (isNearObstacle(x, y)) {
-        qDebug() << "Emergency Stop! Roboter zu nah am Hindernis.";
-        
-        QPointF robo_pos = worldToScene(m_map.info.origin.position.x, m_map.info.origin.position.y);
-        robot_x_ = robo_pos.x();
-        robot_y_ = robo_pos.y();
-    } else {
-        robot_x_ = x;
-        robot_y_ = y;
-        robot_theta_ = theta;
-    }
+    qDebug() << "X vor worldtoscene: " << x;
+    QPointF robo_pos = worldToScene(x, y);
+    m_robot_x_pixels = robo_pos.x();
+    m_robot_y_pixels = robo_pos.y();
+    robot_theta_ = theta;
+    qDebug() << "x nach Worldtoscene: " << m_robot_x_pixels;
+
         if (robot_) {
-            robot_->setRect(robot_x_ - 10, robot_y_ - 10, 20, 20);
+            // Größe und Form des Roboters (immer bei 0,0 relativ zum Item)
+            robot_->setRect(0, 0, m_robot_size, m_robot_size);
+
+            // Position des Roboters in der Szene (Mittelpunkt ausrichten)
+            robot_->setPos(m_robot_x_pixels - m_robot_size / 2, m_robot_y_pixels - m_robot_size / 2);
+
+            robot_->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
+            robot_->setRotation(-robot_theta_ * 180.0 / M_PI);
+            qDebug() << "robot_theta (rad):" << robot_theta_ << "rot (deg):" << (-robot_theta_ * 180.0 / M_PI);
+
         }
         if (orientationLine_) {
             // Linie vom Mittelpunkt zu Ausrichtungspunkt neu setzen
             double length = 20;
-            double endX = robot_x_ + length * std::cos(robot_theta_);
-            double endY = robot_y_ + length * std::sin(robot_theta_);
-            orientationLine_->setLine(robot_x_, robot_y_, endX, endY);
+            double endX = m_robot_x_pixels + length * std::cos(robot_theta_);
+            double endY = m_robot_y_pixels + length * std::sin(robot_theta_);
+            orientationLine_->setLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY);
         }
     
 }
@@ -296,25 +357,36 @@ void ObstacleMapWidget::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
     view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);  // optional: oder Qt::IgnoreAspectRatio
+    view_->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 
 // Map Koordinaten in Qt-Pixel koordinaten ausrechnen
 QPointF ObstacleMapWidget::worldToScene(double x_m, double y_m) {
-    // Höhe und Breite der Karte in Zellen
-    int width = m_map.info.width;
-    int height = m_map.info.height;
+    // Ursprungsposition der Map (in Metern)
+    double origin_x = m_map.info.origin.position.x;
+    double origin_y = m_map.info.origin.position.y;
 
-    // Pixelgröße einer Zelle
+    // Auflösung der Karte (Meter pro Zelle)
     double resolution = m_map.info.resolution;
-    const double pixels_per_meter = 100.0;
-    double cellSize = resolution * pixels_per_meter;
 
-    // Y-Achse invertieren (weil Szene y nach unten wächst)
-    double scene_x = x_m * pixels_per_meter;
-    double scene_y = (height * cellSize) - (y_m * pixels_per_meter);
+    // Zellengröße in Pixeln
+    double cellSize = resolution * m_pixels_per_meter;
+
+    // Höhe der Karte in Pixeln
+    double map_height_px = m_map.info.height * cellSize;
+    double map_width_px = m_map.info.width * cellSize;
+
+    // Position relativ zum Map-Ursprung (in Meter)
+    double rel_x = x_m - origin_x;
+    double rel_y = y_m - origin_y;
+
+    // Umrechnung in Szene-Koordinaten (Y-Achse invertiert!)
+    double scene_x = map_width_px - (rel_x * m_pixels_per_meter);
+    double scene_y = (rel_y) * m_pixels_per_meter;
 
     return QPointF(scene_x, scene_y);
 }
+
 
 void ObstacleMapWidget::updateObstaclesFromMap()
 {
@@ -323,7 +395,6 @@ void ObstacleMapWidget::updateObstaclesFromMap()
     // Erst alle bisherigen Hindernisse löschen
     QList<QGraphicsItem*> items = scene_->items();
     for (auto item : items) {
-        // Optional: nur rote Rechtecke löschen, falls du statische Wände behalten willst
         if (QGraphicsRectItem* rect = dynamic_cast<QGraphicsRectItem*>(item)) {
             scene_->removeItem(rect);
             delete rect;
@@ -335,24 +406,40 @@ void ObstacleMapWidget::updateObstaclesFromMap()
     int width = m_map.info.width;
     int height = m_map.info.height;
 
-    // Zellgröße in Szene (Pixel) bestimmen
-    const double pixels_per_meter = 100.0;
-    double resolution = m_map.info.resolution; 
-    double cellSize = resolution * pixels_per_meter;
+    // Zellgröße in Pixel berechnen
+    double resolution = m_map.info.resolution; // Meter pro Zelle
+    double cellSize = resolution * m_pixels_per_meter; // Pixel pro Zelle
 
+    // Ursprung der Map (in Metern)
+    double origin_x = m_map.info.origin.position.x;
+    double origin_y = m_map.info.origin.position.y;
+
+    // Pixel-Offset für Ursprung berechnen
+    double offset_x = origin_x * m_pixels_per_meter;
+    double offset_y = -origin_y * m_pixels_per_meter;
+
+    // Szene Rechteck setzen, damit alles sichtbar ist
+    double scene_width = width * cellSize;
+    double scene_height = height * cellSize;
+    scene_->setSceneRect(offset_x, offset_y, scene_width, scene_height);
+
+    // Hindernisse zeichnen
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
-            int i = x + y * width;  // hier normale Reihenfolge
-
+            int i = x + y * width;
             if (m_map.data[i] == 100) { // Hindernis
-                // Rechteck an Position zeichnen
-                double scene_height = height * cellSize;
-                double draw_y = scene_height - (y + 1) * cellSize;
-                addObstacle(x * cellSize, draw_y, cellSize, cellSize);
+                // Y-Achse invertieren, da Qt Y nach unten geht
+                double draw_x = x * cellSize + offset_x;
+                double draw_y = scene_height - (y + 1) * cellSize + offset_y;
+                addObstacle(draw_x, draw_y, cellSize, cellSize);
             }
         }
     }
+
+    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);
+    view_->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
+
 
 void ObstacleMapWidget::addObstacle(int x, int y, int width, int height)
 {
@@ -423,8 +510,8 @@ void ObstacleMapWidget::goToNextPoint() {
     }
 
     QPointF target = current_path_[current_target_index_];
-    double dx = target.x() - robot_x_;
-    double dy = target.y() - robot_y_;
+    double dx = target.x() - m_robot_x_pixels;
+    double dy = target.y() - m_robot_y_pixels;
     double distance = std::sqrt(dx * dx + dy * dy);
 
     if (distance < 5.0) {  // Zielpunkt erreicht
@@ -434,8 +521,8 @@ void ObstacleMapWidget::goToNextPoint() {
             return;
         }
         target = current_path_[current_target_index_];
-        dx = target.x() - robot_x_;
-        dy = target.y() - robot_y_;
+        dx = target.x() - m_robot_x_pixels;
+        dy = target.y() - m_robot_y_pixels;
     }
 
     double angle_to_target = std::atan2(dy, dx);

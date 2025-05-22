@@ -15,6 +15,9 @@
 #include <QGesture>
 #include <QScrollBar>
 #include <QImage>
+#include <tf2/LinearMath/Quaternion.hpp>
+#include <tf2/LinearMath/Matrix3x3.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include "robot_node.h"
 #include "mainwindow.h"
 
@@ -31,7 +34,7 @@ public:
     ~ObstacleMapWidget();
 
     // Setter
-    void setRobotNode(std::shared_ptr<RobotNode> robot_node) { m_robot_node = robot_node; };
+    void setRobotNode(std::shared_ptr<RobotNode> robot_node);
     void setDrawPathMode(bool isEnabled) { drawPathMode_ = isEnabled; };
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
 
@@ -54,6 +57,7 @@ private:
     void setupStaticObstacles();
     bool isNearObstacle(float x, float y);
     QPointF worldToScene(double x_m, double y_m);
+    void initializeRobot();
 
     Ui::ObstacleMapWidget *ui;
     QGraphicsScene *scene_;
@@ -61,10 +65,12 @@ private:
     QGraphicsEllipseItem *robot_;
     QGraphicsLineItem *orientationLine_;  // Linie für Richtung
 
-    float robot_x_ = 400;
-    float robot_y_ = 300;
-    const float EMERGENCY_STOP_RADIUS = 2.0f;  // Radius in Pixeln
-    float robot_theta_ = 0.0; // Ausrichtung in Radiant
+    double m_robot_x_pixels = 400;
+    double m_robot_y_pixels = 300;
+    double m_robot_x_meters = 400;
+    double m_robot_y_meters = 300;
+    const double EMERGENCY_STOP_RADIUS = 3.0f;  // Radius in Pixeln
+    double robot_theta_ = 0.0; // Ausrichtung in Radiant
 
     // Bool Variablen, ob Funktion gerade aktiv ist
     bool drawPathMode_ = false;
@@ -84,7 +90,7 @@ private:
     qreal lastPinchScaleFactor_;
 
     // Laserdaten
-    std::vector<float> latestDistances_;
+    std::vector<double> latestDistances_;
     QVector<QGraphicsLineItem*> beam_items_;
 
     // Roboter Node
@@ -92,6 +98,9 @@ private:
 
     // Map 
     nav_msgs::msg::OccupancyGrid m_map;
+    const double m_pixels_per_meter = 100.0;
+    const double m_robot_size = 40.0;
+
 
 };
 

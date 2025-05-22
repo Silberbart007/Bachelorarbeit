@@ -14,6 +14,10 @@
   <depend>nav2_map_server</depend>
   <depend>nav2_amcl</depend>
   <depend>nav_msgs</depend> 
+  <depend>geometry_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
 
   <build_depend>cv_bridge</build_depend>
   <exec_depend>cv_bridge</exec_depend>
