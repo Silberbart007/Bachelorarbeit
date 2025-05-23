@@ -51,7 +51,7 @@ private:
     void generateDummyData();
     void updateObstaclesFromMap();
     QVector<QPointF> resamplePath(const QVector<QPointF>& originalPoints, double spacing);
-    void addObstacle(int x, int y, int width, int height);
+    void addObstacle(double x, double y, double width, double height);
     void updateObstacles();
     void updateRobotPosition(double x, double y, double theta);
     void setupStaticObstacles();
@@ -65,10 +65,10 @@ private:
     QGraphicsEllipseItem *robot_;
     QGraphicsLineItem *orientationLine_;  // Linie für Richtung
 
-    double m_robot_x_pixels = 400;
-    double m_robot_y_pixels = 300;
-    double m_robot_x_meters = 400;
-    double m_robot_y_meters = 300;
+    double m_robot_x_pixels;
+    double m_robot_y_pixels;
+    double m_robot_x_meters;
+    double m_robot_y_meters;
     const double EMERGENCY_STOP_RADIUS = 3.0f;  // Radius in Pixeln
     double robot_theta_ = 0.0; // Ausrichtung in Radiant
 

@@ -5,17 +5,18 @@ amcl:
     base_frame_id: "base_link"
     global_frame_id: "map"
     scan_topic: "base_scan"
-    update_min_d: 0.2
-    update_min_a: 0.2
-    resample_interval: 1
-    transform_tolerance: 1.0
-    min_particles: 500
-    max_particles: 2000
+    resample_interval: 1      # → ruhig auch auf 2–3 setzen, um Glättung zu verbessern
+    update_min_d: 0.05        # → kleinere Bewegung reicht zum Update
+    update_min_a: 0.05
+    min_particles: 1000       # mehr Partikel für bessere Schätzung
+    max_particles: 3000
+    transform_tolerance: 0.1  # kleiner, wenn du Timingprobleme vermeiden willst
     laser_min_range: 0.0
     laser_max_range: 100.0
     set_initial_pose: true
     initial_pose:
-      x: 7.0
-      y: 7.0
+      x: -4.0
+      y: -4.0
       z: 0.0
-      yaw: 45.0
+      yaw: 0.785398
+    publish_particle_cloud: true

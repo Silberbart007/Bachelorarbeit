@@ -52,7 +52,7 @@ void RobotNode::publish_velocity(RobotSpeed speed, double rotation)
     // Variablen des Roboters setzen
     msg.linear.x = m_speed.x;
     msg.linear.y = m_speed.y;
-    msg.angular.z = m_rot;
+    msg.angular.z = -m_rot;
 
     // Daten an topic publishen
     m_cmd_pub->publish(msg);

@@ -78,10 +78,8 @@ void ObstacleMapWidget::initializeRobot() {
 
         m_robot_x_meters = msg->pose.pose.position.x;
         m_robot_y_meters = msg->pose.pose.position.y;
-        qDebug() << "x-real: " << m_robot_x_meters;
+        qDebug() << "x-real: " << m_robot_x_meters << " y-real " << m_robot_y_meters;
         robot_theta_ = yaw;  // Winkel in Radiant
-                qDebug() << "frisches Theta: " << robot_theta_;
-
     };
 
     // Timer, der alle 50 ms die Roboterposition mit der letzten AMCL-Pose updatet
@@ -323,12 +321,12 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
 {
     if (!m_robot_node->has_map()) return;
 
-    qDebug() << "X vor worldtoscene: " << x;
+    //qDebug() << "X vor worldtoscene: " << x;
     QPointF robo_pos = worldToScene(x, y);
     m_robot_x_pixels = robo_pos.x();
     m_robot_y_pixels = robo_pos.y();
     robot_theta_ = theta;
-    qDebug() << "x nach Worldtoscene: " << m_robot_x_pixels;
+    //qDebug() << "x nach Worldtoscene: " << m_robot_x_pixels;
 
         if (robot_) {
             // Größe und Form des Roboters (immer bei 0,0 relativ zum Item)
@@ -339,16 +337,16 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
 
             robot_->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
             robot_->setRotation(-robot_theta_ * 180.0 / M_PI);
-            qDebug() << "robot_theta (rad):" << robot_theta_ << "rot (deg):" << (-robot_theta_ * 180.0 / M_PI);
+            //qDebug() << "robot_theta (rad):" << robot_theta_ << "rot (deg):" << (-robot_theta_ * 180.0 / M_PI);
 
         }
         if (orientationLine_) {
-            // Linie vom Mittelpunkt zu Ausrichtungspunkt neu setzen
             double length = 20;
             double endX = m_robot_x_pixels + length * std::cos(robot_theta_);
-            double endY = m_robot_y_pixels + length * std::sin(robot_theta_);
+            double endY = m_robot_y_pixels - length * std::sin(robot_theta_); 
             orientationLine_->setLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY);
         }
+
     
 }
 
@@ -362,37 +360,24 @@ void ObstacleMapWidget::resizeEvent(QResizeEvent *event)
 
 // Map Koordinaten in Qt-Pixel koordinaten ausrechnen
 QPointF ObstacleMapWidget::worldToScene(double x_m, double y_m) {
-    // Ursprungsposition der Map (in Metern)
-    double origin_x = m_map.info.origin.position.x;
-    double origin_y = m_map.info.origin.position.y;
-
-    // Auflösung der Karte (Meter pro Zelle)
-    double resolution = m_map.info.resolution;
-
-    // Zellengröße in Pixeln
-    double cellSize = resolution * m_pixels_per_meter;
-
-    // Höhe der Karte in Pixeln
-    double map_height_px = m_map.info.height * cellSize;
-    double map_width_px = m_map.info.width * cellSize;
-
-    // Position relativ zum Map-Ursprung (in Meter)
-    double rel_x = x_m - origin_x;
-    double rel_y = y_m - origin_y;
-
-    // Umrechnung in Szene-Koordinaten (Y-Achse invertiert!)
-    double scene_x = map_width_px - (rel_x * m_pixels_per_meter);
-    double scene_y = (rel_y) * m_pixels_per_meter;
+    double scene_x = x_m * m_pixels_per_meter; 
+    double scene_y = -y_m * m_pixels_per_meter;
+    
+    
+    // qDebug() << "worldToScene: x_m=" << x_m << " y_m=" << y_m
+    //          << " -> scene_x=" << scene_x << " scene_y=" << scene_y;
 
     return QPointF(scene_x, scene_y);
 }
+
+
 
 
 void ObstacleMapWidget::updateObstaclesFromMap()
 {
     if (!m_robot_node->has_map()) return;
 
-    // Erst alle bisherigen Hindernisse löschen
+    // Szene leeren
     QList<QGraphicsItem*> items = scene_->items();
     for (auto item : items) {
         if (QGraphicsRectItem* rect = dynamic_cast<QGraphicsRectItem*>(item)) {
@@ -401,37 +386,47 @@ void ObstacleMapWidget::updateObstaclesFromMap()
         }
     }
 
-    // Map auslesen
+    // Map laden
     m_map = m_robot_node->get_map();
     int width = m_map.info.width;
     int height = m_map.info.height;
+    double resolution = m_map.info.resolution;
 
-    // Zellgröße in Pixel berechnen
-    double resolution = m_map.info.resolution; // Meter pro Zelle
-    double cellSize = resolution * m_pixels_per_meter; // Pixel pro Zelle
+    // Skalierung in Pixeln
+    double cellSize = resolution * m_pixels_per_meter;
 
-    // Ursprung der Map (in Metern)
+    // Ursprung der Karte in Weltkoordinaten (Meter)
     double origin_x = m_map.info.origin.position.x;
     double origin_y = m_map.info.origin.position.y;
 
-    // Pixel-Offset für Ursprung berechnen
-    double offset_x = origin_x * m_pixels_per_meter;
-    double offset_y = -origin_y * m_pixels_per_meter;
-
-    // Szene Rechteck setzen, damit alles sichtbar ist
+    // Szenegröße in Pixeln
     double scene_width = width * cellSize;
     double scene_height = height * cellSize;
-    scene_->setSceneRect(offset_x, offset_y, scene_width, scene_height);
 
-    // Hindernisse zeichnen
+    // Szene-Rechteck korrekt setzen (y invertiert, damit Qt nach unten wächst)
+    double scene_left = origin_x * m_pixels_per_meter;
+    double scene_top = -origin_y * m_pixels_per_meter - scene_height;
+
+    scene_->setSceneRect(scene_left, scene_top, scene_width, scene_height);
+    qDebug() << "Map origin:" << origin_x << origin_y;
+qDebug() << "Map size (cells):" << width << height;
+qDebug() << "Map resolution:" << resolution;
+
+    // Hindernisse einzeichnen
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int i = x + y * width;
-            if (m_map.data[i] == 100) { // Hindernis
-                // Y-Achse invertieren, da Qt Y nach unten geht
-                double draw_x = x * cellSize + offset_x;
-                double draw_y = scene_height - (y + 1) * cellSize + offset_y;
-                addObstacle(draw_x, draw_y, cellSize, cellSize);
+            if (m_map.data[i] == 100) {
+                // Koordinaten in Szene umrechnen
+                double map_x = origin_x + x * resolution;
+                double map_y = origin_y + y * resolution;
+                if (map_x >= 3)
+                qDebug() << "map_x " << map_x << "map_y " << map_y; 
+
+                QPointF scene_pos = worldToScene(map_x, map_y);
+
+                // Zelle zeichnen
+                addObstacle(scene_pos.x(), scene_pos.y(), cellSize, cellSize);
             }
         }
     }
@@ -441,7 +436,8 @@ void ObstacleMapWidget::updateObstaclesFromMap()
 }
 
 
-void ObstacleMapWidget::addObstacle(int x, int y, int width, int height)
+
+void ObstacleMapWidget::addObstacle(double x, double y, double width, double height)
 {
     QGraphicsRectItem *rect = new QGraphicsRectItem(x, y, width, height);
     rect->setBrush(QBrush(Qt::red));  // Hindernis als rotes Rechteck
@@ -510,7 +506,7 @@ void ObstacleMapWidget::goToNextPoint() {
     }
 
     QPointF target = current_path_[current_target_index_];
-    double dx = target.x() - m_robot_x_pixels;
+    double dx = m_robot_x_pixels - target.x();
     double dy = target.y() - m_robot_y_pixels;
     double distance = std::sqrt(dx * dx + dy * dy);
 
@@ -529,14 +525,27 @@ void ObstacleMapWidget::goToNextPoint() {
     double angle_diff = angle_to_target - robot_theta_;
     angle_diff = std::atan2(std::sin(angle_diff), std::cos(angle_diff)); // Normalisieren
 
-    double gain_rot = 2.0;
-    double rotation = std::tanh(gain_rot * angle_diff);  // sanfte Begrenzung auf [-1, 1]
+    // **Schwellwerte definieren**
+    const double distance_threshold = 3.0;  // Minimaler Abstand, um noch zu fahren
+    const double angle_threshold = 0.8;     // Minimaler Winkel in rad 
 
-    // Geschwindigkeit
-    double max_speed = 1.0;
-    double gain = 2.0;  // Steuerparameter
-    double angle_factor = 1.0 - std::tanh(gain * std::abs(angle_diff));
-    double speed = max_speed * std::max(angle_factor, 0.1);  // Niemals ganz 0
+    qDebug() << "robot_theta_" << robot_theta_;
+    qDebug() << "Thresh " << angle_threshold << " angle_diff " << angle_diff;
+    // Rotation nur, wenn Winkelunterschied größer als Schwellwert
+    double rotation = 0.0;
+    if (std::abs(angle_diff) > angle_threshold) {
+        double gain_rot = 2.0;
+        rotation = std::tanh(gain_rot * angle_diff);
+    }
+
+    // Geschwindigkeit nur, wenn Abstand größer als Schwellwert und Winkel klein genug ist
+    double speed = 0.0;
+    if (distance > distance_threshold && std::abs(angle_diff) < (M_PI / 4)) {  // z.B. 45° maximal
+        double max_speed = 1.0;
+        double gain = 2.0;
+        double angle_factor = 1.0 - std::tanh(gain * std::abs(angle_diff));
+        speed = max_speed * std::max(angle_factor, 0.1);
+    }
 
     RobotNode::RobotSpeed cmd;
     cmd.x = speed;
