@@ -408,9 +408,6 @@ void ObstacleMapWidget::updateObstaclesFromMap()
     double scene_top = -origin_y * m_pixels_per_meter - scene_height;
 
     scene_->setSceneRect(scene_left, scene_top, scene_width, scene_height);
-    qDebug() << "Map origin:" << origin_x << origin_y;
-qDebug() << "Map size (cells):" << width << height;
-qDebug() << "Map resolution:" << resolution;
 
     // Hindernisse einzeichnen
     for (int y = 0; y < height; ++y) {
@@ -420,9 +417,7 @@ qDebug() << "Map resolution:" << resolution;
                 // Koordinaten in Szene umrechnen
                 double map_x = origin_x + x * resolution;
                 double map_y = origin_y + y * resolution;
-                if (map_x >= 3)
-                qDebug() << "map_x " << map_x << "map_y " << map_y; 
-
+                
                 QPointF scene_pos = worldToScene(map_x, map_y);
 
                 // Zelle zeichnen

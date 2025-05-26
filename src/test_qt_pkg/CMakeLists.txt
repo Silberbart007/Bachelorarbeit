@@ -123,6 +123,13 @@ install(TARGETS
   DESTINATION lib/${PROJECT_NAME}
 )
 
+# for amcl yaml
+install(
+  DIRECTORY config
+  DESTINATION share/${PROJECT_NAME}
+)
+
+
 # Launch files
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/

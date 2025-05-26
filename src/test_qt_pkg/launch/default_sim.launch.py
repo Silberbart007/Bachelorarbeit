@@ -4,6 +4,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch.actions import ExecuteProcess
+from launch.substitutions import PathJoinSubstitution
 import os
 
 def generate_launch_description():
@@ -13,12 +14,25 @@ def generate_launch_description():
         'stage.launch.py'
     )
 
+    map_yaml_file = PathJoinSubstitution([
+    FindPackageShare("stage_ros2"),
+    "world",
+    "bitmaps",
+    "cave_map.yaml"
+    ])
+
+    amcl_yaml_file = PathJoinSubstitution([
+        FindPackageShare("test_qt_pkg"),
+        "config",
+        "amcl.yaml"
+    ])
+
     return LaunchDescription([
         Node(
             package='nav2_map_server',
             executable='map_server',
             name='map_server',
-            parameters=[{'yaml_filename': '/home/user/vtulkinm0/Ros_workspaces/Bachelorarbeit/src/stage_ros2/world/bitmaps/cave_map.yaml'}]
+            parameters=[{'yaml_filename': map_yaml_file}]
         ),
         Node(
             package='nav2_amcl',
@@ -27,7 +41,7 @@ def generate_launch_description():
             output='screen',
             parameters=[
                 {'use_sim_time': True},
-                '/home/user/vtulkinm0/Ros_workspaces/Bachelorarbeit/src/test_qt_pkg/config/amcl.yaml'
+                amcl_yaml_file
             ]
         ),
         Node(
