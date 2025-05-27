@@ -64,6 +64,11 @@ void ObstacleMapWidget::setRobotNode(std::shared_ptr<RobotNode> robot_node) {
     }
 }
 
+// Nav2Client setzen
+void ObstacleMapWidget::setNav2Node(std::shared_ptr<Nav2Client> nav2_node) {
+    m_nav2_node = nav2_node;
+}
+
 // Roboter und Map startklar machen, wenn Map vorhanden ist
 void ObstacleMapWidget::initializeRobot() {
 
@@ -371,6 +376,19 @@ QPointF ObstacleMapWidget::worldToScene(double x_m, double y_m) {
 }
 
 
+QPointF ObstacleMapWidget::sceneToMapCoordinates(const QPointF& scene_pos) {
+
+    double resolution = m_map.info.resolution;
+
+    // Ursprung der Karte in Weltkoordinaten (Meter)
+    double origin_x = m_map.info.origin.position.x;
+    double origin_y = m_map.info.origin.position.y;
+
+    double x_m = scene_pos.x() / m_pixels_per_meter;
+    double y_m = -scene_pos.y() / m_pixels_per_meter;
+
+    return QPoint(x_m, y_m);
+}
 
 
 void ObstacleMapWidget::updateObstaclesFromMap()
@@ -501,7 +519,23 @@ void ObstacleMapWidget::goToNextPoint() {
     }
 
     QPointF target = current_path_[current_target_index_];
-    double dx = target.x() - m_robot_x_pixels;
+    qDebug() << "target: " << target;
+    QPointF target_world = sceneToMapCoordinates(target);
+    qDebug() << "World Target: " << target_world;
+
+
+    geometry_msgs::msg::PoseStamped goal;
+    goal.header.frame_id = "map";
+    goal.header.stamp = m_nav2_node->now();
+
+    goal.pose.position.x = target_world.x();
+    goal.pose.position.y = target_world.y();
+    goal.pose.position.z = 0.0;
+    goal.pose.orientation.w = 1.0; // keine Drehung
+
+    m_nav2_node->sendGoal(goal);
+    
+    /*double dx = target.x() - m_robot_x_pixels;
     double dy = target.y() - m_robot_y_pixels;
 
     qDebug() << "m_robot_y_pixels: " << m_robot_y_pixels;
@@ -551,7 +585,7 @@ void ObstacleMapWidget::goToNextPoint() {
     m_robot_node->publish_velocity(cmd, rotation);
 
     // Timer für nächsten Aufruf
-    QTimer::singleShot(50, this, &ObstacleMapWidget::goToNextPoint);
+    QTimer::singleShot(50, this, &ObstacleMapWidget::goToNextPoint);*/
 }
 
 QVector<QPointF> ObstacleMapWidget::resamplePath(const QVector<QPointF>& originalPoints, double spacing = 5.0) {

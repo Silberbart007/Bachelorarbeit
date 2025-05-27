@@ -13,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent)
     // Robot Node erstellen
     m_robot_node = std::make_shared<RobotNode>();
 
+    // Nav2Client erstellen
+    m_nav2_node = std::make_shared<Nav2Client>();
+
     // Kamera-Callback registrieren
     m_robot_node->on_image_received = [this](const sensor_msgs::msg::Image::SharedPtr msg) {
         this->image_callback(msg);  // ruft Funktion von MainWindow auf
@@ -35,6 +38,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->rotation_slider_joystick->setRobotNode(m_robot_node);
     ui->joysticks->setRobotNode(m_robot_node);
     ui->obstacle_map_widget->setRobotNode(m_robot_node);
+
+    // Nav2 Client übergeben
+    ui->obstacle_map_widget->setNav2Node(m_nav2_node);
 
     // Lenkräder Styles bestimmen
     //

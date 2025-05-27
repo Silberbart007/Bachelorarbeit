@@ -17,6 +17,7 @@
 #include "joystick.h"
 #include "robot_node.h"
 #include "wheel.h"
+#include "nav2client.h"
 
 namespace Ui {
 class MainWindow;
@@ -32,6 +33,7 @@ public:
 
     // Getter für den Node
     rclcpp::Node::SharedPtr getRobotNode() const { return m_robot_node; }
+    rclcpp::Node::SharedPtr getNav2Node() const { return m_nav2_node; }
 
 private slots:
 
@@ -58,6 +60,7 @@ private:
     JoystickWidget *joystick;
 
     std::shared_ptr<RobotNode> m_robot_node;
+    std::shared_ptr<Nav2Client> m_nav2_node;
     
     // Konkrete Callback Funktionen
     void image_callback(const sensor_msgs::msg::Image::SharedPtr msg);

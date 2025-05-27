@@ -35,6 +35,7 @@ public:
 
     // Setter
     void setRobotNode(std::shared_ptr<RobotNode> robot_node);
+    void setNav2Node(std::shared_ptr<Nav2Client> nav2_node);
     void setDrawPathMode(bool isEnabled) { drawPathMode_ = isEnabled; };
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
 
@@ -57,6 +58,7 @@ private:
     void setupStaticObstacles();
     bool isNearObstacle(float x, float y);
     QPointF worldToScene(double x_m, double y_m);
+    QPointF sceneToMapCoordinates(const QPointF& scene_pos);
     void initializeRobot();
 
     Ui::ObstacleMapWidget *ui;
@@ -95,6 +97,9 @@ private:
 
     // Roboter Node
     std::shared_ptr<RobotNode> m_robot_node;
+
+    // Nav2 Node
+    std::shared_ptr<Nav2Client> m_nav2_node;
 
     // Map 
     nav_msgs::msg::OccupancyGrid m_map;

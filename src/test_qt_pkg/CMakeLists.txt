@@ -19,6 +19,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(rclcpp_action REQUIRED)
 
 
 # Qt5
@@ -57,6 +58,7 @@ set(HEADERS
   include/test_qt_pkg/touch_slider_vertical.h
   include/test_qt_pkg/touch_slider_horizontal.h
   include/test_qt_pkg/robot_node.h
+  include/test_qt_pkg/nav2client.h
 )
 
 set(UIS
@@ -68,6 +70,7 @@ set(UIS
 add_executable(gui_main
   src/main.cpp
   src/robot_node.cpp
+  src/nav2client.cpp
   src/mainwindow.cpp
   src/joystick.cpp
   src/wheel.cpp
@@ -98,6 +101,7 @@ ament_target_dependencies(gui_main
   nav_msgs
   nav2_amcl
   nav2_map_server
+  rclcpp_action
 )
 
 

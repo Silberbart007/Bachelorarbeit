@@ -17,11 +17,16 @@ int main(int argc, char *argv[])
         rclcpp::spin(window.getRobotNode());  // Spin in eigenem Thread
     });
 
+    std::thread nav2_node_thread([&]() {
+        rclcpp::spin(window.getNav2Node());  // Spin in eigenem Thread
+    });
+
     // Qt Event-Loop starten
     int ret = app.exec();  // Event-Loop von Qt ausführen
 
     rclcpp::shutdown();
     robot_node_thread.join();
+    nav2_node_thread.join();
 
     return ret;
 }
