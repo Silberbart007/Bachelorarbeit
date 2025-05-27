@@ -489,7 +489,7 @@ bool ObstacleMapWidget::isNearObstacle(float x, float y)
 
 // Pfad zu Ende gezeichnet - Signal
 void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {
-    current_path_ = resamplePath(points, 7.0);  // alle 7 Pixel ein Punkt
+    current_path_ = resamplePath(points, 10.0);  // alle 7 Pixel ein Punkt
     current_target_index_ = 0;
     goToNextPoint();
 }
@@ -501,8 +501,10 @@ void ObstacleMapWidget::goToNextPoint() {
     }
 
     QPointF target = current_path_[current_target_index_];
-    double dx = m_robot_x_pixels - target.x();
+    double dx = target.x() - m_robot_x_pixels;
     double dy = target.y() - m_robot_y_pixels;
+
+    qDebug() << "m_robot_y_pixels: " << m_robot_y_pixels;
     double distance = std::sqrt(dx * dx + dy * dy);
 
     if (distance < 5.0) {  // Zielpunkt erreicht
@@ -517,29 +519,29 @@ void ObstacleMapWidget::goToNextPoint() {
     }
 
     double angle_to_target = std::atan2(dy, dx);
-    double angle_diff = angle_to_target - robot_theta_;
+    double angle_diff = angle_to_target + robot_theta_;
     angle_diff = std::atan2(std::sin(angle_diff), std::cos(angle_diff)); // Normalisieren
 
     // **Schwellwerte definieren**
     const double distance_threshold = 3.0;  // Minimaler Abstand, um noch zu fahren
-    const double angle_threshold = 0.8;     // Minimaler Winkel in rad 
+    const double angle_threshold = 0.1;     // Minimaler Winkel in rad 
 
     qDebug() << "robot_theta_" << robot_theta_;
     qDebug() << "Thresh " << angle_threshold << " angle_diff " << angle_diff;
     // Rotation nur, wenn Winkelunterschied größer als Schwellwert
     double rotation = 0.0;
     if (std::abs(angle_diff) > angle_threshold) {
-        double gain_rot = 2.0;
+        double gain_rot = 0.3;
         rotation = std::tanh(gain_rot * angle_diff);
     }
 
     // Geschwindigkeit nur, wenn Abstand größer als Schwellwert und Winkel klein genug ist
     double speed = 0.0;
-    if (distance > distance_threshold && std::abs(angle_diff) < (M_PI / 4)) {  // z.B. 45° maximal
-        double max_speed = 1.0;
+    if (distance > distance_threshold && std::abs(angle_diff) < (M_PI / 2)) { // 90 Grad maximal
+        double max_speed = 0.4;
         double gain = 2.0;
-        double angle_factor = 1.0 - std::tanh(gain * std::abs(angle_diff));
-        speed = max_speed * std::max(angle_factor, 0.1);
+        double angle_factor = 1.0 - std::tanh(gain * angle_diff);
+        speed = std::tanh(max_speed * std::max(angle_factor, 0.1));
     }
 
     RobotNode::RobotSpeed cmd;
