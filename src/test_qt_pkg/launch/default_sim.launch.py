@@ -55,7 +55,10 @@ def generate_launch_description():
         ),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(stage_launch_path)
+            PythonLaunchDescriptionSource(stage_launch_path),
+            launch_arguments={
+                'use_sim_time' : 'true'
+            }.items()
         ),
 
         # Eigene Nodes starten
