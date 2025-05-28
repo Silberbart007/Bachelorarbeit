@@ -387,7 +387,7 @@ QPointF ObstacleMapWidget::sceneToMapCoordinates(const QPointF& scene_pos) {
     double x_m = scene_pos.x() / m_pixels_per_meter;
     double y_m = -scene_pos.y() / m_pixels_per_meter;
 
-    return QPoint(x_m, y_m);
+    return QPointF(x_m, y_m);
 }
 
 
