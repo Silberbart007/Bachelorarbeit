@@ -56,6 +56,7 @@ Der `amcl`-Node benötigt folgende Einstellungen:
         alpha5: 0.05
 
 Möglicherweise müssen auch die anderen Nodes in der Param noch Zuweisungen für base\_scan und base\_scan.
+Die Gewichte beim FollowPath können angepasst werden, ja nach Wunsch.
 
 ---
 
@@ -156,7 +157,8 @@ Beschreibung: Transformationen zwischen Frames
 ## 📝 Hinweise
 
 - Die initiale Pose muss mit der Startposition im Simulator übereinstimmen.
-
+- In der cave.world-Datei sollte man die größe der Map auf 10,10 Stellen anstatt 16,16.
+- In der cave.world Datei sollte man die Startposition auf -4,-4 anpassen.
 ---
 
 ## 📦 Abhängigkeiten

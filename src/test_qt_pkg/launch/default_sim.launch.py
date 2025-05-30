@@ -14,6 +14,13 @@ def generate_launch_description():
         'stage.launch.py'
     )
 
+    # Pfad zur custom bringup-yaml (Wo auch Amcl, Mapserver etc. gestartet wird)
+    custom_params_path = PathJoinSubstitution([
+        FindPackageShare('test_qt_pkg'),
+        'config',
+        'custom_nav2_params.yaml'
+    ])
+
     # Pfad zum bringup-Launchfile
     bringup_launch_path = os.path.join(
         FindPackageShare('nav2_bringup').find('nav2_bringup'),
@@ -47,10 +54,10 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(bringup_launch_path),
             launch_arguments={
-                'map': map_yaml_file,   # falls du MapServer willst
+                'map': map_yaml_file,
                 'use_sim_time': 'true',
                 'autostart': 'true',
-                # 'params_file': '/path/to/nav2_params.yaml'
+                'params_file': custom_params_path
             }.items()
         ),
 

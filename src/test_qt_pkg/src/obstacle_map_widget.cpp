@@ -108,54 +108,9 @@ void ObstacleMapWidget::initializeRobot() {
 
     orientationLine_ = scene_->addLine(m_robot_x_pixels, m_robot_y_pixels, end_x, end_y, QPen(Qt::blue, 2));
 
-    // Startposition ermitteln
-    //QPointF init_pos = worldToScene(m_map.info.origin.position.x, m_map.info.origin.position.y);
-    //robot_x_ = init_pos.x();
-    //robot_y_ = init_pos.y();
-
     // Szene zentrieren auf die Map
     view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);
 
-    // Roboterposition aktualisieren
-    //updateRobotPosition(robot_x_, robot_y_, robot_theta_);
-
-    // Roboterbewegung initiieren
-    // QTimer *move_timer = new QTimer(this);
-    // connect(move_timer, &QTimer::timeout, this, [this]() {
-    //     double dt = 0.05; // 50 ms
-
-    //     // Geschwindigkeit und Drehgeschwindigkeit vom RobotNode holen
-    //     RobotNode::RobotSpeed v = m_robot_node->getSpeed(); // lokale Geschwindigkeit (vorwärts x, seitlich y)
-    //     double omega = m_robot_node->getRotation(); // Winkelgeschwindigkeit in rad/s
-
-    //     // Orientierung nur aktualisieren, wenn Drehgeschwindigkeit ungleich 0 ist
-    //     if (std::abs(omega) > 1e-6) {
-    //         double direction = (v.x >= 0) ? 1.0 : -1.0;
-    //         robot_theta_ += direction * omega * dt;
-    //         if (robot_theta_ > 2 * M_PI) robot_theta_ -= 2 * M_PI;
-    //         else if (robot_theta_ < 0) robot_theta_ += 2 * M_PI;
-    //     }
-
-    //     // Lokale Geschwindigkeit in Weltkoordinaten umrechnen
-    //     double dx = v.x * std::cos(robot_theta_) - v.y * std::sin(robot_theta_);
-    //     double dy = v.x * std::sin(robot_theta_) + v.y * std::cos(robot_theta_);
-
-    //     // Neue Position berechnen
-    //     robot_x_ += dx * dt * m_pixels_per_meter;
-    //     robot_y_ += dy * dt * m_pixels_per_meter;
-
-    //     //qDebug() << "x-Pixel Position: " << robot_x_;
-    //     //qDebug() << "y-Pixel Position: " << robot_y_;
-    //     updateRobotPosition(robot_x_, robot_y_, robot_theta_);
-
-    //     view_->centerOn(robot_x_, robot_y_);
-    // });
-    // move_timer->start(50);
-
-    // Timer für Hindernisaktualisierungen
-    // QTimer *timer = new QTimer(this);
-    // connect(timer, &QTimer::timeout, this, &ObstacleMapWidget::updateObstacles);
-    // timer->start(60000);
     updateObstacles();
 
     // Timer für Strahlenanzeige
@@ -359,7 +314,7 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
 void ObstacleMapWidget::resizeEvent(QResizeEvent *event)
 {
     QWidget::resizeEvent(event);
-    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);  // optional: oder Qt::IgnoreAspectRatio
+    view_->fitInView(scene_->sceneRect(), Qt::KeepAspectRatio); 
     view_->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 
@@ -505,87 +460,58 @@ bool ObstacleMapWidget::isNearObstacle(float x, float y)
     return false;
 }   
 
-// Pfad zu Ende gezeichnet - Signal
+// Pfad zu Ende gezeichnet
 void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {
-    current_path_ = resamplePath(points, 10.0);  // alle 7 Pixel ein Punkt
+    current_path_ = resamplePath(points, 10.0);
     current_target_index_ = 0;
     goToNextPoint();
 }
 
+// Pfad zeichnen - Punkt zeichnen ausführen (je nach größe des Pfads)
 void ObstacleMapWidget::goToNextPoint() {
     if (current_target_index_ >= current_path_.size()) {
         m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
         return;
     }
 
-    QPointF target = current_path_[current_target_index_];
-    qDebug() << "target: " << target;
-    QPointF target_world = sceneToMapCoordinates(target);
-    qDebug() << "World Target: " << target_world;
+    // Pose-Client (Nur 1 Punkt) 
+    if (current_path_.size() == 1) {
+        QPointF target = current_path_[current_target_index_];
+        QPointF target_world = sceneToMapCoordinates(target);
 
+        geometry_msgs::msg::PoseStamped goal;
+        goal.header.frame_id = "map";
+        goal.header.stamp = m_nav2_node->now();
 
-    geometry_msgs::msg::PoseStamped goal;
-    goal.header.frame_id = "map";
-    goal.header.stamp = m_nav2_node->now();
+        goal.pose.position.x = target_world.x();
+        goal.pose.position.y = target_world.y();
+        goal.pose.position.z = 0.0;
+        //goal.pose.orientation.w = 1.0; // keine Drehung
 
-    goal.pose.position.x = target_world.x();
-    goal.pose.position.y = target_world.y();
-    goal.pose.position.z = 0.0;
-    goal.pose.orientation.w = 1.0; // keine Drehung
+        // Punkt an Client schicken (ausführen)
+        m_nav2_node->sendGoal(goal);
+    }
+    // FollowPath-Client 
+    else {
+        nav_msgs::msg::Path path;
+        path.header.frame_id = "map";
+        path.header.stamp = m_nav2_node->now();
 
-    m_nav2_node->sendGoal(goal);
-    
-    /*double dx = target.x() - m_robot_x_pixels;
-    double dy = target.y() - m_robot_y_pixels;
+        for (const QPointF &pt : current_path_) {
+            QPointF world = sceneToMapCoordinates(pt);
 
-    qDebug() << "m_robot_y_pixels: " << m_robot_y_pixels;
-    double distance = std::sqrt(dx * dx + dy * dy);
-
-    if (distance < 5.0) {  // Zielpunkt erreicht
-        current_target_index_++;
-        if (current_target_index_ >= current_path_.size()) {
-            m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
-            return;
+            geometry_msgs::msg::PoseStamped pose;
+            pose.header = path.header;
+            pose.pose.position.x = world.x();
+            pose.pose.position.y = world.y();
+            pose.pose.position.z = 0.0;
+            //pose.pose.orientation.w = 1.0;  // keine Drehung
+            path.poses.push_back(pose);
         }
-        target = current_path_[current_target_index_];
-        dx = target.x() - m_robot_x_pixels;
-        dy = target.y() - m_robot_y_pixels;
+
+        // Pfad an Client schicken (ausführen)
+        m_nav2_node->sendPath(path);
     }
-
-    double angle_to_target = std::atan2(dy, dx);
-    double angle_diff = angle_to_target + robot_theta_;
-    angle_diff = std::atan2(std::sin(angle_diff), std::cos(angle_diff)); // Normalisieren
-
-    // **Schwellwerte definieren**
-    const double distance_threshold = 3.0;  // Minimaler Abstand, um noch zu fahren
-    const double angle_threshold = 0.1;     // Minimaler Winkel in rad 
-
-    qDebug() << "robot_theta_" << robot_theta_;
-    qDebug() << "Thresh " << angle_threshold << " angle_diff " << angle_diff;
-    // Rotation nur, wenn Winkelunterschied größer als Schwellwert
-    double rotation = 0.0;
-    if (std::abs(angle_diff) > angle_threshold) {
-        double gain_rot = 0.3;
-        rotation = std::tanh(gain_rot * angle_diff);
-    }
-
-    // Geschwindigkeit nur, wenn Abstand größer als Schwellwert und Winkel klein genug ist
-    double speed = 0.0;
-    if (distance > distance_threshold && std::abs(angle_diff) < (M_PI / 2)) { // 90 Grad maximal
-        double max_speed = 0.4;
-        double gain = 2.0;
-        double angle_factor = 1.0 - std::tanh(gain * angle_diff);
-        speed = std::tanh(max_speed * std::max(angle_factor, 0.1));
-    }
-
-    RobotNode::RobotSpeed cmd;
-    cmd.x = speed;
-    cmd.y = 0.0;
-
-    m_robot_node->publish_velocity(cmd, rotation);
-
-    // Timer für nächsten Aufruf
-    QTimer::singleShot(50, this, &ObstacleMapWidget::goToNextPoint);*/
 }
 
 QVector<QPointF> ObstacleMapWidget::resamplePath(const QVector<QPointF>& originalPoints, double spacing = 5.0) {
@@ -613,7 +539,7 @@ QVector<QPointF> ObstacleMapWidget::resamplePath(const QVector<QPointF>& origina
         }
         accumulatedDist += segmentLength;
     }
-    // Optional: letzten Punkt anfügen
+    // letzten Punkt anfügen
     if (!newPoints.last().isNull() && newPoints.last() != originalPoints.last())
         newPoints.push_back(originalPoints.last());
 
