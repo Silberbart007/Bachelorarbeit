@@ -38,6 +38,7 @@ public:
     void setNav2Node(std::shared_ptr<Nav2Client> nav2_node);
     void setDrawPathMode(bool isEnabled) { drawPathMode_ = isEnabled; };
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
+    void setFollowMode(bool isEnabled) { followMode_ = isEnabled; };
 
 protected:
     void resizeEvent(QResizeEvent *) override;
@@ -57,6 +58,7 @@ private:
     void updateRobotPosition(double x, double y, double theta);
     void setupStaticObstacles();
     bool isNearObstacle(float x, float y);
+    void followCurrentPoint();
     QPointF worldToScene(double x_m, double y_m);
     QPointF sceneToMapCoordinates(const QPointF& scene_pos);
     void initializeRobot();
@@ -77,6 +79,7 @@ private:
     // Bool Variablen, ob Funktion gerade aktiv ist
     bool drawPathMode_ = false;
     bool beamMode_ = false;
+    bool followMode_ = false;
 
     // Pfad zeichnen 
     bool drawing_;
@@ -85,6 +88,10 @@ private:
     int current_target_index_ = 0;  // Index des aktuellen Zielpunkts
     QVector<QPointF> current_path_; // Der Pfad, als Liste von Punkten
     QGraphicsEllipseItem* temp_point_item_; // Einzelnen Punkt verfolgen
+
+    // Follow Mode
+    bool following_;
+    QPointF current_follow_point_;
 
     // Skalierung mit Fingern
     QPointF lastPinchCenterInView_;

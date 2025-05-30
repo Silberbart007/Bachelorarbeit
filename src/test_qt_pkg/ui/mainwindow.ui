@@ -430,6 +430,16 @@
            </item>
            <item>
             <property name="text">
+             <string>Follow Mode</string>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+           </item>
+           <item>
+            <property name="text">
              <string>Beam</string>
             </property>
             <property name="font">
@@ -809,7 +819,7 @@
      <x>0</x>
      <y>0</y>
      <width>1342</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
   </widget>

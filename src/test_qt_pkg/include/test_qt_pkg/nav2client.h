@@ -23,10 +23,13 @@ public:
     
     bool sendGoal(const geometry_msgs::msg::PoseStamped & goal_pose);
     bool sendPath(const nav_msgs::msg::Path & path);
+    bool cancelGoal();
 
 private:
     rclcpp_action::Client<NavigateToPose>::SharedPtr m_pose_client;
     rclcpp_action::Client<FollowPath>::SharedPtr m_path_client;
+
+    rclcpp_action::Client<NavigateToPose>::GoalHandle::SharedPtr m_current_goal_handle;
 
     void goalResponseCallback(std::shared_ptr<GoalHandleNavigateToPose> goal_handle);
     void feedbackCallback(GoalHandleNavigateToPose::SharedPtr, const std::shared_ptr<const NavigateToPose::Feedback> feedback);

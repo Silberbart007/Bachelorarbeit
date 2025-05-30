@@ -76,6 +76,11 @@ bool Nav2Client::sendGoal(const geometry_msgs::msg::PoseStamped & goal_pose)
     return false;
   }
 
+  // Vorheriges Ziel abbrechen
+//   if (m_current_goal_handle) {
+//     m_pose_client->async_cancel_goal(m_current_goal_handle);
+//   }
+
   NavigateToPose::Goal goal_msg;
   goal_msg.pose = goal_pose;
 
@@ -96,6 +101,17 @@ bool Nav2Client::sendGoal(const geometry_msgs::msg::PoseStamped & goal_pose)
   };
 
   auto future_goal_handle = m_pose_client->async_send_goal(goal_msg, send_goal_options);
+  future_goal_handle.wait();
+  m_current_goal_handle = future_goal_handle.get();
+
+  return true;
+}
+
+bool Nav2Client::cancelGoal() {
+  // Vorheriges Ziel abbrechen
+  if (m_current_goal_handle) {
+    m_pose_client->async_cancel_goal(m_current_goal_handle);
+  }
 
   return true;
 }

@@ -264,6 +264,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
     bool drawPathMode = false;
     bool beamMode = false;
+    bool followMode = false;
 
     // Prüfe die ausgewählten Items
     for (QListWidgetItem *item : selectedItems) {
@@ -272,12 +273,15 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
             drawPathMode = true;
         } else if (text == "Beam") {
             beamMode = true;
+        } else if (text == "Follow Mode") {
+            followMode = true;
         }
     }
 
     // Anzeigewidgets sichtbar oder unsichtbar machen
     ui->obstacle_map_widget->setDrawPathMode(drawPathMode);
     ui->obstacle_map_widget->setBeamMode(beamMode);
+    ui->obstacle_map_widget->setFollowMode(followMode);
 }
 
 

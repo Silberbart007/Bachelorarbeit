@@ -6,6 +6,7 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     view_(new QGraphicsView(scene_, this))
 {
     drawing_ = false;
+    following_ = false;
     temp_path_item_ = nullptr;
     temp_point_item_ = nullptr;
     m_robot_x_meters = 0.0; 
@@ -117,6 +118,11 @@ void ObstacleMapWidget::initializeRobot() {
     QTimer *beam_timer = new QTimer(this);
     connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateDummyData);
     beam_timer->start(100); // alle 100 ms
+
+    // Timer für FollowMode
+    QTimer* follow_timer = new QTimer(this);
+    connect(follow_timer, &QTimer::timeout, this, &ObstacleMapWidget::followCurrentPoint);
+    follow_timer->start(1000);  // alle 500 ms neues Ziel
 }
 
 
@@ -179,6 +185,11 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                     temp_path_item_ = nullptr;
                 }
             }
+            // Follow Mode
+            else if (followMode_) {
+                following_ = true;
+                current_follow_point_ = view_->mapToScene(mouseEvent->pos());
+            }
 
             return true;  // Event verarbeitet
         }
@@ -204,6 +215,10 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                 }
 
                 temp_path_item_ = scene_->addPath(path, QPen(Qt::blue, 2));
+            }
+            // Follow Mode
+            else if (followMode_) {
+                current_follow_point_ = view_->mapToScene(mouseEvent->pos());
             }
 
             return true;  // Event verarbeitet
@@ -252,6 +267,11 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                 }
 
             return true;  // Event verarbeitet
+            }
+            // Follow Mode
+            if (followMode_) {
+                following_ = false;
+                return true;
             }
         }
         // Gesten
@@ -332,13 +352,6 @@ QPointF ObstacleMapWidget::worldToScene(double x_m, double y_m) {
 
 
 QPointF ObstacleMapWidget::sceneToMapCoordinates(const QPointF& scene_pos) {
-
-    double resolution = m_map.info.resolution;
-
-    // Ursprung der Karte in Weltkoordinaten (Meter)
-    double origin_x = m_map.info.origin.position.x;
-    double origin_y = m_map.info.origin.position.y;
-
     double x_m = scene_pos.x() / m_pixels_per_meter;
     double y_m = -scene_pos.y() / m_pixels_per_meter;
 
@@ -460,9 +473,30 @@ bool ObstacleMapWidget::isNearObstacle(float x, float y)
     return false;
 }   
 
+// Im Follow Mode aktuelle Finger/Maus-Position verfolgen (wird jede ...ms geschickt)
+void ObstacleMapWidget::followCurrentPoint() {
+    // Roboter fährt bei keinem Berührungspunkt "zu sich selbst"
+    if (!followMode_ || !following_) {
+        return;
+    }
+
+    QPointF world = sceneToMapCoordinates(current_follow_point_);
+    geometry_msgs::msg::PoseStamped goal;
+    goal.header.stamp = m_nav2_node->now();
+    goal.header.frame_id = "map";  
+
+    goal.pose.position.x = world.x();
+    goal.pose.position.y = world.y();
+    goal.pose.position.z = 0.0;
+
+    // Punkt an Client schicken (ausführen)
+    m_nav2_node->sendGoal(goal);
+}
+
+
 // Pfad zu Ende gezeichnet
 void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {
-    current_path_ = resamplePath(points, 10.0);
+    current_path_ = resamplePath(points, 5.0);
     current_target_index_ = 0;
     goToNextPoint();
 }
