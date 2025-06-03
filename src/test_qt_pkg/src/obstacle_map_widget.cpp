@@ -23,6 +23,8 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
 
     // Gesten erkennen
     view_->viewport()->grabGesture(Qt::PinchGesture);
+    view_->viewport()->grabGesture(Qt::PanGesture);
+
     //view_->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
 
     // View in Layout einfügen
@@ -281,16 +283,34 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
             // Zoomen
             if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
                 QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
-                
-                if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
-                    qreal scaleFactor = pinch->scaleFactor(); 
-                    
-                    // -> Zoom auf die View anwenden
-                    view_->scale(scaleFactor, scaleFactor);
 
-                    return true;  // Event verarbeitet
+                if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
+                    qreal scaleFactor = pinch->scaleFactor();
+                    view_->scale(scaleFactor, scaleFactor);
+                    return true;
                 }
             }
+            // Mit Finger verschieben (panning mit 3 Fingern)
+            if (QGesture* g = gestureEvent->gesture(Qt::PanGesture)) {
+                QPanGesture* pan = static_cast<QPanGesture*>(g);
+                QPointF delta = pan->delta();
+
+                // Optionales Debugging
+                qDebug() << "Delta: " << delta;
+
+                // aktuellen Mittelpunkt holen
+                QPointF center = view_->mapToScene(view_->viewport()->rect().center());
+
+                // neuen Mittelpunkt berechnen (delta invertieren für natürliches Wischen)
+                QPointF newCenter = center - delta;
+
+                // View auf neuen Mittelpunkt setzen
+                view_->centerOn(newCenter);
+
+                return true;
+            }
+
+
         }
     }
     // Alle anderen Events normal weiterreichen
