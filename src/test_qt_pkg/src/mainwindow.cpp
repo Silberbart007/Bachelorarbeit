@@ -110,7 +110,7 @@ MainWindow::MainWindow(QWidget *parent)
     //QApplication::changeOverrideCursor(cursor);
 
     // Auf vollen Bildschirm (4k) aktivieren
-    this->resize(1920, 1080);
+    this->resize(3840, 2160);
 }
 
 MainWindow::~MainWindow()
