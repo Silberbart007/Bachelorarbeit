@@ -23,7 +23,7 @@ public:
     
     bool sendGoal(const geometry_msgs::msg::PoseStamped & goal_pose);
     bool sendPath(const nav_msgs::msg::Path & path);
-    bool cancelGoal();
+    bool cancelGoalsPose(); 
 
 private:
     rclcpp_action::Client<NavigateToPose>::SharedPtr m_pose_client;

@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Scan-Callback registrieren
     m_robot_node->on_scan_received = [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
-        //qDebug() << "Lasercallback aus Mainwindow";
+        ui->obstacle_map_widget->laser_callback(msg); //Lasercallback aus ObstacleWidget
     };
 
     // UI "aktivieren"

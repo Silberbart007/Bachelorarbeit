@@ -16,7 +16,7 @@ RobotNode::RobotNode() : Node("robot_node")
 
     // Scan subscriber
     m_scan_sub = this->create_subscription<sensor_msgs::msg::LaserScan>(
-        "scan", 10,
+        "/base_scan", 10,
         std::bind(&RobotNode::scan_callback, this, std::placeholders::_1)
     );
 

@@ -47,6 +47,12 @@ ObstacleMapWidget::~ObstacleMapWidget()
     delete view_;
 }
 
+// Callback für Laser
+void ObstacleMapWidget::laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
+    m_current_scan = *msg;
+    m_scan_available = true;
+}
+
 // Roboter Node setzen und Map/Roboter initiieren
 void ObstacleMapWidget::setRobotNode(std::shared_ptr<RobotNode> robot_node) {
     m_robot_node = robot_node;
@@ -95,7 +101,7 @@ void ObstacleMapWidget::initializeRobot() {
     connect(update_pose_timer, &QTimer::timeout, this, [this]() {
         updateRobotPosition(m_robot_x_meters, m_robot_y_meters, robot_theta_);
     });
-    update_pose_timer->start(50);
+    update_pose_timer->start(10);
 
     // Roboter zeichnen
     robot_ = scene_->addEllipse(m_robot_x_pixels - m_robot_size / 2,
@@ -118,7 +124,7 @@ void ObstacleMapWidget::initializeRobot() {
 
     // Timer für Strahlenanzeige
     QTimer *beam_timer = new QTimer(this);
-    connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateDummyData);
+    connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateLaserBeams);
     beam_timer->start(100); // alle 100 ms
 
     // Timer für FollowMode
@@ -127,6 +133,42 @@ void ObstacleMapWidget::initializeRobot() {
     follow_timer->start(1000);  // alle 500 ms neues Ziel
 }
 
+
+void ObstacleMapWidget::generateLaserBeams() {
+    if (m_scan_available && beamMode_) {
+        // Alte Strahlen löschen
+        for (auto item : beam_items_) {
+            scene_->removeItem(item);
+            delete item;
+        }
+        beam_items_.clear();
+
+        int numRays = m_current_scan.ranges.size();
+        float angle = m_current_scan.angle_min;
+
+        for (int i = 0; i < numRays; ++i) {
+            float dist = m_current_scan.ranges[i];
+            if (!std::isfinite(dist)) continue;  // NaN oder Inf überspringen
+
+            float theta = angle + robot_theta_;
+
+            float endX = m_robot_x_pixels + dist * m_pixels_per_meter * std::cos(theta);
+            float endY = m_robot_y_pixels - dist * m_pixels_per_meter * std::sin(theta);
+
+            QGraphicsLineItem *line = scene_->addLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY, QPen(Qt::red));
+            line->setZValue(0);
+            beam_items_.push_back(line);
+
+            angle += m_current_scan.angle_increment;
+        }
+    } else {
+        for (auto item : beam_items_) {
+            scene_->removeItem(item);
+            delete item;
+        }
+        beam_items_.clear();
+    }
+}
 
 void ObstacleMapWidget::generateDummyData() {
     if (beamMode_) {
@@ -273,6 +315,9 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
             // Follow Mode
             if (followMode_) {
                 following_ = false;
+                
+                // alle Goals canceln
+                m_nav2_node->cancelGoalsPose();
                 return true;
             }
         }
@@ -329,6 +374,9 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
     //qDebug() << "x nach Worldtoscene: " << m_robot_x_pixels;
 
         if (robot_) {
+            // Roboter vorne anzeigen
+            robot_->setZValue(1);
+
             // Größe und Form des Roboters (immer bei 0,0 relativ zum Item)
             robot_->setRect(0, 0, m_robot_size, m_robot_size);
 
@@ -345,6 +393,9 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
             double endX = m_robot_x_pixels + length * std::cos(robot_theta_);
             double endY = m_robot_y_pixels - length * std::sin(robot_theta_); 
             orientationLine_->setLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY);
+
+            // Orientierung ganz Vorne anzeigen
+            orientationLine_->setZValue(2);
         }
 
     

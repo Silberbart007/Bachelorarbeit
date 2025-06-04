@@ -76,11 +76,6 @@ bool Nav2Client::sendGoal(const geometry_msgs::msg::PoseStamped & goal_pose)
     return false;
   }
 
-  // Vorheriges Ziel abbrechen
-//   if (m_current_goal_handle) {
-//     m_pose_client->async_cancel_goal(m_current_goal_handle);
-//   }
-
   NavigateToPose::Goal goal_msg;
   goal_msg.pose = goal_pose;
 
@@ -101,16 +96,28 @@ bool Nav2Client::sendGoal(const geometry_msgs::msg::PoseStamped & goal_pose)
   };
 
   auto future_goal_handle = m_pose_client->async_send_goal(goal_msg, send_goal_options);
-  future_goal_handle.wait();
-  m_current_goal_handle = future_goal_handle.get();
 
   return true;
 }
 
-bool Nav2Client::cancelGoal() {
-  // Vorheriges Ziel abbrechen
-  if (m_current_goal_handle) {
-    m_pose_client->async_cancel_goal(m_current_goal_handle);
+// Alle Ziele des Pose Clients canceln
+bool Nav2Client::cancelGoalsPose() 
+{
+  // Auf server warten
+  if (!m_pose_client->wait_for_action_server(std::chrono::seconds(5))) {
+    RCLCPP_ERROR(this->get_logger(), "Action server (pose) nicht erreichbar");
+    return false;
+  }
+
+  auto cancel_future = m_pose_client->async_cancel_all_goals();
+
+  // Goals canceln
+  if (cancel_future.wait_for(std::chrono::seconds(2)) == std::future_status::ready) {
+    RCLCPP_INFO(this->get_logger(), "Alle Goals wurden erfolgreich abgebrochen.");
+    return true;
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "Abbruch der Goals hat zu lange gedauert oder ist fehlgeschlagen.");
+    return false;
   }
 
   return true;

@@ -40,6 +40,9 @@ public:
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
     void setFollowMode(bool isEnabled) { followMode_ = isEnabled; };
 
+    // Callback für Laser (wird in RobotNode aufgerufen)
+    void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
+
 protected:
     void resizeEvent(QResizeEvent *) override;
     //void paintEvent(QPaintEvent *) override; 
@@ -59,9 +62,14 @@ private:
     void setupStaticObstacles();
     bool isNearObstacle(float x, float y);
     void followCurrentPoint();
+    void initializeRobot();
+
+    // Hilfsfunktionen zum umrechnen
     QPointF worldToScene(double x_m, double y_m);
     QPointF sceneToMapCoordinates(const QPointF& scene_pos);
-    void initializeRobot();
+
+    // Beams aus Laserdaten generieren
+    void generateLaserBeams();
 
     Ui::ObstacleMapWidget *ui;
     QGraphicsScene *scene_;
@@ -99,8 +107,12 @@ private:
     qreal lastPinchScaleFactor_;
 
     // Laserdaten
+    // Dummy
     std::vector<double> latestDistances_;
     QVector<QGraphicsLineItem*> beam_items_;
+    // Echter Laser
+    sensor_msgs::msg::LaserScan m_current_scan;
+    bool m_scan_available = false;
 
     // Roboter Node
     std::shared_ptr<RobotNode> m_robot_node;
