@@ -244,11 +244,6 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                 path_points_.clear();
                 QPointF scenePos = view_->mapToScene(mouseEvent->pos());
                 path_points_.push_back(scenePos);
-                if (temp_path_item_) {
-                    scene_->removeItem(temp_path_item_);
-                    delete temp_path_item_;
-                    temp_path_item_ = nullptr;
-                }
             }
             // Follow Mode
             else if (followMode_) {

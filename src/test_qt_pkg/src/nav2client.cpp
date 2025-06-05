@@ -54,15 +54,15 @@ bool Nav2Client::sendPath(const nav_msgs::msg::Path & path)
                 break;
             case rclcpp_action::ResultCode::ABORTED:
                 RCLCPP_ERROR(this->get_logger(), "FollowPath wurde abgebrochen.");
-                m_obstacle_map->deleteAllDrawings();
+                //m_obstacle_map->deleteAllDrawings();
                 break;
             case rclcpp_action::ResultCode::CANCELED:
                 RCLCPP_WARN(this->get_logger(), "FollowPath wurde gecancelt.");
-                m_obstacle_map->deleteAllDrawings();
+                //m_obstacle_map->deleteAllDrawings();
                 break;
             default:
                 RCLCPP_ERROR(this->get_logger(), "Unbekannter Fehler bei FollowPath.");
-                m_obstacle_map->deleteAllDrawings();
+                //m_obstacle_map->deleteAllDrawings();
                 break;
         }
     };
@@ -151,6 +151,7 @@ void Nav2Client::resultCallback(const GoalHandleNavigateToPose::WrappedResult & 
     switch (result.code) {
         case rclcpp_action::ResultCode::SUCCEEDED:
             RCLCPP_INFO(this->get_logger(), "Navigation erfolgreich!");
+            m_obstacle_map->deleteAllDrawings();
             break;
         case rclcpp_action::ResultCode::ABORTED:
             RCLCPP_ERROR(this->get_logger(), "Navigation abgebrochen!");
