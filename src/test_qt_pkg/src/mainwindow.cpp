@@ -273,7 +273,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
             drawPathMode = true;
         } else if (text == "Beam") {
             beamMode = true;
-        } else if (text == "Follow Mode") {
+        } else if (text == "Follow Finger") {
             followMode = true;
         }
     }

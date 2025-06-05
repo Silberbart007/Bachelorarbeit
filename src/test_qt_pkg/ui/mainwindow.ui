@@ -61,6 +61,12 @@
       </property>
       <item alignment="Qt::AlignLeft|Qt::AlignTop">
        <widget class="QWidget" name="ModesLayout_2" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>500</width>
+          <height>500</height>
+         </size>
+        </property>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
@@ -94,9 +100,15 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>400</width>
+             <height>150</height>
+            </size>
+           </property>
            <property name="maximumSize">
             <size>
-             <width>250</width>
+             <width>300</width>
              <height>1000</height>
             </size>
            </property>
@@ -120,13 +132,13 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>200</width>
-             <height>100</height>
+             <width>320</width>
+             <height>400</height>
             </size>
            </property>
            <property name="maximumSize">
             <size>
-             <width>400</width>
+             <width>500</width>
              <height>16777215</height>
             </size>
            </property>
@@ -144,7 +156,7 @@
               </property>
               <property name="maximumSize">
                <size>
-                <width>250</width>
+                <width>350</width>
                 <height>600</height>
                </size>
               </property>
@@ -430,7 +442,7 @@
            </item>
            <item>
             <property name="text">
-             <string>Follow Mode</string>
+             <string>Follow Finger</string>
             </property>
             <property name="font">
              <font>
@@ -610,7 +622,7 @@
         </layout>
        </widget>
       </item>
-      <item>
+      <item alignment="Qt::AlignHCenter">
        <widget class="QWidget" name="sliders" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -640,7 +652,7 @@
          <property name="rightMargin">
           <number>0</number>
          </property>
-         <item alignment="Qt::AlignRight">
+         <item>
           <widget class="CustomTouchSliderHorizontal" name="rotation_slider" native="true">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -652,6 +664,12 @@
             <size>
              <width>500</width>
              <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>300</width>
+             <height>16777215</height>
             </size>
            </property>
           </widget>
@@ -819,7 +837,7 @@
      <x>0</x>
      <y>0</y>
      <width>1342</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

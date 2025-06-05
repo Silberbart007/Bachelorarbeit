@@ -122,6 +122,9 @@ void ObstacleMapWidget::initializeRobot() {
 
     updateObstacles();
 
+    // Dieses Objekt an Nav2Client übergeben
+    m_nav2_node->setObstacleMap(this);
+
     // Timer für Strahlenanzeige
     QTimer *beam_timer = new QTimer(this);
     connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateLaserBeams);
@@ -209,6 +212,22 @@ void ObstacleMapWidget::generateDummyData() {
     }
 }
 
+// Alle Zeichnungen (Also Punkte und Pfade) löschen
+void ObstacleMapWidget::deleteAllDrawings() {
+    // Gezeichnete Linie entfernen, falls vorhanden
+    if (temp_path_item_) {
+        scene_->removeItem(temp_path_item_);
+        delete temp_path_item_;
+        temp_path_item_ = nullptr;
+    }
+    // Einzelnen Punkt entfernen, falls vorhanden
+    if (temp_point_item_) {
+        scene_->removeItem(temp_point_item_);
+        delete temp_point_item_;
+        temp_point_item_ = nullptr;
+    }
+}
+
 // Alle Events abfangen -> Pfad zeichnen
 bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
 {
@@ -216,7 +235,9 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
         // Klick - anfang
         if (event->type() == QEvent::MouseButtonPress) {
             QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-
+            
+            deleteAllDrawings();
+            
             // Pfad Zeichnen - Modus
             if (drawPathMode_) {
                 drawing_ = true;
@@ -273,20 +294,6 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
             // Pfad zeichnen - Modus
             if (drawPathMode_) {
                 drawing_ = false;
-
-                // Einzelnen Punkt entfernen, falls vorhanden
-                if (temp_point_item_) {
-                    scene_->removeItem(temp_point_item_);
-                    delete temp_point_item_;
-                    temp_point_item_ = nullptr;
-                }
-
-                // Gezeichnete Linie entfernen, falls vorhanden
-                if (temp_path_item_) {
-                    scene_->removeItem(temp_path_item_);
-                    delete temp_path_item_;
-                    temp_path_item_ = nullptr;
-                }
 
                 if (path_points_.size() >= 2) {
                     pathDrawn(path_points_);

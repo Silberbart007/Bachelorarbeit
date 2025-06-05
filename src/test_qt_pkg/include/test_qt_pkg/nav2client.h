@@ -6,7 +6,10 @@
 #include <nav2_msgs/action/follow_path.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include "mainwindow.h"
+#include "obstacle_map_widget.h"
 #include <functional>
+class ObstacleMapWidget;
 
 class Nav2Client : public rclcpp::Node
 {
@@ -25,7 +28,13 @@ public:
     bool sendPath(const nav_msgs::msg::Path & path);
     bool cancelGoalsPose(); 
 
+    // Setter
+    void setObstacleMap(ObstacleMapWidget* obstacle_map) { m_obstacle_map = obstacle_map; }; 
+
 private:
+    // Referenz zum ObstacleMapWidget
+    ObstacleMapWidget* m_obstacle_map;
+
     rclcpp_action::Client<NavigateToPose>::SharedPtr m_pose_client;
     rclcpp_action::Client<FollowPath>::SharedPtr m_path_client;
 

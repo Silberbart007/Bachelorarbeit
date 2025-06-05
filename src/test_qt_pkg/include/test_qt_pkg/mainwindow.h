@@ -18,6 +18,7 @@
 #include "robot_node.h"
 #include "wheel.h"
 #include "nav2client.h"
+class Nav2Client;
 
 namespace Ui {
 class MainWindow;
@@ -32,8 +33,8 @@ public:
     ~MainWindow();
 
     // Getter für den Node
-    rclcpp::Node::SharedPtr getRobotNode() const { return m_robot_node; }
-    rclcpp::Node::SharedPtr getNav2Node() const { return m_nav2_node; }
+    rclcpp::Node::SharedPtr getRobotNode() const { return m_robot_node; };
+    rclcpp::Node::SharedPtr getNav2Node() const { return std::static_pointer_cast<rclcpp::Node>(m_nav2_node); };
 
 private slots:
 

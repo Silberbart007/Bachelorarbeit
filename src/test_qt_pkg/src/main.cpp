@@ -1,5 +1,6 @@
 #include <QApplication>
 #include "mainwindow.h"
+#include "nav2client.h"
 
 int main(int argc, char *argv[])
 {

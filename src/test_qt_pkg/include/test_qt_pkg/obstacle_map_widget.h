@@ -19,7 +19,10 @@
 #include <tf2/LinearMath/Matrix3x3.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include "robot_node.h"
+#include "nav2client.h"
 #include "mainwindow.h"
+
+class Nav2Client;
 
 namespace Ui {
 class ObstacleMapWidget;
@@ -39,6 +42,9 @@ public:
     void setDrawPathMode(bool isEnabled) { drawPathMode_ = isEnabled; };
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
     void setFollowMode(bool isEnabled) { followMode_ = isEnabled; };
+
+    // Alle Punkte und Paths von der Karte löschen
+    void deleteAllDrawings();
 
     // Callback für Laser (wird in RobotNode aufgerufen)
     void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
