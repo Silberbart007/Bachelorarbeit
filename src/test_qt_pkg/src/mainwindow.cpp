@@ -9,6 +9,8 @@ MainWindow::MainWindow(QWidget *parent)
     {
     // Variablen Initialisieren
     m_counter = 0;
+    m_parkingMode = false;
+    m_vectorMode = false;
 
     // Robot Node erstellen
     m_robot_node = std::make_shared<RobotNode>();
@@ -162,9 +164,62 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
             // Optional: minimale sichtbare Länge, damit bei kleinen Werten noch etwas angezeigt wird
             if (std::abs(speed_value.x) > 0.01) {
                 int thickness = 6;
-                cv::arrowedLine(frame, start, end, arrow_color, thickness);
+                // Nur anzeigen wenn vectorMode
+                if (m_vectorMode)
+                    cv::arrowedLine(frame, start, end, arrow_color, thickness);
             }
             // Ende Vektorpfeil
+
+            // === Fahrspurhilfslinie für parkingMode ===
+            if (m_parkingMode) {
+                double wheel_base = 150.0; 
+                double max_steering_angle = M_PI / 4; // 45 Grad
+                double steering_angle = rotation_value * max_steering_angle;
+
+                if (std::abs(steering_angle) < 1e-3) {
+                    int offset = 20; // Abstand der Linien
+
+                    // Erste Linie (Mittel)
+                    cv::line(frame,
+                            start,
+                            cv::Point(start.x, start.y - max_length),
+                            cv::Scalar(0, 255, 0), 3);
+
+                    // Zweite Linie (parallel rechts)
+                    cv::line(frame,
+                            cv::Point(start.x + offset, start.y),
+                            cv::Point(start.x + offset, start.y - max_length),
+                            cv::Scalar(0, 255, 0), 3);
+                } else {
+                    double R = wheel_base / std::tan(steering_angle);
+                    int num_points = 30;
+                    double offset = 20.0; // Abstand der parallelen Linie in Pixel
+
+                    std::vector<cv::Point> curve_points;
+                    std::vector<cv::Point> offset_curve_points;
+
+                    for (int i = 0; i < num_points; ++i) {
+                        double dist = i * (max_length / num_points);
+                        double theta = dist / R;
+
+                        int x = static_cast<int>(start.x + R * (1 - std::cos(theta)));
+                        int y = static_cast<int>(start.y + -1.0 * R * std::sin(theta));
+
+                        curve_points.emplace_back(cv::Point(x, y));
+
+                        // Einfacher Offset in x-Richtung (nach rechts)
+                        offset_curve_points.emplace_back(cv::Point(x + static_cast<int>(offset), y));
+                    }
+
+                    // Mittlere Kurve zeichnen
+                    cv::polylines(frame, curve_points, false, cv::Scalar(0, 255, 0), 3);
+
+                    // Parallele zweite Kurve zeichnen (einfacher X-Offset)
+                    cv::polylines(frame, offset_curve_points, false, cv::Scalar(0, 255, 0), 3);
+                }
+            }
+            // === Ende Fahrspurhilfslinie ===
+
 
             // Kamera-Bild anzeigen
             //
@@ -284,6 +339,26 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     ui->obstacle_map_widget->setFollowMode(followMode);
 }
 
+// Optionen Fenster des Kamerabildes, zum Auswählen der Funktionen
+void MainWindow::on_cam_list_itemSelectionChanged()
+{
+    // Hole alle aktuell ausgewählten Items
+    QList<QListWidgetItem*> selectedItems = ui->cam_list->selectedItems();
+
+    // Flags, ob die jeweiligen Assitenzsysteme angezeigt werden sollen
+    m_vectorMode = false;
+    m_parkingMode = false;
+
+    // Prüfe die ausgewählten Items
+    for (QListWidgetItem *item : selectedItems) {
+        QString text = item->text();
+        if (text == "Vektorpfeil") {
+            m_vectorMode = true;
+        } else if (text == "Parkmodus") {
+            m_parkingMode = true;
+        }
+    }
+}
 
 // Optionen Button
 void MainWindow::on_modes_button_clicked() {

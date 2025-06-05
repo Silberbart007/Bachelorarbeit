@@ -334,6 +334,51 @@
            </property>
           </widget>
          </item>
+         <item row="1" column="0">
+          <widget class="QListWidget" name="cam_list">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="selectionMode">
+            <enum>QAbstractItemView::MultiSelection</enum>
+           </property>
+           <property name="flow">
+            <enum>QListView::LeftToRight</enum>
+           </property>
+           <property name="resizeMode">
+            <enum>QListView::Fixed</enum>
+           </property>
+           <property name="spacing">
+            <number>0</number>
+           </property>
+           <property name="batchSize">
+            <number>200</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>Vektorpfeil</string>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Parkmodus</string>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+           </item>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>

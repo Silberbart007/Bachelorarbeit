@@ -56,12 +56,19 @@ private slots:
     // Obstacle Map List
     void on_obstacle_map_list_itemSelectionChanged();
 
+    // Kameramodi-List
+    void on_cam_list_itemSelectionChanged();
+
 private:
     Ui::MainWindow *ui;
     JoystickWidget *joystick;
 
     std::shared_ptr<RobotNode> m_robot_node;
     std::shared_ptr<Nav2Client> m_nav2_node;
+
+    // Kameramodi
+    bool m_parkingMode;
+    bool m_vectorMode;
     
     // Konkrete Callback Funktionen
     void image_callback(const sensor_msgs::msg::Image::SharedPtr msg);
