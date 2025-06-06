@@ -120,6 +120,15 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+// Hilfsfunktion zum projezieren eines 3D Objekts auf dem 2D Bild
+cv::Point MainWindow::projectToImage(double x, double y, double z,
+                         double fx, double fy,
+                         double cx, double cy) {
+    int img_x = static_cast<int>(fx * x / z + cx);
+    int img_y = static_cast<int>(fy * y / z + cy);
+    return cv::Point(img_x, img_y);
+}
+
 // Callback für Kameradaten (Subscriber)
 void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
 {
@@ -174,51 +183,66 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
             if (m_parkingMode) {
                 double wheel_base = 150.0; 
                 double max_steering_angle = M_PI / 4; // 45 Grad
-                double steering_angle = rotation_value * max_steering_angle;
+                double steering_angle = -rotation_value * max_steering_angle;
 
-                if (std::abs(steering_angle) < 1e-3) {
-                    int offset = 20; // Abstand der Linien
+                // Kameraparameter (vereinfacht, anpassbar)
+                double fx = 800.0;
+                double fy = 800.0;
+                double cx = frame.cols / 2.0;
+                double cy = frame.rows / 2.0;
 
-                    // Erste Linie (Mittel)
-                    cv::line(frame,
-                            start,
-                            cv::Point(start.x, start.y - max_length),
-                            cv::Scalar(0, 255, 0), 3);
+                // Kamera ist auf 30 cm Höhe
+                double camera_height = 30.0; // in cm
 
-                    // Zweite Linie (parallel rechts)
-                    cv::line(frame,
-                            cv::Point(start.x + offset, start.y),
-                            cv::Point(start.x + offset, start.y - max_length),
-                            cv::Scalar(0, 255, 0), 3);
-                } else {
-                    double R = wheel_base / std::tan(steering_angle);
-                    int num_points = 30;
-                    double offset = 20.0; // Abstand der parallelen Linie in Pixel
+                // Linienlänge in Z-Richtung (Tiefe)
+                double max_z = 200.0; // 2 Meter
+                int num_points = 30;
+                double offset = 20.0; // Abstand paralleler Linien (in cm)
 
-                    std::vector<cv::Point> curve_points;
-                    std::vector<cv::Point> offset_curve_points;
+                std::vector<cv::Point> left_curve_points;
+                std::vector<cv::Point> right_curve_points;
 
-                    for (int i = 0; i < num_points; ++i) {
-                        double dist = i * (max_length / num_points);
-                        double theta = dist / R;
+                double cos_a = std::cos(-steering_angle);
+                double sin_a = std::sin(-steering_angle);
 
-                        int x = static_cast<int>(start.x + R * (1 - std::cos(theta)));
-                        int y = static_cast<int>(start.y + -1.0 * R * std::sin(theta));
+                for (int i = 0; i < num_points; ++i) {
+                    double z = (i / (double)num_points) * max_z;
+                    double x = 0.0;
 
-                        curve_points.emplace_back(cv::Point(x, y));
+                    if (std::abs(steering_angle) > 1e-3) {
+                        double R = wheel_base / std::tan(steering_angle);
+                        double theta = z / R;
 
-                        // Einfacher Offset in x-Richtung (nach rechts)
-                        offset_curve_points.emplace_back(cv::Point(x + static_cast<int>(offset), y));
+                        x = R * std::sin(theta);
+                        z = R * (1 - std::cos(theta));
                     }
 
-                    // Mittlere Kurve zeichnen
-                    cv::polylines(frame, curve_points, false, cv::Scalar(0, 255, 0), 3);
+                    double y_cam = camera_height;
 
-                    // Parallele zweite Kurve zeichnen (einfacher X-Offset)
-                    cv::polylines(frame, offset_curve_points, false, cv::Scalar(0, 255, 0), 3);
+                    // Offset vor Rotation
+                    double x_left = x - offset;
+                    double x_right = x + offset;
+
+                    // Punkte rotieren
+                    double x_rot_left = cos_a * x_left + sin_a * z;
+                    double z_rot_left = -sin_a * x_left + cos_a * z;
+
+                    double x_rot_right = cos_a * x_right + sin_a * z;
+                    double z_rot_right = -sin_a * x_right + cos_a * z;
+
+                    if (z_rot_left > 0.0)
+                        left_curve_points.emplace_back(projectToImage(x_rot_left, y_cam, z_rot_left, fx, fy, cx, cy));
+                    if (z_rot_right > 0.0)
+                        right_curve_points.emplace_back(projectToImage(x_rot_right, y_cam, z_rot_right, fx, fy, cx, cy));
                 }
+
+
+                // Linien zeichnen
+                cv::polylines(frame, left_curve_points, false, cv::Scalar(0, 255, 0), 3);
+                cv::polylines(frame, right_curve_points, false, cv::Scalar(0, 255, 0), 3);
             }
             // === Ende Fahrspurhilfslinie ===
+
 
 
             // Kamera-Bild anzeigen

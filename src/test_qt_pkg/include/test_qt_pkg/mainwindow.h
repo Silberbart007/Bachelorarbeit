@@ -59,6 +59,11 @@ private slots:
     // Kameramodi-List
     void on_cam_list_itemSelectionChanged();
 
+    // Hilfsfunktion für Projektion
+    cv::Point projectToImage(double x, double y, double z,
+                         double fx, double fy,
+                         double cx, double cy);
+
 private:
     Ui::MainWindow *ui;
     JoystickWidget *joystick;
