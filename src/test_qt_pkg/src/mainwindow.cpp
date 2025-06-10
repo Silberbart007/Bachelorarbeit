@@ -181,29 +181,28 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
 
             // === Fahrspurhilfslinie für parkingMode ===
             if (m_parkingMode) {
-                double wheel_base = 150.0; 
+                double wheel_base = 50.0; 
                 double max_steering_angle = M_PI / 4; // 45 Grad
-                double steering_angle = -rotation_value * max_steering_angle;
+                double steering_angle = rotation_value * max_steering_angle;
 
                 // Kameraparameter (vereinfacht, anpassbar)
-                double fx = 800.0;
-                double fy = 800.0;
+                double fx = 200.0;
+                double fy = 200.0;
                 double cx = frame.cols / 2.0;
                 double cy = frame.rows / 2.0;
 
                 // Kamera ist auf 30 cm Höhe
-                double camera_height = 30.0; // in cm
+                double camera_height = 50.0; // in cm
 
                 // Linienlänge in Z-Richtung (Tiefe)
-                double max_z = 200.0; // 2 Meter
+                double max_z = 100.0; // 1 Meter
                 int num_points = 30;
-                double offset = 20.0; // Abstand paralleler Linien (in cm)
+                double offset = 25.0; // Abstand paralleler Linien (in cm)
 
-                std::vector<cv::Point> left_curve_points;
-                std::vector<cv::Point> right_curve_points;
+                std::vector<cv::Point> left_pts;
+                std::vector<cv::Point> right_pts;
 
-                double cos_a = std::cos(-steering_angle);
-                double sin_a = std::sin(-steering_angle);
+                std::vector<cv::Point2f> base;
 
                 for (int i = 0; i < num_points; ++i) {
                     double z = (i / (double)num_points) * max_z;
@@ -215,31 +214,33 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
 
                         x = R * std::sin(theta);
                         z = R * (1 - std::cos(theta));
+                    } else {
+                        z = 0.0;
+                        x = (i / (double)num_points) * max_z;
                     }
 
-                    double y_cam = camera_height;
-
-                    // Offset vor Rotation
-                    double x_left = x - offset;
-                    double x_right = x + offset;
-
-                    // Punkte rotieren
-                    double x_rot_left = cos_a * x_left + sin_a * z;
-                    double z_rot_left = -sin_a * x_left + cos_a * z;
-
-                    double x_rot_right = cos_a * x_right + sin_a * z;
-                    double z_rot_right = -sin_a * x_right + cos_a * z;
-
-                    if (z_rot_left > 0.0)
-                        left_curve_points.emplace_back(projectToImage(x_rot_left, y_cam, z_rot_left, fx, fy, cx, cy));
-                    if (z_rot_right > 0.0)
-                        right_curve_points.emplace_back(projectToImage(x_rot_right, y_cam, z_rot_right, fx, fy, cx, cy));
+                    base.emplace_back(x,z);
                 }
+                
+                double y_cam = camera_height;
 
+                for (auto &b : base) {
+                    double len = hypot(b.x, b.y);
+                    double perp_z =  b.y/len;
+                    double perp_x = -b.x/len;
 
+                    cv::Point2f L(b.y + perp_x*offset,
+                                b.x + perp_z*offset);
+                    cv::Point2f R(b.y - perp_x*offset,
+                                b.x - perp_z*offset);
+
+                    if (L.y>0) left_pts.emplace_back(projectToImage(L.x,y_cam,L.y,fx,fy,cx,cy));
+                    if (R.y>0) right_pts.emplace_back(projectToImage(R.x,y_cam,R.y,fx,fy,cx,cy));
+                }
+                
                 // Linien zeichnen
-                cv::polylines(frame, left_curve_points, false, cv::Scalar(0, 255, 0), 3);
-                cv::polylines(frame, right_curve_points, false, cv::Scalar(0, 255, 0), 3);
+                cv::polylines(frame, left_pts, false, cv::Scalar(0, 255, 0), 3);
+                cv::polylines(frame, right_pts, false, cv::Scalar(0, 255, 0), 3);
             }
             // === Ende Fahrspurhilfslinie ===
 

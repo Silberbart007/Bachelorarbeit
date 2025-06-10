@@ -92,7 +92,7 @@ void ObstacleMapWidget::initializeRobot() {
 
         m_robot_x_meters = msg->pose.pose.position.x;
         m_robot_y_meters = msg->pose.pose.position.y;
-        qDebug() << "x-real: " << m_robot_x_meters << " y-real " << m_robot_y_meters;
+        //qDebug() << "x-real: " << m_robot_x_meters << " y-real " << m_robot_y_meters;
         robot_theta_ = yaw;  // Winkel in Radiant
     };
 
