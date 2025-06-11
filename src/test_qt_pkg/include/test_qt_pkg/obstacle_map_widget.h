@@ -50,6 +50,8 @@ public:
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
     void setFollowMode(bool isEnabled) { followMode_ = isEnabled; };
     void setGhostMode(bool isEnabled) { ghostMode_ = isEnabled; };
+    void setWheelBase(double newBase) { m_wheel_base = newBase; };
+    void setCurveGain(double newGain) { m_curve_gain = newGain; };
 
     // Alle Punkte und Paths von der Karte löschen
     void deleteAllDrawings();
@@ -124,9 +126,19 @@ private:
     QTimer* ghost_timer_ = nullptr;
     int ghost_frame_index_ = 0;
     std::vector<Pose2D> ghost_trajectory_;
-    std::vector<Pose2D> computeGhostTrajectory(double v, double delta_rad, double wheel_base_cm, double duration_sec, int steps, double theta_start_rad);
+    double m_wheel_base = 30.0;
+    double m_curve_gain = 10.0;
+    std::vector<Pose2D> computeGhostTrajectory(double v, double delta_rad, double wheel_base_cm, double distance_cm, int steps, double theta_start_rad);
+    std::vector<Pose2D> computeGhostTrajectoryDiffDrive(
+        double v,                       // Vorwärtsgeschwindigkeit in cm/s
+        double omega,                   // Drehgeschwindigkeit in rad/s
+        double duration_sec,            // Simulationsdauer
+        int steps,                      // Simulationsschritte
+        double theta_start_rad          // Anfangsorientierung
+    );    
     void startGhostAnimation(double speed_cm_s, double steering_value, double max_angle_rad, double wheel_base_cm);
     void updateGhostAnimation();
+
 
 
     // Skalierung mit Fingern

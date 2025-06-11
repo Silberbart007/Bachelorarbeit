@@ -403,11 +403,11 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
     // Ghost Mode
     if (ghostMode_) {
         double current_speed = m_robot_node->getSpeed().x * 100.0;
-        double current_rot = m_robot_node->getRotationNormalized();
-        double current_steering = current_rot * m_max_steering;
+        double current_rot = m_robot_node->getRotation();
+        double current_steering = current_rot;
 
         if (std::abs(m_last_speed - current_speed) > 1e-2 || std::abs(m_last_steering - current_steering) > 1e-2) {
-            startGhostAnimation(current_speed, -current_steering, m_max_steering, 25.0);
+            startGhostAnimation(current_speed, -current_steering, m_max_steering, m_wheel_base);
             m_last_speed = current_speed;
             m_last_steering = current_steering;
         }
@@ -578,14 +578,24 @@ void ObstacleMapWidget::followCurrentPoint() {
     m_nav2_node->sendGoal(goal);
 }
 
-// Hilfsfunktion für GhostMode: Positionen im Voraus berechnen
-std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectory(double v, double delta_rad, double wheel_base_cm, double duration_sec, int steps, double theta_start_rad) {
+std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectory(
+    double v,                      // Geschwindigkeit in cm/s
+    double delta_rad,              // ursprünglicher Lenkwinkel
+    double wheel_base_cm,          // Radstand
+    double distance_cm,            // Gesamtfahrstrecke
+    int steps,                     // Simulationsschritte
+    double theta_start_rad         // Anfangsorientierung
+) {
     std::vector<Pose2D> result;
-    double dt = duration_sec / steps;
+
+    double ds = distance_cm / steps;
 
     double x = 0.0, y = 0.0, theta = 0.0;
 
-    const double a_max = 40.0; // maximale Querbeschleunigung in cm/s², Wert anpassen
+    // Dynamisch angepasster Lenkwinkel
+    double base_speed = m_curve_gain; // cm/s – empirischer Wert
+    double effective_delta = delta_rad * base_speed / std::max(std::abs(v), 1.0);
+    effective_delta = std::clamp(effective_delta, -M_PI_2 + 0.01, M_PI_2 - 0.01); // Vermeide tan(±90°)
 
     for (int i = 0; i <= steps; ++i) {
         double x_local = x;
@@ -597,34 +607,56 @@ std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectory
 
         result.push_back({x_world, y_world, theta_world});
 
-        if (std::abs(delta_rad) > 1e-3) {
-            double R = wheel_base_cm / std::tan(delta_rad);
-            double omega = v / R;
-            //if (v < 0) omega = -omega;
+        if (std::abs(effective_delta) > 1e-3) {
+            double R = wheel_base_cm / std::tan(effective_delta);
+            double dtheta = ds / R;
 
-            // Update Winkel
-            double theta_new = theta + omega * dt;
-
-            // Positionsupdate mit exakter Kreisformel:
+            double theta_new = theta + dtheta;
             x += R * (std::sin(theta_new) - std::sin(theta));
             y += -R * (std::cos(theta_new) - std::cos(theta));
 
             theta = theta_new;
         } else {
-            x += v * std::cos(theta) * dt;
-            y += v * std::sin(theta) * dt;
+            x += ds * std::cos(theta);
+            y += ds * std::sin(theta);
         }
     }
 
+    return result;
+}
+
+std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectoryDiffDrive(
+    double v,                       // Vorwärtsgeschwindigkeit in cm/s
+    double omega,                   // Drehgeschwindigkeit in rad/s
+    double duration_sec,            // Simulationsdauer
+    int steps,                      // Simulationsschritte
+    double theta_start_rad          // Anfangsorientierung
+) {
+    std::vector<Pose2D> result;
+
+    double x = 0.0, y = 0.0, theta = theta_start_rad;
+    double dt = duration_sec / steps;
+
+    for (int i = 0; i <= steps; ++i) {
+        result.push_back({x, y, theta});
+
+        // Bewegungsgleichung für Differential Drive
+        x += v * std::cos(theta) * dt;
+        y += v * std::sin(theta) * dt;
+        theta += omega * dt;
+    }
 
     return result;
 }
+
+
+
 
 // Für GhostMode: Animation starten
 void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_value, double max_angle_rad, double wheel_base_cm) {
     double delta = steering_value * max_angle_rad;
 
-    ghost_trajectory_ = computeGhostTrajectory(speed_cm_s, delta, wheel_base_cm, 3.0, 60, robot_theta_);
+    ghost_trajectory_ = computeGhostTrajectoryDiffDrive(speed_cm_s, steering_value, 2.0, 60, robot_theta_);
     ghost_frame_index_ = 0;
 
     // Items vorbereiten

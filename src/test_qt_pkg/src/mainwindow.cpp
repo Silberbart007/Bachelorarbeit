@@ -92,6 +92,12 @@ MainWindow::MainWindow(QWidget *parent)
     // Optionsmenü verstecken
     ui->AllOptionsLayout->setVisible(false);
 
+    // Parametereinstellungen verstecken
+    ui->wheel_base_slider->setVisible(false);
+    ui->wheel_base_label->setVisible(false);
+    ui->curve_gain_slider->setVisible(false);
+    ui->curve_gain_label->setVisible(false);
+
     // Hinderniskarte verstecken
     //ui->obstacle_map_widget->setVisible(false);
 
@@ -366,6 +372,12 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     ui->obstacle_map_widget->setBeamMode(beamMode);
     ui->obstacle_map_widget->setFollowMode(followMode);
     ui->obstacle_map_widget->setGhostMode(ghostMode);
+
+    // Parmetrisierungen
+    ui->wheel_base_slider->setVisible(ghostMode);
+    ui->wheel_base_label->setVisible(ghostMode);
+    ui->curve_gain_slider->setVisible(ghostMode);
+    ui->curve_gain_label->setVisible(ghostMode);
 }
 
 // Optionen Fenster des Kamerabildes, zum Auswählen der Funktionen
@@ -407,5 +419,17 @@ void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindig
 // Reset Rotation Button
 void MainWindow::on_reset_rotation_button_clicked() {
     m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
+}
+
+// Parameter Slider
+//
+void MainWindow::on_wheel_base_slider_valueChanged(int value) {
+    ui->obstacle_map_widget->setWheelBase(static_cast<double>(value));
+    ui->wheel_base_label->setText(QString("Radstand (cm): %1").arg(value));
+}
+
+void MainWindow::on_curve_gain_slider_valueChanged(int value) {
+    ui->obstacle_map_widget->setCurveGain(static_cast<double>(value));
+    ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(value));
 }
 

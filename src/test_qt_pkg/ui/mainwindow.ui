@@ -517,6 +517,52 @@
            </item>
           </widget>
          </item>
+         <item>
+          <widget class="QLabel" name="wheel_base_label">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Wheel base</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="wheel_base_slider">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="pageStep">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="curve_gain_label">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="text">
+            <string>Curve gain</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="curve_gain_slider">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="pageStep">
+            <number>1</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
