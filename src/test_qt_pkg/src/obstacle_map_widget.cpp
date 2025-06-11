@@ -375,31 +375,43 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
     robot_theta_ = theta;
     //qDebug() << "x nach Worldtoscene: " << m_robot_x_pixels;
 
-        if (robot_) {
-            // Roboter vorne anzeigen
-            robot_->setZValue(1);
+    if (robot_) {
+        // Roboter vorne anzeigen
+        robot_->setZValue(2);
 
-            // Größe und Form des Roboters (immer bei 0,0 relativ zum Item)
-            robot_->setRect(0, 0, m_robot_size, m_robot_size);
+        // Größe und Form des Roboters (immer bei 0,0 relativ zum Item)
+        robot_->setRect(0, 0, m_robot_size, m_robot_size);
 
-            // Position des Roboters in der Szene (Mittelpunkt ausrichten)
-            robot_->setPos(m_robot_x_pixels - m_robot_size / 2, m_robot_y_pixels - m_robot_size / 2);
+        // Position des Roboters in der Szene (Mittelpunkt ausrichten)
+        robot_->setPos(m_robot_x_pixels - m_robot_size / 2, m_robot_y_pixels - m_robot_size / 2);
 
-            robot_->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
-            robot_->setRotation(-robot_theta_ * 180.0 / M_PI);
-            //qDebug() << "robot_theta (rad):" << robot_theta_ << "rot (deg):" << (-robot_theta_ * 180.0 / M_PI);
+        robot_->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
+        robot_->setRotation(-robot_theta_ * 180.0 / M_PI);
+        //qDebug() << "robot_theta (rad):" << robot_theta_ << "rot (deg):" << (-robot_theta_ * 180.0 / M_PI);
 
+    }
+    if (orientationLine_) {
+        double length = 20;
+        double endX = m_robot_x_pixels + length * std::cos(robot_theta_);
+        double endY = m_robot_y_pixels - length * std::sin(robot_theta_); 
+        orientationLine_->setLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY);
+
+        // Orientierung ganz Vorne anzeigen
+        orientationLine_->setZValue(3);
+    }
+
+    // Ghost Mode
+    if (ghostMode_) {
+        double current_speed = m_robot_node->getSpeed().x * 100.0;
+        double current_rot = m_robot_node->getRotationNormalized();
+        double current_steering = current_rot * m_max_steering;
+
+        if (std::abs(m_last_speed - current_speed) > 1e-2 || std::abs(m_last_steering - current_steering) > 1e-2) {
+            startGhostAnimation(current_speed, -current_steering, m_max_steering, 25.0);
+            m_last_speed = current_speed;
+            m_last_steering = current_steering;
         }
-        if (orientationLine_) {
-            double length = 20;
-            double endX = m_robot_x_pixels + length * std::cos(robot_theta_);
-            double endY = m_robot_y_pixels - length * std::sin(robot_theta_); 
-            orientationLine_->setLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY);
-
-            // Orientierung ganz Vorne anzeigen
-            orientationLine_->setZValue(2);
-        }
-
+    }
     
 }
 
@@ -566,6 +578,103 @@ void ObstacleMapWidget::followCurrentPoint() {
     m_nav2_node->sendGoal(goal);
 }
 
+// Hilfsfunktion für GhostMode: Positionen im Voraus berechnen
+std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectory(double v, double delta_rad, double wheel_base_cm, double duration_sec, int steps, double theta_start_rad) {
+    std::vector<Pose2D> result;
+    double dt = duration_sec / steps;
+
+    double x = 0.0, y = 0.0, theta = 0.0;
+
+    const double a_max = 40.0; // maximale Querbeschleunigung in cm/s², Wert anpassen
+
+    for (int i = 0; i <= steps; ++i) {
+        double x_local = x;
+        double y_local = y;
+        double theta_world = theta_start_rad + theta;
+
+        double x_world = x_local * std::cos(theta_start_rad) - y_local * std::sin(theta_start_rad);
+        double y_world = x_local * std::sin(theta_start_rad) + y_local * std::cos(theta_start_rad);
+
+        result.push_back({x_world, y_world, theta_world});
+
+        if (std::abs(delta_rad) > 1e-3) {
+            double R = wheel_base_cm / std::tan(delta_rad);
+            double omega = v / R;
+            //if (v < 0) omega = -omega;
+
+            // Update Winkel
+            double theta_new = theta + omega * dt;
+
+            // Positionsupdate mit exakter Kreisformel:
+            x += R * (std::sin(theta_new) - std::sin(theta));
+            y += -R * (std::cos(theta_new) - std::cos(theta));
+
+            theta = theta_new;
+        } else {
+            x += v * std::cos(theta) * dt;
+            y += v * std::sin(theta) * dt;
+        }
+    }
+
+
+    return result;
+}
+
+// Für GhostMode: Animation starten
+void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_value, double max_angle_rad, double wheel_base_cm) {
+    double delta = steering_value * max_angle_rad;
+
+    ghost_trajectory_ = computeGhostTrajectory(speed_cm_s, delta, wheel_base_cm, 3.0, 60, robot_theta_);
+    ghost_frame_index_ = 0;
+
+    // Items vorbereiten
+    for (auto& item : ghostItems_) {
+        scene_->removeItem(item);
+        delete item;
+    }
+    ghostItems_.clear();
+
+    for (int i = 0; i < ghost_trajectory_.size(); ++i) {
+        QGraphicsEllipseItem* ghost = new QGraphicsEllipseItem(0, 0, m_robot_size, m_robot_size);
+        ghost->setBrush(QColor(255, 255, 0, 100)); // halbtransparent
+        ghost->setPen(Qt::NoPen);
+        ghost->setZValue(1); // unter echtem Roboter
+        ghost->setVisible(false);
+        scene_->addItem(ghost);
+        ghostItems_.push_back(ghost);
+    }
+
+    if (!ghost_timer_) {
+        ghost_timer_ = new QTimer(this);
+        connect(ghost_timer_, &QTimer::timeout, this, &ObstacleMapWidget::updateGhostAnimation);
+    }
+    ghost_timer_->start(10);
+}
+
+// Für GhostMode: Animieren
+void ObstacleMapWidget::updateGhostAnimation() {
+    if (ghost_frame_index_ >= ghostItems_.size()) {
+        ghost_timer_->stop();
+        return;
+    }
+
+    const auto& pose = ghost_trajectory_[ghost_frame_index_];
+
+    double base_x = m_robot_x_meters + pose.x / m_pixels_per_meter;
+    double base_y = m_robot_y_meters + pose.y / m_pixels_per_meter;
+    double theta = robot_theta_ + pose.theta;
+
+    QPointF pos_px = worldToScene(base_x, base_y);
+
+    QGraphicsEllipseItem* ghost = ghostItems_[ghost_frame_index_];
+    ghost->setRect(0, 0, m_robot_size, m_robot_size);
+    ghost->setPos(pos_px.x() - m_robot_size / 2, pos_px.y() - m_robot_size / 2);
+    ghost->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
+    ghost->setRotation(-theta * 180.0 / M_PI);
+    ghost->setVisible(true);
+
+    ghost_frame_index_++;
+}
 
 // Pfad zu Ende gezeichnet
 void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {

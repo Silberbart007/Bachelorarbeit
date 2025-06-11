@@ -194,8 +194,8 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
                 // Kamera ist auf 30 cm Höhe
                 double camera_height = 50.0; // in cm
 
-                // Linienlänge in Z-Richtung (Tiefe)
-                double max_z = 100.0; // 1 Meter
+                // Linienlänge in Z-Richtung (Tiefe) | abhängig von Speed
+                double max_z = std::min(150.0, 60.0 + std::abs(speed_value.x) * 100); // in cm
                 int num_points = 30;
                 double offset = 25.0; // Abstand paralleler Linien (in cm)
 
@@ -345,6 +345,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     bool drawPathMode = false;
     bool beamMode = false;
     bool followMode = false;
+    bool ghostMode = false;
 
     // Prüfe die ausgewählten Items
     for (QListWidgetItem *item : selectedItems) {
@@ -355,6 +356,8 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
             beamMode = true;
         } else if (text == "Follow Finger") {
             followMode = true;
+        } else if (text == "Ghost Robot") {
+            ghostMode = true;
         }
     }
 
@@ -362,6 +365,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     ui->obstacle_map_widget->setDrawPathMode(drawPathMode);
     ui->obstacle_map_widget->setBeamMode(beamMode);
     ui->obstacle_map_widget->setFollowMode(followMode);
+    ui->obstacle_map_widget->setGhostMode(ghostMode);
 }
 
 // Optionen Fenster des Kamerabildes, zum Auswählen der Funktionen

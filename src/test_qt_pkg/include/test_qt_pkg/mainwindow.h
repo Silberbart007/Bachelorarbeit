@@ -18,6 +18,7 @@
 #include "robot_node.h"
 #include "wheel.h"
 #include "nav2client.h"
+#include <cmath>
 class Nav2Client;
 
 namespace Ui {
