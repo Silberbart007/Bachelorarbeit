@@ -39,6 +39,19 @@ void CustomTouchSliderHorizontal::paintEvent(QPaintEvent *)
     double centerX = margin + (usableWidth * relativeValue) + sliderWidth / 2;
 
     painter.drawRect(centerX - sliderWidth / 2, height() / 2 - sliderHeight / 2, sliderWidth, sliderHeight);
+
+    // Deadzone grafisch darstellen
+    // Deadzone von ±0.1 anzeigen
+    double deadzone_left = sliderValueToPixels(-0.1);
+    double deadzone_right = sliderValueToPixels(0.1);
+    double deadzone_width = deadzone_right - deadzone_left;
+
+    painter.setBrush(QColor(200, 0, 0, 150));  // halbtransparentes Grau
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(deadzone_left,
+                    height() / 2 - sliderHeight / 2,
+                    deadzone_width,
+                    sliderHeight);
 }
 
 
@@ -107,10 +120,27 @@ void CustomTouchSliderHorizontal::setValue(double newValue)
     if (newValue != m_value) {
         m_value = newValue;
 
+        if (std::abs(newValue) < 0.1)
+            m_value = 0.0;
+
         // An Roboter publishen
         RobotNode::RobotSpeed currentSpeed = m_robot_node->getSpeedNormalized();
         m_robot_node->publish_velocity(currentSpeed, m_value);
 
         update();  // Widget neu zeichnen, um die Slider-Position zu aktualisieren
     }
+}
+
+double CustomTouchSliderHorizontal::sliderValueToPixels(double value) const
+{
+    qreal dpi = this->devicePixelRatioF();
+    const double margin = 10 * dpi;
+    const double sliderWidth = 60 * dpi;
+    double usableWidth = width() - 2 * margin - sliderWidth;
+
+    // Normierter Wert [0.0, 1.0]
+    double relativeValue = (value + 1.0) / 2.0;
+
+    // Mitte des Sliders bei gegebener Position
+    return margin + (usableWidth * relativeValue) + sliderWidth / 2;
 }

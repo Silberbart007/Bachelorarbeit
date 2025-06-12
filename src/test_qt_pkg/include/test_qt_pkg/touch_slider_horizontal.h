@@ -30,6 +30,7 @@ private:
     std::shared_ptr<RobotNode> m_robot_node;
 
     double mapToSliderValue(double x);  // Mapped die X-Position auf den Sliderwert
+    double sliderValueToPixels(double value) const;
 };
 
 #endif // TOUCH_SLIDER_HORIZONTAL_H

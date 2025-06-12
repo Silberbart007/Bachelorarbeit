@@ -39,6 +39,19 @@ void CustomTouchSliderVertical::paintEvent(QPaintEvent *)
     double sliderY = margin + usableHeight * (1.0 - normValue);  // oben = 1.0
 
     painter.drawRect(width() / 2 - sliderWidth / 2 - 5, sliderY, sliderWidth + 10, sliderHeight);
+
+    // Deadzone grafisch darstellen
+    // Deadzone von ±0.1 anzeigen
+    double deadzone_top = sliderValueToPixels(0.1) + sliderHeight / 2.0;
+    double deadzone_bottom = sliderValueToPixels(-0.1) + sliderHeight / 2.0;
+    double deadzone_height = deadzone_bottom - deadzone_top;
+
+    painter.setBrush(QColor(200, 0, 0, 120));  // halbtransparentes Rot
+    painter.setPen(Qt::NoPen);
+    painter.drawRect(width() / 2 - sliderWidth / 2,
+                    deadzone_top,
+                    sliderWidth,
+                    deadzone_height);
 }
 
 
@@ -86,7 +99,7 @@ void CustomTouchSliderVertical::mouseReleaseEvent(QMouseEvent *)
 double CustomTouchSliderVertical::mapToSliderValue(double y)
 {
     const double margin = 10;
-    const double sliderHeight = 30;
+    const double sliderHeight = 60;
     int usableHeight = height() - 2 * margin - sliderHeight;
 
     y = std::clamp(y, margin + sliderHeight / 2, margin + usableHeight + sliderHeight / 2);
@@ -107,6 +120,9 @@ void CustomTouchSliderVertical::setValue(double newValue)
     if (newValue != m_value) {
         m_value = newValue;
 
+        if (std::abs(newValue) < 0.1)
+            m_value = 0.0;
+
         // Roboterdaten kriegen
         RobotNode::RobotSpeed currentSpeed = m_robot_node->getSpeedNormalized();
         double currentRot = m_robot_node->getRotationNormalized();
@@ -117,4 +133,17 @@ void CustomTouchSliderVertical::setValue(double newValue)
 
         update();  // Widget neu zeichnen, um die Slider-Position zu aktualisieren
     }
+}
+
+double CustomTouchSliderVertical::sliderValueToPixels(double value) const
+{
+    qreal dpi = this->devicePixelRatioF();
+    const double margin = 10 * dpi;
+    const double sliderHeight = 60 * dpi;
+    double usableHeight = height() - 2 * margin - sliderHeight;
+
+    double normValue = (value + 1.0) / 2.0;
+
+    // Wert 1.0 (oben) → kleiner Y
+    return margin + usableHeight * (1.0 - normValue);
 }

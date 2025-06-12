@@ -136,7 +136,7 @@ void ObstacleMapWidget::initializeRobot() {
     follow_timer->start(1000);  // alle 500 ms neues Ziel
 }
 
-
+// Funktion für Beam-Mode
 void ObstacleMapWidget::generateLaserBeams() {
     if (m_scan_available && beamMode_) {
         // Alte Strahlen löschen
@@ -173,6 +173,7 @@ void ObstacleMapWidget::generateLaserBeams() {
     }
 }
 
+// Funktion nur zum Testen
 void ObstacleMapWidget::generateDummyData() {
     if (beamMode_) {
         latestDistances_.clear();
@@ -226,6 +227,15 @@ void ObstacleMapWidget::deleteAllDrawings() {
         delete temp_point_item_;
         temp_point_item_ = nullptr;
     }
+}
+
+void ObstacleMapWidget::deleteGhosts() {
+    // Items vorbereiten
+    for (auto& item : ghostItems_) {
+        scene_->removeItem(item);
+        delete item;
+    }
+    ghostItems_.clear();
 }
 
 // Alle Events abfangen -> Pfad zeichnen
@@ -411,6 +421,8 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
             m_last_speed = current_speed;
             m_last_steering = current_steering;
         }
+    } else {
+        deleteGhosts();
     }
     
 }
@@ -576,53 +588,6 @@ void ObstacleMapWidget::followCurrentPoint() {
 
     // Punkt an Client schicken (ausführen)
     m_nav2_node->sendGoal(goal);
-}
-
-std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectory(
-    double v,                      // Geschwindigkeit in cm/s
-    double delta_rad,              // ursprünglicher Lenkwinkel
-    double wheel_base_cm,          // Radstand
-    double distance_cm,            // Gesamtfahrstrecke
-    int steps,                     // Simulationsschritte
-    double theta_start_rad         // Anfangsorientierung
-) {
-    std::vector<Pose2D> result;
-
-    double ds = distance_cm / steps;
-
-    double x = 0.0, y = 0.0, theta = 0.0;
-
-    // Dynamisch angepasster Lenkwinkel
-    double base_speed = m_curve_gain; // cm/s – empirischer Wert
-    double effective_delta = delta_rad * base_speed / std::max(std::abs(v), 1.0);
-    effective_delta = std::clamp(effective_delta, -M_PI_2 + 0.01, M_PI_2 - 0.01); // Vermeide tan(±90°)
-
-    for (int i = 0; i <= steps; ++i) {
-        double x_local = x;
-        double y_local = y;
-        double theta_world = theta_start_rad + theta;
-
-        double x_world = x_local * std::cos(theta_start_rad) - y_local * std::sin(theta_start_rad);
-        double y_world = x_local * std::sin(theta_start_rad) + y_local * std::cos(theta_start_rad);
-
-        result.push_back({x_world, y_world, theta_world});
-
-        if (std::abs(effective_delta) > 1e-3) {
-            double R = wheel_base_cm / std::tan(effective_delta);
-            double dtheta = ds / R;
-
-            double theta_new = theta + dtheta;
-            x += R * (std::sin(theta_new) - std::sin(theta));
-            y += -R * (std::cos(theta_new) - std::cos(theta));
-
-            theta = theta_new;
-        } else {
-            x += ds * std::cos(theta);
-            y += ds * std::sin(theta);
-        }
-    }
-
-    return result;
 }
 
 std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectoryDiffDrive(
