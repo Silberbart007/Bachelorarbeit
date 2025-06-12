@@ -39,6 +39,9 @@ public:
     rclcpp::Node::SharedPtr getRobotNode() const { return m_robot_node; };
     rclcpp::Node::SharedPtr getNav2Node() const { return std::static_pointer_cast<rclcpp::Node>(m_nav2_node); };
 
+protected:
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
 private slots:
 
     // Optionen-Liste
@@ -85,6 +88,7 @@ private:
     // Kameramodi
     bool m_parkingMode;
     bool m_vectorMode;
+    bool m_tapControlMode;
     
     // Konkrete Callback Funktionen
     void image_callback(const sensor_msgs::msg::Image::SharedPtr msg);

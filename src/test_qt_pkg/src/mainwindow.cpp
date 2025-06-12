@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_counter = 0;
     m_parkingMode = false;
     m_vectorMode = false;
+    m_tapControlMode = false;
 
     // Robot Node erstellen
     m_robot_node = std::make_shared<RobotNode>();
@@ -123,6 +124,8 @@ MainWindow::MainWindow(QWidget *parent)
     //QApplication::setOverrideCursor(cursor);
     //QApplication::changeOverrideCursor(cursor);
 
+    ui->cam_label->installEventFilter(this);
+
     // Auf vollen Bildschirm (4k) aktivieren
     this->resize(3840, 2160);
 }
@@ -131,6 +134,39 @@ MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+// Maus/Touch abfangen
+bool MainWindow::eventFilter(QObject *obj, QEvent *event)
+{
+    if (obj == ui->cam_label && event->type() == QEvent::MouseButtonPress && m_tapControlMode)
+    {
+        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
+        QPoint clickPos = mouseEvent->pos();  // Klickposition im cam_label
+
+        int img_width = ui->cam_label->width();
+        int img_height = ui->cam_label->height();
+
+        // Berechne Richtung vom Mittelpunkt aus
+        float dx = clickPos.x() - img_width / 2;
+        float dy = img_height / 2 - clickPos.y();  // Y-Achse invertiert
+        float angle = std::atan2(dy, dx);  // [-π, π]
+
+        qDebug() << "Tapped at: " << clickPos << ", angle=" << angle;
+        
+        // Roboter steuern – je nach API
+        if (m_robot_node) {
+            float linear = 0.2;   // m/s
+            // Normiert:
+            float angular = angle / M_PI;              // [-1, 1]
+            angular = std::clamp(angular, -1.0f, 1.0f);
+            m_robot_node->publish_velocity({linear,0.0}, angular);  // oder dein Kommando
+        }
+
+        return true;  // Event wurde behandelt
+    }
+    return QMainWindow::eventFilter(obj, event);
+}
+
 
 // Hilfsfunktion zum projezieren eines 3D Objekts auf dem 2D Bild
 cv::Point MainWindow::projectToImage(double x, double y, double z,
@@ -406,6 +442,8 @@ void MainWindow::on_cam_list_itemSelectionChanged()
             m_vectorMode = true;
         } else if (text == "Parkmodus") {
             m_parkingMode = true;
+        } else if (text == "Tap-Control") {
+            m_tapControlMode = true;
         }
     }
 }
