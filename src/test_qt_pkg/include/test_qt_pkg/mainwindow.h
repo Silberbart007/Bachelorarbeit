@@ -61,8 +61,8 @@ private slots:
     void on_cam_list_itemSelectionChanged();
 
     // Parameter Slider
-    void on_wheel_base_slider_valueChanged(int value);
     void on_curve_gain_slider_valueChanged(int value);
+    void on_ghost_duration_slider_valueChanged(int value);
 
     // Hilfsfunktion für Projektion
     cv::Point projectToImage(double x, double y, double z,

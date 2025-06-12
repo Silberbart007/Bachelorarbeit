@@ -634,29 +634,42 @@ std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectory
 ) {
     std::vector<Pose2D> result;
 
+    // omega skalieren für weitere Effekte (schärfere Kurve)
+    omega *= m_curve_gain;
+
     double x = 0.0, y = 0.0, theta = theta_start_rad;
     double dt = duration_sec / steps;
 
     for (int i = 0; i <= steps; ++i) {
         result.push_back({x, y, theta});
 
-        // Bewegungsgleichung für Differential Drive
-        x += v * std::cos(theta) * dt;
-        y += v * std::sin(theta) * dt;
-        theta += omega * dt;
+        // Nur updaten, wenn wir noch Schritte vor uns haben
+        if (i == steps) break;
+
+        if (std::abs(omega) < 1e-6) {
+            // Geradeausfahrt
+            x += v * std::cos(theta) * dt;
+            y += v * std::sin(theta) * dt;
+            // theta bleibt gleich
+        } else {
+            // Kreisbewegung
+            double R = v / omega;
+            double dtheta = omega * dt;
+            x += -R * std::sin(theta) + R * std::sin(theta + dtheta);
+            y +=  R * std::cos(theta) - R * std::cos(theta + dtheta);
+            theta += dtheta;
+        }
     }
 
     return result;
 }
 
 
-
-
 // Für GhostMode: Animation starten
 void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_value, double max_angle_rad, double wheel_base_cm) {
     double delta = steering_value * max_angle_rad;
 
-    ghost_trajectory_ = computeGhostTrajectoryDiffDrive(speed_cm_s, steering_value, 2.0, 60, robot_theta_);
+    ghost_trajectory_ = computeGhostTrajectoryDiffDrive(speed_cm_s, steering_value, m_ghost_duration, 60, robot_theta_);
     ghost_frame_index_ = 0;
 
     // Items vorbereiten
@@ -678,13 +691,15 @@ void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_v
 
     if (!ghost_timer_) {
         ghost_timer_ = new QTimer(this);
-        connect(ghost_timer_, &QTimer::timeout, this, &ObstacleMapWidget::updateGhostAnimation);
+        connect(ghost_timer_, &QTimer::timeout, this, [this]() {
+                    updateGhostAnimation(m_robot_x_meters, m_robot_y_meters);
+                });
     }
     ghost_timer_->start(10);
 }
 
 // Für GhostMode: Animieren
-void ObstacleMapWidget::updateGhostAnimation() {
+void ObstacleMapWidget::updateGhostAnimation(double x_pos, double y_pos) {
     if (ghost_frame_index_ >= ghostItems_.size()) {
         ghost_timer_->stop();
         return;
@@ -692,8 +707,8 @@ void ObstacleMapWidget::updateGhostAnimation() {
 
     const auto& pose = ghost_trajectory_[ghost_frame_index_];
 
-    double base_x = m_robot_x_meters + pose.x / m_pixels_per_meter;
-    double base_y = m_robot_y_meters + pose.y / m_pixels_per_meter;
+    double base_x = x_pos + pose.x / m_pixels_per_meter;
+    double base_y = y_pos + pose.y / m_pixels_per_meter;
     double theta = robot_theta_ + pose.theta;
 
     QPointF pos_px = worldToScene(base_x, base_y);

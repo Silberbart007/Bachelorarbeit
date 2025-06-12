@@ -93,10 +93,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->AllOptionsLayout->setVisible(false);
 
     // Parametereinstellungen verstecken
-    ui->wheel_base_slider->setVisible(false);
-    ui->wheel_base_label->setVisible(false);
     ui->curve_gain_slider->setVisible(false);
     ui->curve_gain_label->setVisible(false);
+    ui->ghost_duration_slider->setVisible(false);
+    ui->ghost_duration_label->setVisible(false);
 
     // Hinderniskarte verstecken
     //ui->obstacle_map_widget->setVisible(false);
@@ -374,10 +374,10 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     ui->obstacle_map_widget->setGhostMode(ghostMode);
 
     // Parmetrisierungen
-    ui->wheel_base_slider->setVisible(ghostMode);
-    ui->wheel_base_label->setVisible(ghostMode);
     ui->curve_gain_slider->setVisible(ghostMode);
     ui->curve_gain_label->setVisible(ghostMode);
+    ui->ghost_duration_slider->setVisible(ghostMode);
+    ui->ghost_duration_label->setVisible(ghostMode);
 }
 
 // Optionen Fenster des Kamerabildes, zum Auswählen der Funktionen
@@ -423,13 +423,13 @@ void MainWindow::on_reset_rotation_button_clicked() {
 
 // Parameter Slider
 //
-void MainWindow::on_wheel_base_slider_valueChanged(int value) {
-    ui->obstacle_map_widget->setWheelBase(static_cast<double>(value));
-    ui->wheel_base_label->setText(QString("Radstand (cm): %1").arg(value));
+void MainWindow::on_curve_gain_slider_valueChanged(int value) {
+    ui->obstacle_map_widget->setCurveGain(static_cast<double>(value)/100);
+    ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(value));
 }
 
-void MainWindow::on_curve_gain_slider_valueChanged(int value) {
-    ui->obstacle_map_widget->setCurveGain(static_cast<double>(value));
-    ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(value));
+void MainWindow::on_ghost_duration_slider_valueChanged(int value) {
+    ui->obstacle_map_widget->setGhostDuration(static_cast<double>(value));
+    ui->ghost_duration_label->setText(QString("Ghost duration: %1").arg(value));
 }
 

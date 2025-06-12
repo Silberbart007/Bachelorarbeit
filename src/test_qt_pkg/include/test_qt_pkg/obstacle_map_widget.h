@@ -50,7 +50,7 @@ public:
     void setBeamMode(bool isEnabled) { beamMode_ = isEnabled; };
     void setFollowMode(bool isEnabled) { followMode_ = isEnabled; };
     void setGhostMode(bool isEnabled) { ghostMode_ = isEnabled; };
-    void setWheelBase(double newBase) { m_wheel_base = newBase; };
+    void setGhostDuration(double newDuration) { m_ghost_duration = newDuration; };
     void setCurveGain(double newGain) { m_curve_gain = newGain; };
 
     // Alle Punkte und Paths von der Karte löschen
@@ -127,7 +127,8 @@ private:
     int ghost_frame_index_ = 0;
     std::vector<Pose2D> ghost_trajectory_;
     double m_wheel_base = 30.0;
-    double m_curve_gain = 10.0;
+    double m_ghost_duration = 2.0;
+    double m_curve_gain = 1.25;
     std::vector<Pose2D> computeGhostTrajectory(double v, double delta_rad, double wheel_base_cm, double distance_cm, int steps, double theta_start_rad);
     std::vector<Pose2D> computeGhostTrajectoryDiffDrive(
         double v,                       // Vorwärtsgeschwindigkeit in cm/s
@@ -137,7 +138,7 @@ private:
         double theta_start_rad          // Anfangsorientierung
     );    
     void startGhostAnimation(double speed_cm_s, double steering_value, double max_angle_rad, double wheel_base_cm);
-    void updateGhostAnimation();
+    void updateGhostAnimation(double x_pos, double y_pos);
 
 
 

@@ -518,22 +518,31 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="wheel_base_label">
+          <widget class="QLabel" name="ghost_duration_label">
            <property name="enabled">
             <bool>true</bool>
            </property>
            <property name="text">
-            <string>Wheel base</string>
+            <string>Ghost duration</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QSlider" name="wheel_base_slider">
+          <widget class="QSlider" name="ghost_duration_slider">
            <property name="enabled">
             <bool>true</bool>
            </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>20</number>
+           </property>
            <property name="pageStep">
             <number>1</number>
+           </property>
+           <property name="value">
+            <number>2</number>
            </property>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -555,8 +564,17 @@
            <property name="enabled">
             <bool>true</bool>
            </property>
+           <property name="minimum">
+            <number>100</number>
+           </property>
+           <property name="maximum">
+            <number>200</number>
+           </property>
            <property name="pageStep">
             <number>1</number>
+           </property>
+           <property name="value">
+            <number>125</number>
            </property>
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
