@@ -14,6 +14,8 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     m_robot_x_pixels = 0.0; 
     m_robot_y_pixels = 0.0; 
     robot_theta_ = 0.0;
+    m_beam_color = Qt::red;
+    m_laser_number = 270;
 
     view_->setRenderHint(QPainter::Antialiasing);
     view_->setRenderHint(QPainter::SmoothPixmapTransform);
@@ -147,22 +149,22 @@ void ObstacleMapWidget::generateLaserBeams() {
         beam_items_.clear();
 
         int numRays = m_current_scan.ranges.size();
-        float angle = m_current_scan.angle_min;
+        int count = std::min(m_laser_number, numRays);  // Nicht mehr als vorhanden
 
-        for (int i = 0; i < numRays; ++i) {
-            float dist = m_current_scan.ranges[i];
-            if (!std::isfinite(dist)) continue;  // NaN oder Inf überspringen
+        for (int i = 0; i < count; ++i) {
+            int index = static_cast<int>((i / static_cast<float>(count - 1)) * (numRays - 1));
+            float angle = m_current_scan.angle_min + index * m_current_scan.angle_increment;
+            float dist = m_current_scan.ranges[index];
+            if (!std::isfinite(dist)) continue;
 
             float theta = angle + robot_theta_;
 
             float endX = m_robot_x_pixels + dist * m_pixels_per_meter * std::cos(theta);
             float endY = m_robot_y_pixels - dist * m_pixels_per_meter * std::sin(theta);
 
-            QGraphicsLineItem *line = scene_->addLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY, QPen(Qt::red));
+            QGraphicsLineItem *line = scene_->addLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY, QPen(m_beam_color));
             line->setZValue(0);
             beam_items_.push_back(line);
-
-            angle += m_current_scan.angle_increment;
         }
     } else {
         for (auto item : beam_items_) {
@@ -172,6 +174,7 @@ void ObstacleMapWidget::generateLaserBeams() {
         beam_items_.clear();
     }
 }
+
 
 // Funktion nur zum Testen
 void ObstacleMapWidget::generateDummyData() {

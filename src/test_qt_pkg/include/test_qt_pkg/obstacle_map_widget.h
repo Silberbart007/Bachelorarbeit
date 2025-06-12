@@ -52,6 +52,8 @@ public:
     void setGhostMode(bool isEnabled) { ghostMode_ = isEnabled; };
     void setGhostDuration(double newDuration) { m_ghost_duration = newDuration; };
     void setCurveGain(double newGain) { m_curve_gain = newGain; };
+    void setLaserColor(QColor newColor) { m_beam_color = newColor; }; 
+    void setLaserNumber(int newNumber) { m_laser_number = newNumber; };
 
     // Alle Punkte und Paths von der Karte löschen
     void deleteAllDrawings();
@@ -154,6 +156,8 @@ private:
     // Echter Laser
     sensor_msgs::msg::LaserScan m_current_scan;
     bool m_scan_available = false;
+    QColor m_beam_color;
+    int m_laser_number;
 
     // Roboter Node
     std::shared_ptr<RobotNode> m_robot_node;

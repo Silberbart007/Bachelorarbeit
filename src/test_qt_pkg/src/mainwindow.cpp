@@ -97,6 +97,12 @@ MainWindow::MainWindow(QWidget *parent)
     ui->curve_gain_label->setVisible(false);
     ui->ghost_duration_slider->setVisible(false);
     ui->ghost_duration_label->setVisible(false);
+    ui->laser_number_label->setVisible(false);
+    ui->laser_number_slider->setVisible(false);
+    ui->beam_color_button->setVisible(false);
+    ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(1.25));
+    ui->ghost_duration_label->setText(QString("Ghost duration: %1").arg(1.0));
+    ui->laser_number_label->setText(QString("Laser number: %1").arg(270));
 
     // Hinderniskarte verstecken
     //ui->obstacle_map_widget->setVisible(false);
@@ -378,6 +384,9 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     ui->curve_gain_label->setVisible(ghostMode);
     ui->ghost_duration_slider->setVisible(ghostMode);
     ui->ghost_duration_label->setVisible(ghostMode);
+    ui->beam_color_button->setVisible(beamMode);
+    ui->laser_number_label->setVisible(beamMode);
+    ui->laser_number_slider->setVisible(beamMode);
 }
 
 // Optionen Fenster des Kamerabildes, zum Auswählen der Funktionen
@@ -431,5 +440,28 @@ void MainWindow::on_curve_gain_slider_valueChanged(int value) {
 void MainWindow::on_ghost_duration_slider_valueChanged(int value) {
     ui->obstacle_map_widget->setGhostDuration(static_cast<double>(value));
     ui->ghost_duration_label->setText(QString("Ghost duration: %1").arg(value));
+}
+
+void MainWindow::on_laser_number_slider_valueChanged(int value) {
+    ui->obstacle_map_widget->setLaserNumber(value);
+    ui->laser_number_label->setText(QString("Laser number: %1").arg(value));
+}
+
+// Beam Color Button
+void MainWindow::on_beam_color_button_clicked()
+{
+    QColor color = QColorDialog::getColor(Qt::red, this, "Farbe wählen");
+
+    if (color.isValid()) {
+        // Farbe erfolgreich gewählt
+        qDebug() << "Gewählte Farbe:" << color;
+
+        // Button-Hintergrund ändern
+        QString qss = QString("background-color: %1").arg(color.name());
+        ui->beam_color_button->setStyleSheet(qss);
+
+        // An Obstacle Map senden
+        ui->obstacle_map_widget->setLaserColor(color); 
+    }
 }
 

@@ -518,6 +518,44 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="beam_color_button">
+           <property name="font">
+            <font>
+             <pointsize>20</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: red</string>
+           </property>
+           <property name="text">
+            <string>Laser color</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="laser_number_label">
+           <property name="text">
+            <string>Laser number</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="laser_number_slider">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>270</number>
+           </property>
+           <property name="value">
+            <number>270</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QLabel" name="ghost_duration_label">
            <property name="enabled">
             <bool>true</bool>

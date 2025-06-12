@@ -19,6 +19,8 @@
 #include "wheel.h"
 #include "nav2client.h"
 #include <cmath>
+#include <QColorDialog>
+
 class Nav2Client;
 
 namespace Ui {
@@ -63,6 +65,10 @@ private slots:
     // Parameter Slider
     void on_curve_gain_slider_valueChanged(int value);
     void on_ghost_duration_slider_valueChanged(int value);
+    void on_laser_number_slider_valueChanged(int value);
+
+    // Color change für Laser
+    void on_beam_color_button_clicked();
 
     // Hilfsfunktion für Projektion
     cv::Point projectToImage(double x, double y, double z,
