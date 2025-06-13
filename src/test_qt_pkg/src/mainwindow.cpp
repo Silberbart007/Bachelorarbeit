@@ -408,6 +408,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     bool beamMode = false;
     bool followMode = false;
     bool ghostMode = false;
+    bool inertiaMode = false;
 
     // Prüfe die ausgewählten Items
     for (QListWidgetItem *item : selectedItems) {
@@ -420,6 +421,8 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
             followMode = true;
         } else if (text == "Ghost Robot") {
             ghostMode = true;
+        } else if (text == "Inertia-Control") {
+            inertiaMode = true;
         }
     }
 
@@ -428,6 +431,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     ui->obstacle_map_widget->setBeamMode(beamMode);
     ui->obstacle_map_widget->setFollowMode(followMode);
     ui->obstacle_map_widget->setGhostMode(ghostMode);
+    ui->obstacle_map_widget->setInertiaMode(inertiaMode);
 
     // Parmetrisierungen
     ui->curve_gain_slider->setVisible(ghostMode);
@@ -448,6 +452,7 @@ void MainWindow::on_cam_list_itemSelectionChanged()
     // Flags, ob die jeweiligen Assitenzsysteme angezeigt werden sollen
     m_vectorMode = false;
     m_parkingMode = false;
+    m_tapControlMode = false;
 
     // Prüfe die ausgewählten Items
     for (QListWidgetItem *item : selectedItems) {

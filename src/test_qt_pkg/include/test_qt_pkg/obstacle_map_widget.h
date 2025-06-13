@@ -54,6 +54,7 @@ public:
     void setCurveGain(double newGain) { m_curve_gain = newGain; };
     void setLaserColor(QColor newColor) { m_beam_color = newColor; }; 
     void setLaserNumber(int newNumber) { m_laser_number = newNumber; };
+    void setInertiaMode(bool isEnabled) { inertiaMode_ = isEnabled; };
 
     // Alle Punkte und Paths von der Karte löschen
     void deleteAllDrawings();
@@ -110,6 +111,7 @@ private:
     bool beamMode_ = false;
     bool followMode_ = false;
     bool ghostMode_ = false;
+    bool inertiaMode_ = false;
 
     // Pfad zeichnen 
     bool drawing_;
@@ -142,7 +144,11 @@ private:
     void updateGhostAnimation(double x_pos, double y_pos);
     void deleteGhosts();
 
-
+    // Inertia Mode
+    QPointF inertiaStart_;
+    QTime inertiaStartTime_;
+    QTimer* inertiaTimer_;
+    QPointF currentVelocity_;
 
     // Skalierung mit Fingern
     QPointF lastPinchCenterInView_;

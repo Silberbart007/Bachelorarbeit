@@ -528,6 +528,16 @@
              </font>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>Inertia-Control</string>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+           </item>
           </widget>
          </item>
          <item>

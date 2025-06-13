@@ -263,6 +263,10 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                 following_ = true;
                 current_follow_point_ = view_->mapToScene(mouseEvent->pos());
             }
+            else if (inertiaMode_) {
+                inertiaStart_ = view_->mapToScene(mouseEvent->pos());
+                inertiaStartTime_ = QTime::currentTime();
+            }
 
             return true;  // Event verarbeitet
         }
@@ -335,6 +339,92 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                 m_nav2_node->cancelGoalsPose();
                 return true;
             }
+            if (inertiaMode_) {
+                QPointF end = view_->mapToScene(static_cast<QMouseEvent*>(event)->pos());
+                int elapsed_ms = inertiaStartTime_.msecsTo(QTime::currentTime());
+
+                if (elapsed_ms > 0) {
+                    double dt = elapsed_ms / 1000.0;
+
+                    QPointF delta_pixels = QPointF(end.x() - inertiaStart_.x(), inertiaStart_.y() - end.y());
+                    QPointF delta_meters = delta_pixels / m_pixels_per_meter;
+
+                    QPointF velocity_mps = delta_meters / dt;
+
+                    double damping = 0.01;
+                    velocity_mps *= damping;
+
+                    double theta = robot_theta_;
+
+                    double cos_theta = std::cos(-theta);
+                    double sin_theta = std::sin(-theta);
+
+                    double vx_robot = velocity_mps.x() * cos_theta - velocity_mps.y() * sin_theta;
+                    double vy_robot = velocity_mps.x() * sin_theta + velocity_mps.y() * cos_theta;
+
+                    const double max_speed = 0.4;
+                    vx_robot = std::clamp(vx_robot, -max_speed, max_speed);
+                    vy_robot = std::clamp(vy_robot, -max_speed, max_speed);
+
+                    double norm_x = vx_robot / max_speed;
+                    double norm_y = vy_robot / max_speed;
+
+                    // Aktuelle Geschwindigkeit holen
+                    auto current_speed = m_robot_node->getSpeedNormalized();
+
+                    // Addieren
+                    current_speed.x += norm_x;
+                    current_speed.y += norm_y;
+
+                    // Begrenzen
+                    current_speed.x = std::clamp(current_speed.x, -1.0, 1.0);
+                    current_speed.y = std::clamp(current_speed.y, -1.0, 1.0);
+
+                    qDebug() << "Updated norm velocity:" << current_speed.x << current_speed.y;
+
+                    // Senden
+                    m_robot_node->publish_velocity(current_speed, m_robot_node->getRotationNormalized());
+                }
+                return true;
+            }
+        }
+        // Touch Berührung
+        else if (event->type() == QEvent::TouchBegin ||
+                event->type() == QEvent::TouchUpdate ||
+                event->type() == QEvent::TouchEnd) {
+
+            QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
+            const auto& touchPoints = touchEvent->touchPoints();
+
+            // Touch-Anfang
+            if (event->type() == QEvent::TouchBegin) {
+                
+            }
+            // Touch-Ende
+            if (event->type() == QEvent::TouchEnd) {
+    
+            }
+            // Stoppen bei mehreren Fingern im Inertia Mode
+            if (inertiaMode_) {
+                if (touchPoints.count() >= 2) {
+                    qDebug() << "Mehrere Finger erkannt – Bremsen";
+
+                    // Roboter stoppen
+                    geometry_msgs::msg::Twist stop;
+                    stop.linear.x = 0;
+                    stop.linear.y = 0;
+                    stop.angular.z = 0;
+                    m_robot_node->publish_velocity({stop.linear.x, stop.linear.y}, stop.angular.z);
+
+                    // Optional: Trägheit beenden
+                    currentVelocity_ = QPointF(0, 0);
+                    if (inertiaTimer_ && inertiaTimer_->isActive()) {
+                        inertiaTimer_->stop();
+                    }
+
+                    return true;
+                }
+            }
         }
         // Gesten
         else if (event->type() == QEvent::Gesture) {
@@ -369,8 +459,6 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
 
                 return true;
             }
-
-
         }
     }
     // Alle anderen Events normal weiterreichen
