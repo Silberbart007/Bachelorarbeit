@@ -346,7 +346,7 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                 if (elapsed_ms > 0) {
                     double dt = elapsed_ms / 1000.0;
 
-                    QPointF delta_pixels = QPointF(end.x() - inertiaStart_.x(), inertiaStart_.y() - end.y());
+                    QPointF delta_pixels = QPointF(end.x() - inertiaStart_.x(), inertiaStart_.y() - end.y());  // y invertiert
                     QPointF delta_meters = delta_pixels / m_pixels_per_meter;
 
                     QPointF velocity_mps = delta_meters / dt;
@@ -356,11 +356,11 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
 
                     double theta = robot_theta_;
 
-                    double cos_theta = std::cos(-theta);
-                    double sin_theta = std::sin(-theta);
+                    double cos_theta = std::cos(theta);
+                    double sin_theta = std::sin(theta);
 
-                    double vx_robot = velocity_mps.x() * cos_theta - velocity_mps.y() * sin_theta;
-                    double vy_robot = velocity_mps.x() * sin_theta + velocity_mps.y() * cos_theta;
+                    double vx_robot = velocity_mps.x() * cos_theta + velocity_mps.y() * sin_theta;
+                    double vy_robot = -velocity_mps.x() * sin_theta + velocity_mps.y() * cos_theta;
 
                     const double max_speed = 0.4;
                     vx_robot = std::clamp(vx_robot, -max_speed, max_speed);

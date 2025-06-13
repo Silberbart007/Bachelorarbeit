@@ -127,13 +127,10 @@ void JoystickWidget::updateKnob(const QPointF &pos)
 
     QPointF norm = normalizedPosition();
 
-    // Mappe joystick-Koordinaten auf Roboter-Geschwindigkeit
-    double x_speed = -norm.y();  // y-Achse invertiert → x-Speed
-    double y_speed = norm.x();   // x-Achse → y-Speed
+    double x_speed = -norm.y();  // vertikal invertiert → vorwärts/rückwärts
+    double y_speed = -norm.x();  // horizontal invertiert
 
     RobotNode::RobotSpeed speed = {x_speed, y_speed};
-
-    // an RobotNode senden
     m_robot_node->publish_velocity(speed, m_robot_node->getRotationNormalized());
 }
 
@@ -141,22 +138,14 @@ QPointF JoystickWidget::normalizedPosition() const
 {
     QPointF delta = m_knobPos - m_center;
     QPointF normDelta = QPointF(delta.x() / m_maxRadius, delta.y() / m_maxRadius);
-    //qreal normDistance = std::hypot(normDelta.x(), normDelta.y());
-    //qreal angle = std::atan2(normDelta.y(), normDelta.x());
-    //qreal angleInDegrees = qRadiansToDegrees(angle);
-
-    //qDebug() << "Joystick Speed:" << normDistance << "Joystick Angle:" << angleInDegrees;
     return normDelta;
 }
 
 void JoystickWidget::setValue(const RobotNode::RobotSpeed &speed)
 {
-    // speed.x ist die "vertikale" Geschwindigkeit (oben +1, unten -1)
-    // speed.y ist die "horizontale" Geschwindigkeit (rechts +1, links -1)
-    
     QPointF pos;
-    pos.setX(m_center.x() + speed.y * m_maxRadius);    // horizontal
-    pos.setY(m_center.y() - speed.x * m_maxRadius);    // vertikal (invertiert)
+    pos.setX(m_center.x() - speed.y * m_maxRadius);  // horizontal invertiert
+    pos.setY(m_center.y() - speed.x * m_maxRadius);  // vertikal invertiert
 
     m_knobPos = pos;
     update();
