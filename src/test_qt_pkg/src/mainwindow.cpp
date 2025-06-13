@@ -138,32 +138,46 @@ MainWindow::~MainWindow()
 // Maus/Touch abfangen
 bool MainWindow::eventFilter(QObject *obj, QEvent *event)
 {
-    if (obj == ui->cam_label && event->type() == QEvent::MouseButtonPress && m_tapControlMode)
-    {
+    // Maus gedrückt
+    if (event->type() == QEvent::MouseButtonPress) {
         QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
         QPoint clickPos = mouseEvent->pos();  // Klickposition im cam_label
 
-        int img_width = ui->cam_label->width();
-        int img_height = ui->cam_label->height();
+        // Tap Control
+        if (obj == ui->cam_label && m_tapControlMode)
+        {
+            const QPixmap* pixmap = ui->cam_label->pixmap();
+            if (!pixmap || pixmap->isNull())
+                return false;
 
-        // Berechne Richtung vom Mittelpunkt aus
-        float dx = clickPos.x() - img_width / 2;
-        float dy = img_height / 2 - clickPos.y();  // Y-Achse invertiert
-        float angle = std::atan2(dy, dx);  // [-π, π]
+            QSize labelSize = ui->cam_label->size();
+            QSize pixmapSize = pixmap->size();
+            QSize scaledSize = pixmapSize.scaled(labelSize, Qt::KeepAspectRatio);
 
-        qDebug() << "Tapped at: " << clickPos << ", angle=" << angle;
-        
-        // Roboter steuern – je nach API
-        if (m_robot_node) {
-            float linear = 0.2;   // m/s
-            // Normiert:
-            float angular = angle / M_PI;              // [-1, 1]
-            angular = std::clamp(angular, -1.0f, 1.0f);
-            m_robot_node->publish_velocity({linear,0.0}, angular);  // oder dein Kommando
+            // Offset berechnen (zentrierte Darstellung)
+            int offsetX = (labelSize.width() - scaledSize.width()) / 2;
+
+            // Klickposition relativ zur dargestellten Pixmap
+            int relativeX = clickPos.x() - offsetX;
+
+            // Sicherstellen, dass der Klick im sichtbaren Bereich der Pixmap liegt
+            if (relativeX < 0 || relativeX >= scaledSize.width())
+                return false;
+
+            // Normiere auf [-1.0, 1.0] basierend auf der dargestellten Pixmap
+            double dx = (relativeX - scaledSize.width() / 2.0) / (scaledSize.width() / 2.0);
+            dx = std::clamp(dx, -1.0, 1.0);
+
+            // Roboter steuern
+            if (m_robot_node) {
+                float linear = 0.2f;
+                m_robot_node->publish_velocity({linear, 0.0}, dx);
+            }
+
+            return true;
         }
 
-        return true;  // Event wurde behandelt
-    }
+    }   
     return QMainWindow::eventFilter(obj, event);
 }
 
