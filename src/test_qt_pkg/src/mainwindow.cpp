@@ -409,6 +409,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     bool followMode = false;
     bool ghostMode = false;
     bool inertiaMode = false;
+    bool trailMode = false;
 
     // Prüfe die ausgewählten Items
     for (QListWidgetItem *item : selectedItems) {
@@ -423,6 +424,8 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
             ghostMode = true;
         } else if (text == "Inertia-Control") {
             inertiaMode = true;
+        } else if (text == "Trail") {
+            trailMode = true;
         }
     }
 
@@ -432,6 +435,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     ui->obstacle_map_widget->setFollowMode(followMode);
     ui->obstacle_map_widget->setGhostMode(ghostMode);
     ui->obstacle_map_widget->setInertiaMode(inertiaMode);
+    ui->obstacle_map_widget->setTrailMode(trailMode);
 
     // Parmetrisierungen
     ui->curve_gain_slider->setVisible(ghostMode);

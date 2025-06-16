@@ -276,8 +276,44 @@ void ObstacleMapWidget::handleInertia() {
     inertiaVelocity_ *= friction;
 }
 
+// Für Trail mode
+void ObstacleMapWidget::updateSpeedTrail(const QPointF& currentPosition) {
+    QTime now = QTime::currentTime();
+    trailHistory_.push_back(qMakePair(currentPosition, now));
 
-// Alle Events abfangen -> Pfad zeichnen
+    // Alte Punkte entfernen
+    while (!trailHistory_.empty() && trailHistory_.front().second.msecsTo(now) > TRAIL_LIFETIME_MS) {
+        trailHistory_.pop_front();
+    }
+
+    // Alte Linien entfernen
+    for (auto line : trailLines_) {
+        scene_->removeItem(line);
+        delete line;
+    }
+    trailLines_.clear();
+
+    // Neue Linien erzeugen
+    for (int i = 1; i < trailHistory_.size(); ++i) {
+        QPointF p1 = trailHistory_[i - 1].first;
+        QPointF p2 = trailHistory_[i].first;
+        int age = trailHistory_[i].second.msecsTo(now);
+
+        double opacity = 1.0 - static_cast<double>(age) / TRAIL_LIFETIME_MS;
+        QColor color = Qt::cyan;
+        color.setAlphaF(opacity);
+
+        QPen pen(color);
+        pen.setWidthF(3.0);
+
+        QGraphicsLineItem* line = scene_->addLine(QLineF(p1, p2), pen);
+        trailLines_.append(line);
+    }
+}
+
+
+
+// Alle Events abfangen
 bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
 {
     if (obj == view_->viewport()) {
@@ -522,6 +558,12 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
         }
     } else {
         deleteGhosts();
+    }
+
+    // Trail Mode
+    if (trailMode_) {
+        QPointF scenePos = worldToScene(x,y);
+        updateSpeedTrail(scenePos);
     }
     
 }

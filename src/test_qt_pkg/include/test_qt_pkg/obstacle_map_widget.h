@@ -55,6 +55,7 @@ public:
     void setLaserColor(QColor newColor) { m_beam_color = newColor; }; 
     void setLaserNumber(int newNumber) { m_laser_number = newNumber; };
     void setInertiaMode(bool isEnabled) { inertiaMode_ = isEnabled; };
+    void setTrailMode(bool isEnabled) { trailMode_ = isEnabled; };
 
     // Alle Punkte und Paths von der Karte löschen
     void deleteAllDrawings();
@@ -115,6 +116,7 @@ private:
     bool followMode_ = false;
     bool ghostMode_ = false;
     bool inertiaMode_ = false;
+    bool trailMode_ = false;
 
     // Pfad zeichnen 
     bool drawing_;
@@ -152,6 +154,13 @@ private:
     QTime inertiaStartTime_;
     QTimer inertiaTimer_;
     QPointF inertiaVelocity_;
+
+    // Trail mode
+    std::deque<QPair<QPointF, QTime>> trailHistory_; // Position + Zeit
+    QVector<QGraphicsLineItem*> trailLines_; // Linien in der Szene
+    const int TRAIL_MAX_POINTS = 30; // Maximal gespeicherte Punkte
+    const int TRAIL_LIFETIME_MS = 2000; // Wie lange Punkte sichtbar bleiben
+    void updateSpeedTrail(const QPointF& currentPosition);
 
     // Skalierung mit Fingern
     QPointF lastPinchCenterInView_;
