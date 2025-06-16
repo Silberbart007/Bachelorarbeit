@@ -69,6 +69,9 @@ protected:
     // Zum Abfangen von Mausbewegungen über das viewport()
     bool eventFilter(QObject *obj, QEvent *event) override;
 
+private slots:
+    void handleInertia();
+
 private:
     void goToNextPoint();
     void pathDrawn(const QVector<QPointF>& points);
@@ -147,8 +150,8 @@ private:
     // Inertia Mode
     QPointF inertiaStart_;
     QTime inertiaStartTime_;
-    QTimer* inertiaTimer_;
-    QPointF currentVelocity_;
+    QTimer inertiaTimer_;
+    QPointF inertiaVelocity_;
 
     // Skalierung mit Fingern
     QPointF lastPinchCenterInView_;

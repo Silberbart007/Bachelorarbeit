@@ -38,6 +38,10 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     // Default Szenenskalierung
     scene_->setSceneRect(0, 0, 1000, 1000); // früh im Konstruktor
 
+    // Timer für inertia initialisieren
+    inertiaTimer_.setInterval(30);
+    connect(&inertiaTimer_, &QTimer::timeout, this, &ObstacleMapWidget::handleInertia);
+
     // Parcour aufbauen (künstlich)
     //setupStaticObstacles();
 }
@@ -241,6 +245,38 @@ void ObstacleMapWidget::deleteGhosts() {
     ghostItems_.clear();
 }
 
+// Inertia Bewegung
+void ObstacleMapWidget::handleInertia() {
+    const double max_speed = 0.4;
+    const double friction = 0.99;
+
+    // Stoppen, wenn Geschwindigkeit klein ist
+    if (std::abs(inertiaVelocity_.x()) < 0.001 && std::abs(inertiaVelocity_.y()) < 0.001) {
+        inertiaTimer_.stop();
+        // Optional: Bewegung vollständig stoppen
+        m_robot_node->publish_velocity({0, 0}, m_robot_node->getRotationNormalized());
+        return;
+    }
+
+    // Berechne normierte Geschwindigkeit direkt aus inertiaVelocity_
+    double vx_robot = std::clamp(inertiaVelocity_.x(), -max_speed, max_speed);
+    double vy_robot = std::clamp(inertiaVelocity_.y(), -max_speed, max_speed);
+
+    double norm_x = vx_robot / max_speed;
+    double norm_y = vy_robot / max_speed;
+
+    // Direkte Steuerung – kein Aufsummieren!
+    geometry_msgs::msg::Vector3 velocity_msg;
+    velocity_msg.x = std::clamp(norm_x, -1.0, 1.0);
+    velocity_msg.y = std::clamp(norm_y, -1.0, 1.0);
+
+    m_robot_node->publish_velocity({velocity_msg.x, velocity_msg.y}, m_robot_node->getRotationNormalized());
+
+    // Geschwindigkeit dämpfen
+    inertiaVelocity_ *= friction;
+}
+
+
 // Alle Events abfangen -> Pfad zeichnen
 bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
 {
@@ -264,6 +300,7 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                 current_follow_point_ = view_->mapToScene(mouseEvent->pos());
             }
             else if (inertiaMode_) {
+                inertiaTimer_.stop();
                 inertiaStart_ = view_->mapToScene(mouseEvent->pos());
                 inertiaStartTime_ = QTime::currentTime();
             }
@@ -345,45 +382,16 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
 
                 if (elapsed_ms > 0) {
                     double dt = elapsed_ms / 1000.0;
-
-                    QPointF delta_pixels = QPointF(end.x() - inertiaStart_.x(), inertiaStart_.y() - end.y());  // y invertiert
+                    QPointF delta_pixels = QPointF(end.x() - inertiaStart_.x(), inertiaStart_.y() - end.y());
                     QPointF delta_meters = delta_pixels / m_pixels_per_meter;
 
                     QPointF velocity_mps = delta_meters / dt;
 
-                    double damping = 0.01;
+                    const double damping = 0.01;
                     velocity_mps *= damping;
 
-                    double theta = robot_theta_;
-
-                    double cos_theta = std::cos(theta);
-                    double sin_theta = std::sin(theta);
-
-                    double vx_robot = velocity_mps.x() * cos_theta + velocity_mps.y() * sin_theta;
-                    double vy_robot = -velocity_mps.x() * sin_theta + velocity_mps.y() * cos_theta;
-
-                    const double max_speed = 0.4;
-                    vx_robot = std::clamp(vx_robot, -max_speed, max_speed);
-                    vy_robot = std::clamp(vy_robot, -max_speed, max_speed);
-
-                    double norm_x = vx_robot / max_speed;
-                    double norm_y = vy_robot / max_speed;
-
-                    // Aktuelle Geschwindigkeit holen
-                    auto current_speed = m_robot_node->getSpeedNormalized();
-
-                    // Addieren
-                    current_speed.x += norm_x;
-                    current_speed.y += norm_y;
-
-                    // Begrenzen
-                    current_speed.x = std::clamp(current_speed.x, -1.0, 1.0);
-                    current_speed.y = std::clamp(current_speed.y, -1.0, 1.0);
-
-                    qDebug() << "Updated norm velocity:" << current_speed.x << current_speed.y;
-
-                    // Senden
-                    m_robot_node->publish_velocity(current_speed, m_robot_node->getRotationNormalized());
+                    inertiaVelocity_ = velocity_mps;
+                    inertiaTimer_.start();  // ruft regelmäßig handleInertia() auf
                 }
                 return true;
             }
@@ -417,9 +425,9 @@ bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
                     m_robot_node->publish_velocity({stop.linear.x, stop.linear.y}, stop.angular.z);
 
                     // Optional: Trägheit beenden
-                    currentVelocity_ = QPointF(0, 0);
-                    if (inertiaTimer_ && inertiaTimer_->isActive()) {
-                        inertiaTimer_->stop();
+                    inertiaVelocity_ = QPointF(0, 0);
+                    if (inertiaTimer_.isActive()) {
+                        inertiaTimer_.stop();
                     }
 
                     return true;
