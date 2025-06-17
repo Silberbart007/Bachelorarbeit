@@ -440,7 +440,7 @@
            <property name="maximumSize">
             <size>
              <width>16777215</width>
-             <height>50</height>
+             <height>100</height>
             </size>
            </property>
            <property name="verticalScrollBarPolicy">
@@ -470,7 +470,7 @@
            <property name="gridSize">
             <size>
              <width>300</width>
-             <height>50</height>
+             <height>100</height>
             </size>
            </property>
            <property name="viewMode">
@@ -560,6 +560,21 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="trail_color_button">
+           <property name="font">
+            <font>
+             <pointsize>20</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: cyan</string>
+           </property>
+           <property name="text">
+            <string>Trail color</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="beam_color_button">
            <property name="font">
             <font>
@@ -571,6 +586,32 @@
            </property>
            <property name="text">
             <string>Laser color</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="trail_lifetime_label">
+           <property name="text">
+            <string>Trail lifetime</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSlider" name="trail_lifetime_slider">
+           <property name="minimum">
+            <number>10</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="pageStep">
+            <number>1</number>
+           </property>
+           <property name="value">
+            <number>20</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>

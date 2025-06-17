@@ -251,7 +251,7 @@ void ObstacleMapWidget::handleInertia() {
     const double friction = 0.99;
 
     // Stoppen, wenn Geschwindigkeit klein ist
-    if (std::abs(inertiaVelocity_.x()) < 0.001 && std::abs(inertiaVelocity_.y()) < 0.001) {
+    if (std::abs(inertiaVelocity_.x()) < 0.001 && std::abs(inertiaVelocity_.y()) < 0.001 || !inertiaMode_) {
         inertiaTimer_.stop();
         // Optional: Bewegung vollständig stoppen
         m_robot_node->publish_velocity({0, 0}, m_robot_node->getRotationNormalized());
@@ -282,7 +282,7 @@ void ObstacleMapWidget::updateSpeedTrail(const QPointF& currentPosition) {
     trailHistory_.push_back(qMakePair(currentPosition, now));
 
     // Alte Punkte entfernen
-    while (!trailHistory_.empty() && trailHistory_.front().second.msecsTo(now) > TRAIL_LIFETIME_MS) {
+    while (!trailHistory_.empty() && trailHistory_.front().second.msecsTo(now) > m_trail_lifetime_ms) {
         trailHistory_.pop_front();
     }
 
@@ -299,8 +299,8 @@ void ObstacleMapWidget::updateSpeedTrail(const QPointF& currentPosition) {
         QPointF p2 = trailHistory_[i].first;
         int age = trailHistory_[i].second.msecsTo(now);
 
-        double opacity = 1.0 - static_cast<double>(age) / TRAIL_LIFETIME_MS;
-        QColor color = Qt::cyan;
+        double opacity = 1.0 - static_cast<double>(age) / m_trail_lifetime_ms;
+        QColor color = m_trail_color;
         color.setAlphaF(opacity);
 
         QPen pen(color);
