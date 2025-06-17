@@ -5,7 +5,7 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , m_ui(new Ui::MainWindow)
     {
     // Variablen Initialisieren
     m_counter = 0;
@@ -26,24 +26,24 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Scan-Callback registrieren
     m_robot_node->on_scan_received = [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
-        ui->obstacle_map_widget->laser_callback(msg); //Lasercallback aus ObstacleWidget
+        m_ui->obstacle_map_widget->laser_callback(msg); //Lasercallback aus ObstacleWidget
     };
 
     // UI "aktivieren"
-    ui->setupUi(this);
+    m_ui->setupUi(this);
 
     // robot Node an nötige Widgets übergeben
-    ui->rotation_slider->setRobotNode(m_robot_node);
-    ui->speed_slider->setRobotNode(m_robot_node);
-    ui->wheels->setRobotNode(m_robot_node);
-    ui->wheels_2->setRobotNode(m_robot_node);
-    ui->speed_slider_wheels->setRobotNode(m_robot_node);
-    ui->rotation_slider_joystick->setRobotNode(m_robot_node);
-    ui->joysticks->setRobotNode(m_robot_node);
-    ui->obstacle_map_widget->setRobotNode(m_robot_node);
+    m_ui->rotation_slider->setRobotNode(m_robot_node);
+    m_ui->speed_slider->setRobotNode(m_robot_node);
+    m_ui->wheels->setRobotNode(m_robot_node);
+    m_ui->wheels_2->setRobotNode(m_robot_node);
+    m_ui->speed_slider_wheels->setRobotNode(m_robot_node);
+    m_ui->rotation_slider_joystick->setRobotNode(m_robot_node);
+    m_ui->joysticks->setRobotNode(m_robot_node);
+    m_ui->obstacle_map_widget->setRobotNode(m_robot_node);
 
     // Nav2 Client übergeben
-    ui->obstacle_map_widget->setNav2Node(m_nav2_node);
+    m_ui->obstacle_map_widget->setNav2Node(m_nav2_node);
 
     // Lenkräder Styles bestimmen
     //
@@ -59,7 +59,7 @@ MainWindow::MainWindow(QWidget *parent)
     formula1Style.centerTextColor = Qt::yellow;
     formula1Style.maxAngle = 270.0;                     
     formula1Style.isRound = false;
-    ui->wheels_2->setStyle(formula1Style);
+    m_ui->wheels_2->setStyle(formula1Style);
     // Ende Lenkräder Styles
     //
 
@@ -71,65 +71,65 @@ MainWindow::MainWindow(QWidget *parent)
         double rotNorm = m_robot_node->getRotationNormalized();
 
         // Werte im Bereich [-1, 1]
-        ui->speed_slider->setValue(speedNorm.x);
-        ui->rotation_slider->setValue(rotNorm);
-        ui->speed_slider_wheels->setValue(speedNorm.x);
-        ui->rotation_slider_joystick->setValue(rotNorm);
-        ui->wheels->setValue(rotNorm);
-        ui->wheels_2->setValue(rotNorm);
-        ui->joysticks->setValue(speedNorm);
+        m_ui->speed_slider->setValue(speedNorm.x);
+        m_ui->rotation_slider->setValue(rotNorm);
+        m_ui->speed_slider_wheels->setValue(speedNorm.x);
+        m_ui->rotation_slider_joystick->setValue(rotNorm);
+        m_ui->wheels->setValue(rotNorm);
+        m_ui->wheels_2->setValue(rotNorm);
+        m_ui->joysticks->setValue(speedNorm);
     }
     });
     syncTimer->start(50); // alle 50 ms aktualisieren
 
     // Steuerungen verstecken
-    //ui->wheels->setVisible(false);
-    //ui->speed_slider_wheels->setVisible(false);
-    ui->WheelsLayout->setVisible(false);
-    ui->JoystickLayout->setVisible(false);
-    ui->sliders->setVisible(false);
-    ui->ButtonsLayoutHorizontal->setVisible(false);
+    //m_ui->wheels->setVisible(false);
+    //m_ui->speed_slider_wheels->setVisible(false);
+    m_ui->WheelsLayout->setVisible(false);
+    m_ui->JoystickLayout->setVisible(false);
+    m_ui->sliders->setVisible(false);
+    m_ui->ButtonsLayoutHorizontal->setVisible(false);
 
     // Optionsmenü verstecken
-    ui->AllOptionsLayout->setVisible(false);
+    m_ui->AllOptionsLayout->setVisible(false);
 
     // Parametereinstellungen verstecken
-    ui->curve_gain_slider->setVisible(false);
-    ui->curve_gain_label->setVisible(false);
-    ui->ghost_duration_slider->setVisible(false);
-    ui->ghost_duration_label->setVisible(false);
-    ui->ghost_color_button->setVisible(false);
-    ui->laser_number_label->setVisible(false);
-    ui->laser_number_slider->setVisible(false);
-    ui->beam_color_button->setVisible(false);
-    ui->trail_lifetime_slider->setVisible(false);
-    ui->trail_lifetime_label->setVisible(false);
-    ui->trail_color_button->setVisible(false);
-    ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(1.25));
-    ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(1.0));
-    ui->laser_number_label->setText(QString("Laser number: %1").arg(270));
-    ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(2.0));
+    m_ui->curve_gain_slider->setVisible(false);
+    m_ui->curve_gain_label->setVisible(false);
+    m_ui->ghost_duration_slider->setVisible(false);
+    m_ui->ghost_duration_label->setVisible(false);
+    m_ui->ghost_color_button->setVisible(false);
+    m_ui->laser_number_label->setVisible(false);
+    m_ui->laser_number_slider->setVisible(false);
+    m_ui->beam_color_button->setVisible(false);
+    m_ui->trail_lifetime_slider->setVisible(false);
+    m_ui->trail_lifetime_label->setVisible(false);
+    m_ui->trail_color_button->setVisible(false);
+    m_ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(1.25));
+    m_ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(1.0));
+    m_ui->laser_number_label->setText(QString("Laser number: %1").arg(270));
+    m_ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(2.0));
 
     // Hinderniskarte verstecken
-    //ui->obstacle_map_widget->setVisible(false);
+    //m_ui->obstacle_map_widget->setVisible(false);
 
     // Slider Default Werte
-    ui->rotation_slider->setValue(0.0);
-    ui->speed_slider->setValue(0.0);
-    ui->speed_slider_wheels->setValue(0.0);
-    ui->rotation_slider_joystick->setValue(0.0);
+    m_ui->rotation_slider->setValue(0.0);
+    m_ui->speed_slider->setValue(0.0);
+    m_ui->speed_slider_wheels->setValue(0.0);
+    m_ui->rotation_slider_joystick->setValue(0.0);
 
     // Erstes Element standardmäßig auswählen
-    ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
-    ui->mode_list_view->item(0)->setSelected(true);
-    ui->mode_list_view->item(1)->setSelected(true);
+    m_ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
+    m_ui->mode_list_view->item(0)->setSelected(true);
+    m_ui->mode_list_view->item(1)->setSelected(true);
 
     // Cursor verstecken wegen Touch-Display
     //QCursor cursor(Qt::BlankCursor);
     //QApplication::setOverrideCursor(cursor);
     //QApplication::changeOverrideCursor(cursor);
 
-    ui->cam_label->installEventFilter(this);
+    m_ui->cam_label->installEventFilter(this);
 
     // Auf vollen Bildschirm (4k) aktivieren
     this->resize(3840, 2160);
@@ -137,7 +137,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete ui;
+    delete m_ui;
 }
 
 // Maus/Touch abfangen
@@ -149,13 +149,13 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
         QPoint clickPos = mouseEvent->pos();  // Klickposition im cam_label
 
         // Tap Control
-        if (obj == ui->cam_label && m_tapControlMode)
+        if (obj == m_ui->cam_label && m_tapControlMode)
         {
-            const QPixmap* pixmap = ui->cam_label->pixmap();
+            const QPixmap* pixmap = m_ui->cam_label->pixmap();
             if (!pixmap || pixmap->isNull())
                 return false;
 
-            QSize labelSize = ui->cam_label->size();
+            QSize labelSize = m_ui->cam_label->size();
             QSize pixmapSize = pixmap->size();
             QSize scaledSize = pixmapSize.scaled(labelSize, Qt::KeepAspectRatio);
 
@@ -321,11 +321,11 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
             QPixmap pixmap = QPixmap::fromImage(qimg);
             
             // Skalieren der Pixmap auf die Größe des Labels (auch wenn das Bild pixelig wird)
-            QPixmap scaledPixmap = pixmap.scaled(ui->cam_label->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
+            QPixmap scaledPixmap = pixmap.scaled(m_ui->cam_label->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
 
             // Wichtig: Alles, was GUI betrifft, muss im Qt-Thread passieren
             QMetaObject::invokeMethod(this, [this, scaledPixmap]() {
-                ui->cam_label->setPixmap(scaledPixmap);
+                m_ui->cam_label->setPixmap(scaledPixmap);
             }, Qt::QueuedConnection);
         }
     } catch (cv_bridge::Exception &e) {
@@ -337,7 +337,7 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
 void MainWindow::on_mode_list_itemSelectionChanged()
 {
     // Hole alle aktuell ausgewählten Items
-    QList<QListWidgetItem*> selectedItems = ui->mode_list->selectedItems();
+    QList<QListWidgetItem*> selectedItems = m_ui->mode_list->selectedItems();
 
     // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
     bool showWheel = false;
@@ -366,21 +366,21 @@ void MainWindow::on_mode_list_itemSelectionChanged()
     }
 
     // Steuerungswidgets sichtbar oder unsichtbar machen
-    //ui->wheels->setVisible(showWheel);
-    //ui->speed_slider_wheels->setVisible(showWheel);
-    ui->WheelsLayout->setVisible(showWheel);
-    ui->wheels->setVisible(defaultWheel);
-    ui->wheels_2->setVisible(raceWheel);
-    ui->JoystickLayout->setVisible(showJoystick);
-    ui->sliders->setVisible(showSliders);
-    ui->ButtonsLayoutHorizontal->setVisible(showButtons);
+    //m_ui->wheels->setVisible(showWheel);
+    //m_ui->speed_slider_wheels->setVisible(showWheel);
+    m_ui->WheelsLayout->setVisible(showWheel);
+    m_ui->wheels->setVisible(defaultWheel);
+    m_ui->wheels_2->setVisible(raceWheel);
+    m_ui->JoystickLayout->setVisible(showJoystick);
+    m_ui->sliders->setVisible(showSliders);
+    m_ui->ButtonsLayoutHorizontal->setVisible(showButtons);
 }
 
 // Optionen Fenster für Anzeigenp
 void MainWindow::on_mode_list_view_itemSelectionChanged() 
 {
     // Hole alle aktuell ausgewählten Items
-    QList<QListWidgetItem*> selectedItems = ui->mode_list_view->selectedItems();
+    QList<QListWidgetItem*> selectedItems = m_ui->mode_list_view->selectedItems();
 
     // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
     bool showCam = false;
@@ -398,15 +398,15 @@ void MainWindow::on_mode_list_view_itemSelectionChanged()
     }
 
     // Anzeigewidgets sichtbar oder unsichtbar machen
-    ui->cam_widget->setVisible(showCam);
-    ui->ObstacleMapLayout->setVisible(showMap);
+    m_ui->cam_widget->setVisible(showCam);
+    m_ui->ObstacleMapLayout->setVisible(showMap);
 }
 
 // Optionen Fenster der obstacle map, zum Auswählen der Funktionen
 void MainWindow::on_obstacle_map_list_itemSelectionChanged()
 {
     // Hole alle aktuell ausgewählten Items
-    QList<QListWidgetItem*> selectedItems = ui->obstacle_map_list->selectedItems();
+    QList<QListWidgetItem*> selectedItems = m_ui->obstacle_map_list->selectedItems();
 
     // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
     bool drawPathMode = false;
@@ -435,32 +435,32 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     }
 
     // Anzeigewidgets sichtbar oder unsichtbar machen
-    ui->obstacle_map_widget->setDrawPathMode(drawPathMode);
-    ui->obstacle_map_widget->setBeamMode(beamMode);
-    ui->obstacle_map_widget->setFollowMode(followMode);
-    ui->obstacle_map_widget->setGhostMode(ghostMode);
-    ui->obstacle_map_widget->setInertiaMode(inertiaMode);
-    ui->obstacle_map_widget->setTrailMode(trailMode);
+    m_ui->obstacle_map_widget->setDrawPathMode(drawPathMode);
+    m_ui->obstacle_map_widget->setBeamMode(beamMode);
+    m_ui->obstacle_map_widget->setFollowMode(followMode);
+    m_ui->obstacle_map_widget->setGhostMode(ghostMode);
+    m_ui->obstacle_map_widget->setInertiaMode(inertiaMode);
+    m_ui->obstacle_map_widget->setTrailMode(trailMode);
 
     // Parmetrisierungen
-    ui->curve_gain_slider->setVisible(ghostMode);
-    ui->curve_gain_label->setVisible(ghostMode);
-    ui->ghost_duration_slider->setVisible(ghostMode);
-    ui->ghost_duration_label->setVisible(ghostMode);
-    ui->ghost_color_button->setVisible(ghostMode);
-    ui->beam_color_button->setVisible(beamMode);
-    ui->laser_number_label->setVisible(beamMode);
-    ui->laser_number_slider->setVisible(beamMode);
-    ui->trail_color_button->setVisible(trailMode);
-    ui->trail_lifetime_label->setVisible(trailMode);
-    ui->trail_lifetime_slider->setVisible(trailMode);
+    m_ui->curve_gain_slider->setVisible(ghostMode);
+    m_ui->curve_gain_label->setVisible(ghostMode);
+    m_ui->ghost_duration_slider->setVisible(ghostMode);
+    m_ui->ghost_duration_label->setVisible(ghostMode);
+    m_ui->ghost_color_button->setVisible(ghostMode);
+    m_ui->beam_color_button->setVisible(beamMode);
+    m_ui->laser_number_label->setVisible(beamMode);
+    m_ui->laser_number_slider->setVisible(beamMode);
+    m_ui->trail_color_button->setVisible(trailMode);
+    m_ui->trail_lifetime_label->setVisible(trailMode);
+    m_ui->trail_lifetime_slider->setVisible(trailMode);
 }
 
 // Optionen Fenster des Kamerabildes, zum Auswählen der Funktionen
 void MainWindow::on_cam_list_itemSelectionChanged()
 {
     // Hole alle aktuell ausgewählten Items
-    QList<QListWidgetItem*> selectedItems = ui->cam_list->selectedItems();
+    QList<QListWidgetItem*> selectedItems = m_ui->cam_list->selectedItems();
 
     // Flags, ob die jeweiligen Assitenzsysteme angezeigt werden sollen
     m_vectorMode = false;
@@ -483,7 +483,7 @@ void MainWindow::on_cam_list_itemSelectionChanged()
 // Optionen Button
 void MainWindow::on_modes_button_clicked() {
     // Mode-List aktivieren/deaktivieren
-    ui->AllOptionsLayout->setVisible(!ui->AllOptionsLayout->isVisible());
+    m_ui->AllOptionsLayout->setVisible(!m_ui->AllOptionsLayout->isVisible());
 }
 
 // Speed Buttons
@@ -503,23 +503,23 @@ void MainWindow::on_reset_rotation_button_clicked() {
 // Parameter Slider
 //
 void MainWindow::on_curve_gain_slider_valueChanged(int value) {
-    ui->obstacle_map_widget->setCurveGain(static_cast<double>(value)/100);
-    ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(value));
+    m_ui->obstacle_map_widget->setCurveGain(static_cast<double>(value)/100);
+    m_ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(value));
 }
 
 void MainWindow::on_ghost_duration_slider_valueChanged(int value) {
-    ui->obstacle_map_widget->setGhostDuration(static_cast<double>(value));
-    ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(value));
+    m_ui->obstacle_map_widget->setGhostDuration(static_cast<double>(value));
+    m_ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(value));
 }
 
 void MainWindow::on_laser_number_slider_valueChanged(int value) {
-    ui->obstacle_map_widget->setLaserNumber(value);
-    ui->laser_number_label->setText(QString("Laser number: %1").arg(value));
+    m_ui->obstacle_map_widget->setLaserNumber(value);
+    m_ui->laser_number_label->setText(QString("Laser number: %1").arg(value));
 }
 
 void MainWindow::on_trail_lifetime_slider_valueChanged(int value) {
-    ui->obstacle_map_widget->setTrailLifetime(value);
-    ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(static_cast<double>(value)/10));
+    m_ui->obstacle_map_widget->setTrailLifetime(value);
+    m_ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(static_cast<double>(value)/10));
 }
 
 // Beam Color Button
@@ -533,10 +533,10 @@ void MainWindow::on_beam_color_button_clicked()
 
         // Button-Hintergrund ändern
         QString qss = QString("background-color: %1").arg(color.name());
-        ui->beam_color_button->setStyleSheet(qss);
+        m_ui->beam_color_button->setStyleSheet(qss);
 
         // An Obstacle Map senden
-        ui->obstacle_map_widget->setLaserColor(color); 
+        m_ui->obstacle_map_widget->setLaserColor(color); 
     }
 }
 
@@ -551,10 +551,10 @@ void MainWindow::on_trail_color_button_clicked()
 
         // Button-Hintergrund ändern
         QString qss = QString("background-color: %1").arg(color.name());
-        ui->trail_color_button->setStyleSheet(qss);
+        m_ui->trail_color_button->setStyleSheet(qss);
 
         // An Obstacle Map senden
-        ui->obstacle_map_widget->setTrailColor(color); 
+        m_ui->obstacle_map_widget->setTrailColor(color); 
     }
 }
 
@@ -569,10 +569,10 @@ void MainWindow::on_ghost_color_button_clicked()
 
         // Button-Hintergrund ändern
         QString qss = QString("background-color: %1").arg(color.name());
-        ui->ghost_color_button->setStyleSheet(qss);
+        m_ui->ghost_color_button->setStyleSheet(qss);
 
         // An Obstacle Map senden
-        ui->obstacle_map_widget->setGhostColor(color); 
+        m_ui->obstacle_map_widget->setGhostColor(color); 
     }
 }
 

@@ -86,8 +86,7 @@ private slots:
                          double cx, double cy);
 
 private:
-    Ui::MainWindow *ui;
-    JoystickWidget *joystick;
+    Ui::MainWindow *m_ui;
 
     std::shared_ptr<RobotNode> m_robot_node;
     std::shared_ptr<Nav2Client> m_nav2_node;
