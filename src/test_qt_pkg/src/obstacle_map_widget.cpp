@@ -15,6 +15,8 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
     m_robot_y_pixels = 0.0; 
     robot_theta_ = 0.0;
     m_beam_color = Qt::red;
+    m_ghost_color = Qt::yellow;
+    m_trail_color = Qt::cyan;
     m_laser_number = 270;
 
     view_->setRenderHint(QPainter::Antialiasing);
@@ -787,7 +789,9 @@ void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_v
 
     for (int i = 0; i < ghost_trajectory_.size(); ++i) {
         QGraphicsEllipseItem* ghost = new QGraphicsEllipseItem(0, 0, m_robot_size, m_robot_size);
-        ghost->setBrush(QColor(255, 255, 0, 100)); // halbtransparent
+        QColor transparent_color = m_ghost_color;
+        m_ghost_color.setAlpha(100);
+        ghost->setBrush(m_ghost_color); // halbtransparent
         ghost->setPen(Qt::NoPen);
         ghost->setZValue(1); // unter echtem Roboter
         ghost->setVisible(false);

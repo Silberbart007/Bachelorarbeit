@@ -560,6 +560,21 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="ghost_color_button">
+           <property name="font">
+            <font>
+             <pointsize>20</pointsize>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: yellow</string>
+           </property>
+           <property name="text">
+            <string>Ghost color</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="trail_color_button">
            <property name="font">
             <font>

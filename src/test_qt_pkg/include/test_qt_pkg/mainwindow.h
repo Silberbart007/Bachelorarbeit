@@ -77,6 +77,9 @@ private slots:
     // Color change für Trail
     void on_trail_color_button_clicked();
 
+    // Color change für Ghost
+    void on_ghost_color_button_clicked();
+
     // Hilfsfunktion für Projektion
     cv::Point projectToImage(double x, double y, double z,
                          double fx, double fy,

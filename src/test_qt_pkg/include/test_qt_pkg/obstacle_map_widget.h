@@ -51,6 +51,7 @@ public:
     void setFollowMode(bool isEnabled) { followMode_ = isEnabled; };
     void setGhostMode(bool isEnabled) { ghostMode_ = isEnabled; };
     void setGhostDuration(double newDuration) { m_ghost_duration = newDuration; };
+    void setGhostColor(QColor newColor) { m_ghost_color = newColor; };
     void setCurveGain(double newGain) { m_curve_gain = newGain; };
     void setLaserColor(QColor newColor) { m_beam_color = newColor; }; 
     void setLaserNumber(int newNumber) { m_laser_number = newNumber; };
@@ -140,6 +141,7 @@ private:
     double m_wheel_base = 30.0;
     double m_ghost_duration = 2.0;
     double m_curve_gain = 1.25;
+    QColor m_ghost_color;
     std::vector<Pose2D> computeGhostTrajectoryDiffDrive(
         double v,                       // Vorwärtsgeschwindigkeit in cm/s
         double omega,                   // Drehgeschwindigkeit in rad/s
