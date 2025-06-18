@@ -1,195 +1,112 @@
-#include "obstacle_map_widget.h" 
+#include "obstacle_map_widget.h"
 
-ObstacleMapWidget::ObstacleMapWidget(QWidget *parent) :
-    QWidget(parent),
-    m_scene(new QGraphicsScene(this)),
-    m_view(new QGraphicsView(m_scene, this))
-{
-    m_drawing = false;
-    m_following = false;
-    m_temp_path_item = nullptr;
-    m_temp_point_item = nullptr;
-    m_robot_x_meters = 0.0; 
-    m_robot_y_meters = 0.0; 
-    m_robot_x_pixels = 0.0; 
-    m_robot_y_pixels = 0.0; 
-    m_robot_theta_rad = 0.0;
+// =====================
+// Public Methods
+// =====================
+
+/**
+ * @brief Constructor for the ObstacleMapWidget class.
+ *
+ * Initializes the scene and view, sets up default parameters for visualization modes,
+ * configures input handling (mouse, gestures), and prepares layout and timers.
+ *
+ * @param parent The parent widget, if any.
+ */
+ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
+    : QWidget(parent), m_scene(new QGraphicsScene(this)), m_view(new QGraphicsView(m_scene, this)) {
+    // ===== Default parameters for various modes =====
     m_beam_color = Qt::red;
     m_ghost_color = Qt::yellow;
     m_trail_color = Qt::cyan;
     m_laser_number = 270;
+    m_curve_gain = 1.25;
+    m_ghost_duration = 2.0;
 
+    // ===== Configure view rendering =====
     m_view->setRenderHint(QPainter::Antialiasing);
     m_view->setRenderHint(QPainter::SmoothPixmapTransform);
 
-    // Maus Events korrekt verarbeiten:
-    m_view->viewport()->installEventFilter(this);
-
-    // Gesten erkennen
+    // ===== Input handling (mouse + gestures) =====
+    m_view->viewport()->installEventFilter(this); // Capture mouse/touch events
     m_view->viewport()->grabGesture(Qt::PinchGesture);
     m_view->viewport()->grabGesture(Qt::PanGesture);
+    // m_view->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);  // Optional zoom behavior
 
-    //m_view->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
-
-    // View in Layout einfügen
-    QVBoxLayout *layout = new QVBoxLayout(this);
+    // ===== Layout management =====
+    QVBoxLayout* layout = new QVBoxLayout(this);
     layout->addWidget(m_view);
     layout->setContentsMargins(0, 0, 0, 0);
     setLayout(layout);
 
-    // Default Szenenskalierung
-    m_scene->setSceneRect(0, 0, 1000, 1000); // früh im Konstruktor
+    // ===== Scene initialization =====
+    m_scene->setSceneRect(0, 0, 1000, 1000); // Default scene area in pixels
 
-    // Timer für inertia initialisieren
-    m_inertiaTimer.setInterval(30);
+    // ===== Inertia mode timer setup =====
+    m_inertiaTimer.setInterval(30); // Update interval in milliseconds (~33 FPS)
     connect(&m_inertiaTimer, &QTimer::timeout, this, &ObstacleMapWidget::handleInertia);
 
-    // Parcour aufbauen (künstlich)
-    //setupStaticObstacles();
+    // ===== Optional: Add test/static obstacles for debugging =====
+    // setupStaticObstacles();
 }
 
-
-ObstacleMapWidget::~ObstacleMapWidget()
-{
-    delete m_scene;
-    delete m_view;
+/**
+ * @brief Destructor for ObstacleMapWidget.
+ *
+ * Qt automatically deletes child widgets and objects with this as parent.
+ * Therefore, manual deletion of m_scene and m_view is not necessary and
+ * should be avoided to prevent double deletion.
+ */
+ObstacleMapWidget::~ObstacleMapWidget() {
+    // No manual deletion needed; Qt parent-child system manages cleanup.
 }
 
-// Callback für Laser
-void ObstacleMapWidget::laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
-    m_current_scan = *msg;
-    m_scan_available = true;
-}
-
-// Roboter Node setzen und Map/Roboter initiieren
+/**
+ * @brief Sets the RobotNode instance and initializes the map and robot visualization.
+ *
+ * If the map is already loaded in the RobotNode, initialization happens immediately.
+ * Otherwise, a callback is set to initialize once the map loading completes.
+ *
+ * @param robot_node Shared pointer to the RobotNode.
+ */
 void ObstacleMapWidget::setRobotNode(std::shared_ptr<RobotNode> robot_node) {
     m_robot_node = robot_node;
 
-    // MapLoaded Funktion setzen
     if (m_robot_node->has_map()) {
-        if (m_robot_node->has_map()) {
-            QMetaObject::invokeMethod(this, [this]() {
-                initializeRobot();
-            }, Qt::QueuedConnection);
-        }
+        // Map is already loaded, initialize robot immediately via queued connection
+        QMetaObject::invokeMethod(this, [this]() { initializeRobot(); }, Qt::QueuedConnection);
     } else {
+        // Map not loaded yet, set callback to initialize robot when map is loaded
         m_robot_node->map_loaded = [this]() {
-            QMetaObject::invokeMethod(this, [this]() {
-                initializeRobot();
-            }, Qt::QueuedConnection);
-        };  
+            QMetaObject::invokeMethod(this, [this]() { initializeRobot(); }, Qt::QueuedConnection);
+        };
     }
 }
 
-// Nav2Client setzen
+/**
+ * @brief Sets the navigation node (Nav2Client) used for path planning and control.
+ *
+ * @param nav2_node Shared pointer to the Nav2Client instance.
+ */
 void ObstacleMapWidget::setNav2Node(std::shared_ptr<Nav2Client> nav2_node) {
     m_nav2_node = nav2_node;
 }
 
-// Roboter und Map startklar machen, wenn Map vorhanden ist
-void ObstacleMapWidget::initializeRobot() {
-
-    // Amcl Daten verarbeiten
-    m_robot_node->on_amcl_pose_received = [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
-        // Quaternion aus msg holen
-        tf2::Quaternion tf_q;
-        tf2::fromMsg(msg->pose.pose.orientation, tf_q);
-
-        double roll, pitch, yaw;
-        tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
-
-        m_robot_x_meters = msg->pose.pose.position.x;
-        m_robot_y_meters = msg->pose.pose.position.y;
-        //qDebug() << "x-real: " << m_robot_x_meters << " y-real " << m_robot_y_meters;
-        m_robot_theta_rad = yaw;  // Winkel in Radiant
-    };
-
-    // Timer, der alle 50 ms die Roboterposition mit der letzten AMCL-Pose updatet
-    QTimer* update_pose_timer = new QTimer(this);
-    connect(update_pose_timer, &QTimer::timeout, this, [this]() {
-        updateRobotPosition(m_robot_x_meters, m_robot_y_meters, m_robot_theta_rad);
-    });
-    update_pose_timer->start(10);
-
-    // Roboter zeichnen
-    m_robot_ellipse = m_scene->addEllipse(m_robot_x_pixels - m_robot_size / 2,
-                           m_robot_y_pixels - m_robot_size / 2,
-                           m_robot_size,
-                           m_robot_size,
-                           QPen(Qt::green),
-                           QBrush(Qt::green));
-
-    // Orientierungslinie, die nach vorne zeigt
-    double end_x = m_robot_x_pixels + m_robot_size * cos(m_robot_theta_rad);
-    double end_y = m_robot_y_pixels - m_robot_size * sin(m_robot_theta_rad); 
-
-    m_orientation_line = m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, end_x, end_y, QPen(Qt::blue, 2));
-
-    // Szene zentrieren auf die Map
-    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
-
-    updateObstacles();
-
-    // Dieses Objekt an Nav2Client übergeben
-    m_nav2_node->setObstacleMap(this);
-
-    // Timer für Strahlenanzeige
-    QTimer *beam_timer = new QTimer(this);
-    connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateLaserBeams);
-    beam_timer->start(100); // alle 100 ms
-
-    // Timer für FollowMode
-    QTimer* follow_timer = new QTimer(this);
-    connect(follow_timer, &QTimer::timeout, this, &ObstacleMapWidget::followCurrentPoint);
-    follow_timer->start(1000);  // alle 500 ms neues Ziel
-}
-
-// Funktion für Beam-Mode
-void ObstacleMapWidget::generateLaserBeams() {
-    if (m_scan_available && m_beamMode) {
-        // Alte Strahlen löschen
-        for (auto item : m_beam_items) {
-            m_scene->removeItem(item);
-            delete item;
-        }
-        m_beam_items.clear();
-
-        int numRays = m_current_scan.ranges.size();
-        int count = std::min(m_laser_number, numRays);  // Nicht mehr als vorhanden
-
-        for (int i = 0; i < count; ++i) {
-            int index = static_cast<int>((i / static_cast<float>(count - 1)) * (numRays - 1));
-            float angle = m_current_scan.angle_min + index * m_current_scan.angle_increment;
-            float dist = m_current_scan.ranges[index];
-            if (!std::isfinite(dist)) continue;
-
-            float theta = angle + m_robot_theta_rad;
-
-            float endX = m_robot_x_pixels + dist * m_pixels_per_meter * std::cos(theta);
-            float endY = m_robot_y_pixels - dist * m_pixels_per_meter * std::sin(theta);
-
-            QGraphicsLineItem *line = m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY, QPen(m_beam_color));
-            line->setZValue(0);
-            m_beam_items.push_back(line);
-        }
-    } else {
-        for (auto item : m_beam_items) {
-            m_scene->removeItem(item);
-            delete item;
-        }
-        m_beam_items.clear();
-    }
-}
-
-// Alle Zeichnungen (Also Punkte und Pfade) löschen
+/**
+ * @brief Removes all user-drawn elements (paths and points) from the scene.
+ *
+ * This function clears temporary drawing items such as the currently drawn path
+ * and any temporary point markers by removing them from the scene and deleting
+ * the corresponding objects.
+ */
 void ObstacleMapWidget::deleteAllDrawings() {
-    // Gezeichnete Linie entfernen, falls vorhanden
+    // Remove and delete temporary path item if it exists
     if (m_temp_path_item) {
         m_scene->removeItem(m_temp_path_item);
         delete m_temp_path_item;
         m_temp_path_item = nullptr;
     }
-    // Einzelnen Punkt entfernen, falls vorhanden
+
+    // Remove and delete temporary point item if it exists
     if (m_temp_point_item) {
         m_scene->removeItem(m_temp_point_item);
         delete m_temp_point_item;
@@ -197,8 +114,970 @@ void ObstacleMapWidget::deleteAllDrawings() {
     }
 }
 
+/**
+ * @brief Callback for handling incoming laser scan messages.
+ *
+ * This function is called (in RobotNode) whenever new LaserScan data is received.
+ * It updates the current scan data and marks it as available for processing.
+ *
+ * @param msg Shared pointer to the incoming LaserScan message.
+ */
+void ObstacleMapWidget::laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
+    m_current_scan = *msg;
+    m_scan_available = true;
+}
+
+// =====================
+// Protected Methods
+// =====================
+
+/**
+ * @brief Handles widget resize events.
+ *
+ * Adjusts the QGraphicsView to fit the scene while maintaining aspect ratio,
+ * and centers the view on the robot's current pixel position.
+ *
+ * @param event Pointer to the resize event.
+ */
+void ObstacleMapWidget::resizeEvent(QResizeEvent* event) {
+    // Call base class implementation to ensure default behavior
+    QWidget::resizeEvent(event);
+
+    // Fit the scene into the view, preserving aspect ratio
+    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+
+    // Center the view on the robot's current position in pixel coordinates
+    m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
+}
+
+/**
+ * @brief Event filter to handle mouse, touch, and gesture events on the viewport.
+ *
+ * Interprets user interactions for drawing paths, following points, inertia mode,
+ * and supports gestures like pinch zoom and panning.
+ *
+ * @param obj Pointer to the QObject receiving the event (usually viewport).
+ * @param event Pointer to the event being processed.
+ * @return true if the event was handled and should not propagate further,
+ *         false to continue normal event processing.
+ */
+bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
+    if (obj == m_view->viewport()) {
+        // =====================
+        // Mouse Button Pressed
+        // =====================
+        if (event->type() == QEvent::MouseButtonPress) {
+            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+
+            // Clear any temporary drawings from previous interactions
+            deleteAllDrawings();
+
+            if (m_drawPathMode) {
+                // Start drawing a new path
+                m_drawing = true;
+                m_path_points.clear();
+                QPointF scenePos = m_view->mapToScene(mouseEvent->pos());
+                m_path_points.push_back(scenePos);
+            } else if (m_followMode) {
+                // Start following a point
+                m_following = true;
+                m_current_follow_point = m_view->mapToScene(mouseEvent->pos());
+            } else if (m_inertiaMode) {
+                // Initialize inertia interaction (for flick gesture)
+                m_inertiaTimer.stop();
+                m_inertiaStart = m_view->mapToScene(mouseEvent->pos());
+                m_inertiaStartTime = QTime::currentTime();
+            }
+
+            return true; // Event handled
+        }
+
+        // =====================
+        // Mouse Move
+        // =====================
+        else if (event->type() == QEvent::MouseMove) {
+            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+
+            if (m_drawPathMode) {
+                if (!m_drawing)
+                    return false; // Ignore if not currently drawing
+
+                // Add new point to path and redraw temporary path
+                QPointF scenePos = m_view->mapToScene(mouseEvent->pos());
+                m_path_points.push_back(scenePos);
+
+                QPainterPath path;
+                path.moveTo(m_path_points.first());
+                for (const auto& pt : m_path_points)
+                    path.lineTo(pt);
+
+                // Remove previous temp path if exists
+                if (m_temp_path_item) {
+                    m_scene->removeItem(m_temp_path_item);
+                    delete m_temp_path_item;
+                }
+
+                // Draw new temp path in blue
+                m_temp_path_item = m_scene->addPath(path, QPen(Qt::blue, 2));
+            } else if (m_followMode) {
+                // Update follow point while moving mouse
+                m_current_follow_point = m_view->mapToScene(mouseEvent->pos());
+            }
+
+            return true; // Event handled
+        }
+
+        // =====================
+        // Mouse Button Released
+        // =====================
+        else if (event->type() == QEvent::MouseButtonRelease) {
+            if (m_drawPathMode) {
+                m_drawing = false;
+
+                if (m_path_points.size() >= 2) {
+                    // Path complete, emit signal or process path
+                    pathDrawn(m_path_points);
+                } else if (m_path_points.size() == 1) {
+                    // Single point — draw a small circle as visual feedback
+                    QPointF singlePoint = m_path_points.front();
+                    constexpr qreal radius = 3.0;
+
+                    m_temp_point_item = m_scene->addEllipse(
+                        singlePoint.x() - radius, singlePoint.y() - radius, 2 * radius, 2 * radius,
+                        QPen(Qt::blue), QBrush(Qt::blue));
+
+                    pathDrawn(m_path_points);
+                }
+
+                return true; // Event handled
+            } else if (m_followMode) {
+                m_following = false;
+
+                // Cancel any active navigation goals
+                m_nav2_node->cancelGoalsPose();
+                return true; // Event handled
+            } else if (m_inertiaMode) {
+                // Calculate flick velocity for inertia scrolling
+                QPointF end = m_view->mapToScene(static_cast<QMouseEvent*>(event)->pos());
+                int elapsed_ms = m_inertiaStartTime.msecsTo(QTime::currentTime());
+
+                if (elapsed_ms > 0) {
+                    double dt = elapsed_ms / 1000.0;
+                    QPointF delta_pixels =
+                        QPointF(end.x() - m_inertiaStart.x(), m_inertiaStart.y() - end.y());
+                    QPointF delta_meters = delta_pixels / m_pixels_per_meter;
+
+                    QPointF velocity_mps = delta_meters / dt;
+
+                    constexpr double damping = 0.01;
+                    velocity_mps *= damping;
+
+                    m_inertiaVelocity = velocity_mps;
+                    m_inertiaTimer.start(); // Start periodic inertia handling
+                }
+
+                return true; // Event handled
+            }
+        }
+
+        // =====================
+        // Touch Events (Begin, Update, End)
+        // =====================
+        else if (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate ||
+                 event->type() == QEvent::TouchEnd) {
+
+            QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
+            const auto& touchPoints = touchEvent->touchPoints();
+
+            if (m_inertiaMode && touchPoints.count() >= 2) {
+                // Multiple fingers detected — stop inertia and robot movement
+
+                qDebug() << "Multiple fingers detected – stopping inertia";
+
+                // Stop robot velocity immediately
+                geometry_msgs::msg::Twist stop;
+                stop.linear.x = 0;
+                stop.linear.y = 0;
+                stop.angular.z = 0;
+                m_robot_node->publish_velocity({stop.linear.x, stop.linear.y}, stop.angular.z);
+
+                // Stop inertia and timer if active
+                m_inertiaVelocity = QPointF(0, 0);
+                if (m_inertiaTimer.isActive()) {
+                    m_inertiaTimer.stop();
+                }
+
+                return true; // Event handled
+            }
+        }
+
+        // =====================
+        // Gesture Events (Pinch Zoom and Pan)
+        // =====================
+        else if (event->type() == QEvent::Gesture) {
+            QGestureEvent* gestureEvent = static_cast<QGestureEvent*>(event);
+
+            // Pinch zoom gesture
+            if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
+                QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
+
+                if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
+                    qreal scaleFactor = pinch->scaleFactor();
+                    m_view->scale(scaleFactor, scaleFactor);
+                    return true;
+                }
+            }
+
+            // Pan gesture (e.g., three-finger drag)
+            if (QGesture* g = gestureEvent->gesture(Qt::PanGesture)) {
+                QPanGesture* pan = static_cast<QPanGesture*>(g);
+                QPointF delta = pan->delta();
+
+                qDebug() << "Pan delta:" << delta;
+
+                QPointF center = m_view->mapToScene(m_view->viewport()->rect().center());
+                QPointF newCenter = center - delta; // Invert for natural dragging
+
+                m_view->centerOn(newCenter);
+
+                return true;
+            }
+        }
+    }
+
+    // Forward unhandled events to base class eventFilter
+    return QWidget::eventFilter(obj, event);
+}
+
+// =====================
+// Private Slot Methods
+// =====================
+
+/**
+ * @brief Slot triggered periodically to handle inertia simulation.
+ *
+ * Connected to a QTimer, this function updates the robot's velocity based on
+ * the current inertia velocity, applying friction to gradually reduce speed,
+ * and stops the motion when the velocity is sufficiently small.
+ */
+void ObstacleMapWidget::handleInertia() {
+    constexpr double max_speed = 0.4; // Maximum allowed speed (m/s)
+    constexpr double friction = 0.99; // Friction factor to reduce velocity each step
+
+    // Stop inertia if velocity is very small or inertia mode is disabled
+    if ((std::abs(m_inertiaVelocity.x()) < 0.001 && std::abs(m_inertiaVelocity.y()) < 0.001) ||
+        !m_inertiaMode) {
+        m_inertiaTimer.stop();
+
+        // Optionally stop the robot completely by publishing zero velocity
+        m_robot_node->publish_velocity({0, 0}, m_robot_node->getRotationNormalized());
+        return;
+    }
+
+    // Clamp velocity components to the maximum speed limits
+    double vx_robot = std::clamp(m_inertiaVelocity.x(), -max_speed, max_speed);
+    double vy_robot = std::clamp(m_inertiaVelocity.y(), -max_speed, max_speed);
+
+    // Normalize velocity to range [-1, 1] for direct control input
+    double norm_x = vx_robot / max_speed;
+    double norm_y = vy_robot / max_speed;
+
+    // Prepare velocity message to send to robot
+    geometry_msgs::msg::Vector3 velocity_msg;
+    velocity_msg.x = std::clamp(norm_x, -1.0, 1.0);
+    velocity_msg.y = std::clamp(norm_y, -1.0, 1.0);
+
+    // Publish the current velocity to the robot with the current rotation
+    m_robot_node->publish_velocity({velocity_msg.x, velocity_msg.y},
+                                   m_robot_node->getRotationNormalized());
+
+    // Apply friction to gradually slow down the velocity for inertia effect
+    m_inertiaVelocity *= friction;
+}
+
+// =====================
+// Private Methods
+// =====================
+
+/**
+ * @brief Prepares robot and map visualization once the map is available.
+ *
+ * Sets the AMCL pose callback to update robot position and orientation.
+ * Initializes timers to update robot pose visualization (every 10 ms),
+ * generate laser beam visualization (every 100 ms), and update follow mode
+ * targets (every 1000 ms). Also draws the robot ellipse and orientation line
+ * and centers the view on the scene.
+ *
+ * Registers this widget with the navigation node for obstacle map access.
+ */
+void ObstacleMapWidget::initializeRobot() {
+    // Set callback to process AMCL pose updates
+    m_robot_node->on_amcl_pose_received =
+        [this](const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
+            // Extract quaternion from message
+            tf2::Quaternion tf_q;
+            tf2::fromMsg(msg->pose.pose.orientation, tf_q);
+
+            double roll, pitch, yaw;
+            tf2::Matrix3x3(tf_q).getRPY(roll, pitch, yaw);
+
+            // Update robot position in meters
+            m_robot_x_meters = msg->pose.pose.position.x;
+            m_robot_y_meters = msg->pose.pose.position.y;
+
+            // Update robot orientation (yaw in radians)
+            m_robot_theta_rad = yaw;
+        };
+
+    // Timer to update robot visualization every 10 ms using latest AMCL pose
+    QTimer* update_pose_timer = new QTimer(this);
+    connect(update_pose_timer, &QTimer::timeout, this, [this]() {
+        updateRobotPosition(m_robot_x_meters, m_robot_y_meters, m_robot_theta_rad);
+    });
+    update_pose_timer->start(10);
+
+    // Draw robot as ellipse on the scene
+    m_robot_ellipse = m_scene->addEllipse(m_robot_x_pixels - m_robot_size / 2,
+                                          m_robot_y_pixels - m_robot_size / 2, m_robot_size,
+                                          m_robot_size, QPen(Qt::green), QBrush(Qt::green));
+
+    // Draw orientation line indicating robot's heading
+    double end_x = m_robot_x_pixels + m_robot_size * cos(m_robot_theta_rad);
+    double end_y = m_robot_y_pixels - m_robot_size * sin(m_robot_theta_rad);
+
+    m_orientation_line =
+        m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, end_x, end_y, QPen(Qt::blue, 2));
+
+    // Center view on the entire scene (map)
+    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+
+    // Update obstacle visualization on the map
+    updateObstacles();
+
+    // Register this widget with the navigation node to provide obstacle map access
+    m_nav2_node->setObstacleMap(this);
+
+    // Timer to generate laser beam visualization every 100 ms
+    QTimer* beam_timer = new QTimer(this);
+    connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateLaserBeams);
+    beam_timer->start(100);
+
+    // Timer to update follow mode goal every 1000 ms
+    QTimer* follow_timer = new QTimer(this);
+    connect(follow_timer, &QTimer::timeout, this, &ObstacleMapWidget::followCurrentPoint);
+    follow_timer->start(1000);
+}
+
+/**
+ * @brief Sends the robot to the next point in the current path.
+ *
+ * This function handles navigation commands based on the size of the current path:
+ * - If the path contains only one point, it sends a single goal pose to the navigation client.
+ * - If the path contains multiple points, it constructs a full path message and sends it to the
+ * navigation client.
+ *
+ * If the current target index exceeds the path size, the robot is commanded to stop.
+ */
+void ObstacleMapWidget::goToNextPoint() {
+    // Stop the robot if all points are processed
+    if (m_current_target_index >= m_current_path.size()) {
+        m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+        return;
+    }
+
+    // Single pose client (only one target point)
+    if (m_current_path.size() == 1) {
+        QPointF target = m_current_path[m_current_target_index];
+        QPointF target_world = sceneToMapCoordinates(target);
+
+        geometry_msgs::msg::PoseStamped goal;
+        goal.header.frame_id = "map";
+        goal.header.stamp = m_nav2_node->now();
+
+        goal.pose.position.x = target_world.x();
+        goal.pose.position.y = target_world.y();
+        goal.pose.position.z = 0.0;
+        // goal.pose.orientation.w = 1.0; // no rotation
+
+        // Send the single goal to the navigation client
+        m_nav2_node->sendGoal(goal);
+    }
+    // Path following client
+    else {
+        nav_msgs::msg::Path path;
+        path.header.frame_id = "map";
+        path.header.stamp = m_nav2_node->now();
+
+        // Convert each point in the current path from scene to world coordinates and append to path
+        for (const QPointF& pt : m_current_path) {
+            QPointF world = sceneToMapCoordinates(pt);
+
+            geometry_msgs::msg::PoseStamped pose;
+            pose.header = path.header;
+            pose.pose.position.x = world.x();
+            pose.pose.position.y = world.y();
+            pose.pose.position.z = 0.0;
+            // pose.pose.orientation.w = 1.0;  // no rotation
+            path.poses.push_back(pose);
+        }
+
+        // Send the full path to the navigation client
+        m_nav2_node->sendPath(path);
+    }
+}
+
+/**
+ * @brief Handles the event when a new path is drawn by the user.
+ *
+ * This function resamples the input path points to have a fixed spacing,
+ * resets the current target index, and initiates navigation to the first point.
+ *
+ * @param points The list of points defining the drawn path in scene coordinates.
+ */
+void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {
+    // Resample path points to have consistent spacing (e.g., 5.0 units)
+    m_current_path = resamplePath(points, 5.0);
+
+    // Reset target index to start navigating from the first point
+    m_current_target_index = 0;
+
+    // Start navigation towards the next target point
+    goToNextPoint();
+}
+
+/**
+ * @brief Updates the obstacle visualization based on the current occupancy map.
+ *
+ * This function clears any existing obstacle graphics from the scene,
+ * loads the occupancy grid map from the robot node, and draws obstacles
+ * as rectangles for all cells marked as occupied (value 100).
+ * It also adjusts the scene rectangle and view accordingly.
+ */
+void ObstacleMapWidget::updateObstaclesFromMap() {
+    // Return early if no map is available
+    if (!m_robot_node->has_map())
+        return;
+
+    // Clear existing rectangular obstacle items from the scene
+    QList<QGraphicsItem*> items = m_scene->items();
+    for (auto item : items) {
+        if (QGraphicsRectItem* rect = dynamic_cast<QGraphicsRectItem*>(item)) {
+            m_scene->removeItem(rect);
+            delete rect;
+        }
+    }
+
+    // Load occupancy grid map data
+    m_map = m_robot_node->get_map();
+    int width = m_map.info.width;
+    int height = m_map.info.height;
+    double resolution = m_map.info.resolution;
+
+    // Calculate cell size in pixels
+    double cellSize = resolution * m_pixels_per_meter;
+
+    // Map origin in world coordinates (meters)
+    double origin_x = m_map.info.origin.position.x;
+    double origin_y = m_map.info.origin.position.y;
+
+    // Compute scene size in pixels
+    double scene_width = width * cellSize;
+    double scene_height = height * cellSize;
+
+    // Set scene rectangle with y inverted to match Qt coordinate system
+    double scene_left = origin_x * m_pixels_per_meter;
+    double scene_top = -origin_y * m_pixels_per_meter - scene_height;
+
+    m_scene->setSceneRect(scene_left, scene_top, scene_width, scene_height);
+
+    // Iterate over all map cells and add obstacles for occupied cells
+    for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+            int i = x + y * width;
+            if (m_map.data[i] == 100) {
+                // Convert map cell coordinates to scene coordinates
+                double map_x = origin_x + x * resolution;
+                double map_y = origin_y + y * resolution;
+
+                QPointF scene_pos = worldToScene(map_x, map_y);
+
+                // Draw obstacle cell as rectangle
+                addObstacle(scene_pos.x(), scene_pos.y(), cellSize, cellSize);
+            }
+        }
+    }
+
+    // Adjust view to fit the scene rectangle and center on robot position
+    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
+}
+
+/**
+ * @brief Resamples a path to produce points spaced evenly by a given distance.
+ *
+ * This function takes an input path (a vector of QPointF) and returns a new path
+ * with points spaced approximately `spacing` units apart by linear interpolation.
+ * If the input path has fewer than two points, it is returned unchanged.
+ *
+ * @param originalPoints The original path as a vector of points.
+ * @param spacing The desired distance between consecutive points in the resampled path
+ * (default 5.0).
+ * @return QVector<QPointF> The resampled path with evenly spaced points.
+ */
+QVector<QPointF> ObstacleMapWidget::resamplePath(const QVector<QPointF>& originalPoints,
+                                                 double spacing) {
+    if (originalPoints.size() < 2)
+        return originalPoints;
+
+    QVector<QPointF> newPoints;
+    newPoints.push_back(originalPoints.first());
+
+    double accumulatedDist = 0.0;
+    for (int i = 1; i < originalPoints.size(); ++i) {
+        QPointF p0 = originalPoints[i - 1];
+        QPointF p1 = originalPoints[i];
+        double segmentLength = QLineF(p0, p1).length();
+
+        // Interpolate points along segment while spacing is reached or exceeded
+        while (accumulatedDist + segmentLength >= spacing) {
+            double t = (spacing - accumulatedDist) / segmentLength;
+            QPointF newPoint = p0 + t * (p1 - p0);
+            newPoints.push_back(newPoint);
+
+            // Update segment start point and length for next interpolation
+            p0 = newPoint;
+            segmentLength = QLineF(p0, p1).length();
+            accumulatedDist = 0;
+        }
+        accumulatedDist += segmentLength;
+    }
+
+    // Append last point if not already included
+    if (!newPoints.last().isNull() && newPoints.last() != originalPoints.last())
+        newPoints.push_back(originalPoints.last());
+
+    return newPoints;
+}
+
+/**
+ * @brief Adds a rectangular obstacle to the scene.
+ *
+ * Creates a red rectangle representing an obstacle at the specified position and size,
+ * and adds it to the graphics scene for visualization.
+ *
+ * @param x The x-coordinate of the obstacle's top-left corner in scene coordinates.
+ * @param y The y-coordinate of the obstacle's top-left corner in scene coordinates.
+ * @param width The width of the obstacle rectangle.
+ * @param height The height of the obstacle rectangle.
+ */
+void ObstacleMapWidget::addObstacle(double x, double y, double width, double height) {
+    QGraphicsRectItem* rect = new QGraphicsRectItem(x, y, width, height);
+    rect->setBrush(QBrush(Qt::red)); // Obstacle represented as red rectangle
+    m_scene->addItem(rect);
+}
+
+/**
+ * @brief Updates the obstacle visualization on the map.
+ *
+ * This function refreshes the displayed obstacles by
+ * reloading and drawing them from the current occupancy map.
+ * It currently delegates the work to updateObstaclesFromMap().
+ */
+void ObstacleMapWidget::updateObstacles() {
+    updateObstaclesFromMap();
+}
+
+/**
+ * @brief Updates the robot's position and orientation in the visualization.
+ *
+ * Converts the given world coordinates (x, y in meters) to scene coordinates (pixels),
+ * updates the graphical representation of the robot (ellipse and orientation line),
+ * and handles additional visualization modes such as ghost and trail modes.
+ *
+ * @param x Robot's x-position in world coordinates (meters).
+ * @param y Robot's y-position in world coordinates (meters).
+ * @param theta Robot's orientation (yaw) in radians.
+ */
+void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta) {
+    if (!m_robot_node->has_map())
+        return;
+
+    QPointF robo_pos = worldToScene(x, y);
+    m_robot_x_pixels = robo_pos.x();
+    m_robot_y_pixels = robo_pos.y();
+    m_robot_theta_rad = theta;
+
+    if (m_robot_ellipse) {
+        // Draw robot as ellipse centered at robot position with rotation
+        m_robot_ellipse->setZValue(2);
+        m_robot_ellipse->setRect(0, 0, m_robot_size, m_robot_size);
+        m_robot_ellipse->setPos(m_robot_x_pixels - m_robot_size / 2,
+                                m_robot_y_pixels - m_robot_size / 2);
+        m_robot_ellipse->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
+        m_robot_ellipse->setRotation(-m_robot_theta_rad * 180.0 / M_PI);
+    }
+
+    if (m_orientation_line) {
+        // Update orientation line showing robot heading
+        double length = 20;
+        double endX = m_robot_x_pixels + length * std::cos(m_robot_theta_rad);
+        double endY = m_robot_y_pixels - length * std::sin(m_robot_theta_rad);
+        m_orientation_line->setLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY);
+        m_orientation_line->setZValue(3); // Draw on top
+    }
+
+    // Update ghost animation if enabled and speed or steering changed significantly
+    if (m_ghostMode) {
+        double current_speed = m_robot_node->getSpeed().x * 100.0; // convert to cm/s
+        double current_steering = m_robot_node->getRotation();
+
+        if (std::abs(m_last_speed - current_speed) > 1e-2 ||
+            std::abs(m_last_steering - current_steering) > 1e-2) {
+            startGhostAnimation(current_speed, -current_steering);
+            m_last_speed = current_speed;
+            m_last_steering = current_steering;
+        }
+    } else {
+        deleteGhosts();
+    }
+
+    // Update trail visualization if enabled
+    if (m_trailMode) {
+        QPointF scenePos = worldToScene(x, y);
+        updateSpeedTrail(scenePos);
+    }
+}
+
+/**
+ * @brief Sets up a predefined static obstacle course for testing and visualization.
+ *
+ * Adds walls around the perimeter and several obstacles inside the area.
+ * Positions and sizes can be adjusted to create different test environments.
+ */
+void ObstacleMapWidget::setupStaticObstacles() {
+    // Example course: walls and obstacles (positions and sizes can be adjusted)
+    addObstacle(100, 100, 600, 20); // Top wall
+    addObstacle(100, 480, 600, 20); // Bottom wall
+    addObstacle(100, 100, 20, 400); // Left wall
+    addObstacle(680, 100, 20, 400); // Right wall
+
+    // Some internal obstacles
+    addObstacle(300, 200, 50, 150);
+    addObstacle(450, 350, 100, 30);
+    addObstacle(550, 150, 20, 150);
+}
+
+/**
+ * @brief Checks if the given point is near any obstacle in the scene.
+ *
+ * The robot is modeled as a circle with a fixed radius, and the function calculates
+ * the minimum distance between this circle centered at (x, y) and all rectangular obstacles.
+ * If the distance is less than the sum of the robot radius and a safety margin
+ * (EMERGENCY_STOP_RADIUS), it indicates a potential collision risk.
+ *
+ * @param x X coordinate of the robot center in scene coordinates.
+ * @param y Y coordinate of the robot center in scene coordinates.
+ * @return true if the point is too close to an obstacle (emergency stop required), false otherwise.
+ */
+bool ObstacleMapWidget::isNearObstacle(float x, float y) {
+    // Robot modeled as circle with center (x,y) and fixed radius
+    const float robotRadius = 10.0f;
+
+    for (auto item : m_scene->items()) {
+        auto rectItem = dynamic_cast<QGraphicsRectItem*>(item);
+        if (!rectItem)
+            continue;
+
+        QRectF rect = rectItem->rect();
+
+        // Calculate minimum distance between circle center and rectangle edges
+        float closestX = std::max(float(rect.left()), std::min(x, float(rect.right())));
+        float closestY = std::max(float(rect.top()), std::min(y, float(rect.bottom())));
+
+        float dx = x - closestX;
+        float dy = y - closestY;
+
+        float distance = std::sqrt(dx * dx + dy * dy);
+
+        if (distance < (robotRadius + EMERGENCY_STOP_RADIUS)) {
+            return true; // Emergency stop needed
+        }
+    }
+
+    return false;
+}
+
+/**
+ * @brief Sends the current finger or mouse position as a navigation goal in follow mode.
+ *
+ * This function is called periodically (every ... ms) to update the robot's goal
+ * position to follow the user's current touch or mouse location on the map.
+ * If follow mode is inactive or not currently following, no command is sent.
+ */
+void ObstacleMapWidget::followCurrentPoint() {
+    // Robot does not move if follow mode is off or no current follow point
+    if (!m_followMode || !m_following) {
+        return;
+    }
+
+    QPointF world = sceneToMapCoordinates(m_current_follow_point);
+    geometry_msgs::msg::PoseStamped goal;
+    goal.header.stamp = m_nav2_node->now();
+    goal.header.frame_id = "map";
+
+    goal.pose.position.x = world.x();
+    goal.pose.position.y = world.y();
+    goal.pose.position.z = 0.0;
+
+    // Send the goal to the navigation client
+    m_nav2_node->sendGoal(goal);
+}
+
+/**
+ * @brief Converts world coordinates (meters) to Qt scene pixel coordinates.
+ *
+ * The Y-axis is inverted because Qt's coordinate system grows downward,
+ * whereas the world coordinate system grows upward.
+ *
+ * @param x_m X position in meters (world coordinates)
+ * @param y_m Y position in meters (world coordinates)
+ * @return QPointF Corresponding position in Qt scene pixels
+ */
+QPointF ObstacleMapWidget::worldToScene(double x_m, double y_m) {
+    double scene_x = x_m * m_pixels_per_meter;
+    double scene_y = -y_m * m_pixels_per_meter;
+
+    // qDebug() << "worldToScene: x_m=" << x_m << " y_m=" << y_m
+    //          << " -> scene_x=" << scene_x << " scene_y=" << scene_y;
+
+    return QPointF(scene_x, scene_y);
+}
+
+/**
+ * @brief Converts Qt scene pixel coordinates to world coordinates in meters.
+ *
+ * The Y-axis is inverted because Qt's coordinate system grows downward,
+ * whereas the world coordinate system grows upward.
+ *
+ * @param scene_pos Position in Qt scene pixels
+ * @return QPointF Corresponding position in world coordinates (meters)
+ */
+QPointF ObstacleMapWidget::sceneToMapCoordinates(const QPointF& scene_pos) {
+    double x_m = scene_pos.x() / m_pixels_per_meter;
+    double y_m = -scene_pos.y() / m_pixels_per_meter;
+
+    return QPointF(x_m, y_m);
+}
+
+/**
+ * @brief Generates and visualizes laser beams in the scene based on the latest LIDAR scan data.
+ *
+ * When beam mode is enabled and scan data is available, this function clears previously drawn beams
+ * and draws new laser rays as lines originating from the robot's current position.
+ * Each beam corresponds to a LIDAR range measurement, transformed to scene coordinates.
+ *
+ * If beam mode is disabled or no scan data is available, all existing beams are removed from the
+ * scene.
+ *
+ * The beams visually represent obstacles detected by the LIDAR sensor.
+ */
+void ObstacleMapWidget::generateLaserBeams() {
+    if (m_scan_available && m_beamMode) {
+        // Clear previous beams
+        for (auto item : m_beam_items) {
+            m_scene->removeItem(item);
+            delete item;
+        }
+        m_beam_items.clear();
+
+        int numRays = m_current_scan.ranges.size();
+        int count = std::min(m_laser_number, numRays); // Limit to available rays
+
+        for (int i = 0; i < count; ++i) {
+            int index = static_cast<int>((i / static_cast<float>(count - 1)) * (numRays - 1));
+            float angle = m_current_scan.angle_min + index * m_current_scan.angle_increment;
+            float dist = m_current_scan.ranges[index];
+            if (!std::isfinite(dist))
+                continue;
+
+            float theta = angle + m_robot_theta_rad;
+
+            float endX = m_robot_x_pixels + dist * m_pixels_per_meter * std::cos(theta);
+            float endY = m_robot_y_pixels - dist * m_pixels_per_meter * std::sin(theta);
+
+            QGraphicsLineItem* line = m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, endX,
+                                                       endY, QPen(m_beam_color));
+            line->setZValue(0);
+            m_beam_items.push_back(line);
+        }
+    } else {
+        // Remove all beams if beam mode is off or no scan data
+        for (auto item : m_beam_items) {
+            m_scene->removeItem(item);
+            delete item;
+        }
+        m_beam_items.clear();
+    }
+}
+
+/**
+ * @brief Computes a simulated trajectory (ghost path) of a differential drive robot.
+ *
+ * This function calculates the predicted poses of a robot moving with a given
+ * forward velocity (v) and angular velocity (omega) over a specified duration,
+ * divided into discrete simulation steps.
+ *
+ * The robot's motion model assumes a differential drive:
+ * - If angular velocity is near zero, the robot moves straight.
+ * - Otherwise, it follows a circular arc based on the radius derived from v/omega.
+ *
+ * @param v Forward velocity in centimeters per second (cm/s).
+ * @param omega Angular velocity in radians per second (rad/s).
+ * @param duration_sec Total simulation duration in seconds.
+ * @param steps Number of discrete simulation steps.
+ * @param theta_start_rad Initial orientation angle in radians.
+ * @return std::vector<Pose2D> A vector of poses (x, y, theta) representing the trajectory.
+ */
+std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectoryDiffDrive(
+    double v,              // forward velocity (cm/s)
+    double omega,          // angular velocity (rad/s)
+    double duration_sec,   // total simulation time (s)
+    int steps,             // number of simulation steps
+    double theta_start_rad // initial orientation (rad)
+) {
+    std::vector<Pose2D> result;
+
+    // Scale omega to adjust curvature effects (makes turns sharper if >1)
+    omega *= m_curve_gain;
+
+    double x = 0.0, y = 0.0, theta = theta_start_rad;
+    double dt = duration_sec / steps;
+
+    for (int i = 0; i <= steps; ++i) {
+        // Save current pose
+        result.push_back({x, y, theta});
+
+        // Stop updating after last step
+        if (i == steps)
+            break;
+
+        if (std::abs(omega) < 1e-6) {
+            // Straight-line motion update
+            x += v * std::cos(theta) * dt;
+            y += v * std::sin(theta) * dt;
+            // Orientation theta remains unchanged
+        } else {
+            // Circular arc motion update
+            double R = v / omega;       // Turning radius
+            double dtheta = omega * dt; // Angle increment
+
+            // Update position based on circular arc formulas
+            x += -R * std::sin(theta) + R * std::sin(theta + dtheta);
+            y += R * std::cos(theta) - R * std::cos(theta + dtheta);
+            theta += dtheta;
+        }
+    }
+
+    return result;
+}
+
+/**
+ * @brief Starts the ghost animation to visualize the predicted robot trajectory.
+ *
+ * This function computes the predicted future trajectory of the robot based on
+ * the given speed and steering input, and then creates semi-transparent ghost
+ * items along that trajectory in the scene. A timer is started to animate these
+ * ghost items.
+ *
+ * @param speed_cm_s Forward velocity in centimeters per second.
+ * @param steering_value Steering angular velocity in radians per second.
+ */
+void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_value) {
+
+    // Compute predicted ghost trajectory based on current parameters
+    m_ghost_trajectory = computeGhostTrajectoryDiffDrive(speed_cm_s, steering_value,
+                                                         m_ghost_duration, 60, m_robot_theta_rad);
+    m_ghost_frame_index = 0;
+
+    // Remove existing ghost items from the scene to avoid duplicates
+    for (auto& item : m_ghostItems) {
+        m_scene->removeItem(item);
+        delete item;
+    }
+    m_ghostItems.clear();
+
+    // Create new ghost items for each point in the trajectory
+    for (int i = 0; i < static_cast<int>(m_ghost_trajectory.size()); ++i) {
+        QGraphicsEllipseItem* ghost = new QGraphicsEllipseItem(0, 0, m_robot_size, m_robot_size);
+
+        // Set the ghost color with transparency for visualization
+        QColor transparent_color = m_ghost_color;
+        transparent_color.setAlpha(100);
+        ghost->setBrush(transparent_color);
+        ghost->setPen(Qt::NoPen);
+
+        ghost->setZValue(1); // Ensure ghosts are drawn beneath the actual robot
+        ghost->setVisible(false);
+
+        m_scene->addItem(ghost);
+        m_ghostItems.push_back(ghost);
+    }
+
+    // Setup and start the timer to update ghost animation frames at ~100 Hz
+    if (!m_ghost_timer) {
+        m_ghost_timer = new QTimer(this);
+        connect(m_ghost_timer, &QTimer::timeout, this,
+                [this]() { updateGhostAnimation(m_robot_x_meters, m_robot_y_meters); });
+    }
+    m_ghost_timer->start(10);
+}
+
+/**
+ * @brief Updates the ghost animation for the Ghost Mode.
+ *
+ * This function is called periodically (e.g., via a timer) and updates the position
+ * and rotation of the current ghost item according to the precomputed trajectory.
+ *
+ * @param x_pos Current robot x position in world coordinates (meters).
+ * @param y_pos Current robot y position in world coordinates (meters).
+ */
+void ObstacleMapWidget::updateGhostAnimation(double x_pos, double y_pos) {
+    // Stop animation if all frames have been processed
+    if (m_ghost_frame_index >= static_cast<int>(m_ghostItems.size())) {
+        m_ghost_timer->stop();
+        return;
+    }
+
+    // Get current pose from the trajectory
+    const auto& pose = m_ghost_trajectory[m_ghost_frame_index];
+
+    // Calculate position relative to the current robot location (meters to pixels)
+    double base_x = x_pos + pose.x / m_pixels_per_meter;
+    double base_y = y_pos + pose.y / m_pixels_per_meter;
+    double theta = m_robot_theta_rad + pose.theta;
+
+    // Convert to Qt scene coordinates
+    QPointF pos_px = worldToScene(base_x, base_y);
+
+    // Update the ghost graphics item
+    QGraphicsEllipseItem* ghost = m_ghostItems[m_ghost_frame_index];
+    ghost->setRect(0, 0, m_robot_size, m_robot_size);
+    ghost->setPos(pos_px.x() - m_robot_size / 2, pos_px.y() - m_robot_size / 2);
+    ghost->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
+    ghost->setRotation(-theta * 180.0 / M_PI);
+    ghost->setVisible(true);
+
+    // Advance to next frame
+    m_ghost_frame_index++;
+}
+
+/**
+ * @brief Deletes all ghost items from the scene and clears the ghost list.
+ *
+ * This function removes all ghost graphics items from the QGraphicsScene,
+ * deletes them to free memory, and clears the container holding the pointers.
+ */
 void ObstacleMapWidget::deleteGhosts() {
-    // Items vorbereiten
     for (auto& item : m_ghostItems) {
         m_scene->removeItem(item);
         delete item;
@@ -206,55 +1085,33 @@ void ObstacleMapWidget::deleteGhosts() {
     m_ghostItems.clear();
 }
 
-// Inertia Bewegung
-void ObstacleMapWidget::handleInertia() {
-    const double max_speed = 0.4;
-    const double friction = 0.99;
-
-    // Stoppen, wenn Geschwindigkeit klein ist
-    if ((std::abs(m_inertiaVelocity.x()) < 0.001 && std::abs(m_inertiaVelocity.y()) < 0.001) || !m_inertiaMode) {
-        m_inertiaTimer.stop();
-        // Optional: Bewegung vollständig stoppen
-        m_robot_node->publish_velocity({0, 0}, m_robot_node->getRotationNormalized());
-        return;
-    }
-
-    // Berechne normierte Geschwindigkeit direkt aus m_inertiaVelocity
-    double vx_robot = std::clamp(m_inertiaVelocity.x(), -max_speed, max_speed);
-    double vy_robot = std::clamp(m_inertiaVelocity.y(), -max_speed, max_speed);
-
-    double norm_x = vx_robot / max_speed;
-    double norm_y = vy_robot / max_speed;
-
-    // Direkte Steuerung – kein Aufsummieren!
-    geometry_msgs::msg::Vector3 velocity_msg;
-    velocity_msg.x = std::clamp(norm_x, -1.0, 1.0);
-    velocity_msg.y = std::clamp(norm_y, -1.0, 1.0);
-
-    m_robot_node->publish_velocity({velocity_msg.x, velocity_msg.y}, m_robot_node->getRotationNormalized());
-
-    // Geschwindigkeit dämpfen
-    m_inertiaVelocity *= friction;
-}
-
-// Für Trail mode
+/**
+ * @brief Updates the speed trail by adding the current position and rendering fading trail lines.
+ *
+ * This function keeps a history of recent positions with timestamps and removes old ones beyond
+ * the configured lifetime. It then clears the old trail lines from the scene and draws new lines
+ * between consecutive positions. The lines fade out gradually based on their age.
+ *
+ * @param currentPosition The current position of the robot in scene coordinates.
+ */
 void ObstacleMapWidget::updateSpeedTrail(const QPointF& currentPosition) {
     QTime now = QTime::currentTime();
     m_trailHistory.push_back(qMakePair(currentPosition, now));
 
-    // Alte Punkte entfernen
-    while (!m_trailHistory.empty() && m_trailHistory.front().second.msecsTo(now) > m_trail_lifetime_ms) {
+    // Remove old points beyond the trail lifetime
+    while (!m_trailHistory.empty() &&
+           m_trailHistory.front().second.msecsTo(now) > m_trail_lifetime_ms) {
         m_trailHistory.pop_front();
     }
 
-    // Alte Linien entfernen
+    // Remove old trail lines from the scene and delete them
     for (auto line : m_trailLines) {
         m_scene->removeItem(line);
         delete line;
     }
     m_trailLines.clear();
 
-    // Neue Linien erzeugen
+    // Draw new trail lines with opacity based on their age
     for (int i = 1; i < static_cast<int>(m_trailHistory.size()); ++i) {
         QPointF p1 = m_trailHistory[i - 1].first;
         QPointF p2 = m_trailHistory[i].first;
@@ -271,612 +1128,3 @@ void ObstacleMapWidget::updateSpeedTrail(const QPointF& currentPosition) {
         m_trailLines.append(line);
     }
 }
-
-
-
-// Alle Events abfangen
-bool ObstacleMapWidget::eventFilter(QObject *obj, QEvent *event)
-{
-    if (obj == m_view->viewport()) {
-        // Klick - anfang
-        if (event->type() == QEvent::MouseButtonPress) {
-            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-            
-            deleteAllDrawings();
-            
-            // Pfad Zeichnen - Modus
-            if (m_drawPathMode) {
-                m_drawing = true;
-                m_path_points.clear();
-                QPointF scenePos = m_view->mapToScene(mouseEvent->pos());
-                m_path_points.push_back(scenePos);
-            }
-            // Follow Mode
-            else if (m_followMode) {
-                m_following = true;
-                m_current_follow_point = m_view->mapToScene(mouseEvent->pos());
-            }
-            else if (m_inertiaMode) {
-                m_inertiaTimer.stop();
-                m_inertiaStart = m_view->mapToScene(mouseEvent->pos());
-                m_inertiaStartTime = QTime::currentTime();
-            }
-
-            return true;  // Event verarbeitet
-        }
-        // Klick - Prozess
-        else if (event->type() == QEvent::MouseMove) {
-            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-
-            // Pfad zeichnen - Modus 
-            if (m_drawPathMode) {
-                if (!m_drawing) return false; // Nicht verarbeiten, wenn nicht am Zeichnen
-
-                QPointF scenePos = m_view->mapToScene(mouseEvent->pos());
-                m_path_points.push_back(scenePos);
-
-                QPainterPath path;
-                path.moveTo(m_path_points.first());
-                for (const auto& pt : m_path_points)
-                    path.lineTo(pt);
-
-                if (m_temp_path_item) {
-                    m_scene->removeItem(m_temp_path_item);
-                    delete m_temp_path_item;
-                }
-
-                m_temp_path_item = m_scene->addPath(path, QPen(Qt::blue, 2));
-            }
-            // Follow Mode
-            else if (m_followMode) {
-                m_current_follow_point = m_view->mapToScene(mouseEvent->pos());
-            }
-
-            return true;  // Event verarbeitet
-        }
-        // Klick - Ende
-        else if (event->type() == QEvent::MouseButtonRelease) {
-
-            // Pfad zeichnen - Modus
-            if (m_drawPathMode) {
-                m_drawing = false;
-
-                if (m_path_points.size() >= 2) {
-                    pathDrawn(m_path_points);
-                }
-                // Nur ein Punkt (Follow Point mode)
-                else if (m_path_points.size() == 1) {
-                    // Ein einzelner Punkt
-                    QPointF singlePoint = m_path_points.front();
-
-                    // kleinen Kreis als Punkt zeichnen
-                    qreal radius = 3.0;
-                    m_temp_point_item = m_scene->addEllipse(
-                        singlePoint.x() - radius,
-                        singlePoint.y() - radius,
-                        2 * radius,
-                        2 * radius,
-                        QPen(Qt::blue),
-                        QBrush(Qt::blue)
-                    );
-
-                    pathDrawn(m_path_points);
-                }
-
-            return true;  // Event verarbeitet
-            }
-            // Follow Mode
-            if (m_followMode) {
-                m_following = false;
-                
-                // alle Goals canceln
-                m_nav2_node->cancelGoalsPose();
-                return true;
-            }
-            if (m_inertiaMode) {
-                QPointF end = m_view->mapToScene(static_cast<QMouseEvent*>(event)->pos());
-                int elapsed_ms = m_inertiaStartTime.msecsTo(QTime::currentTime());
-
-                if (elapsed_ms > 0) {
-                    double dt = elapsed_ms / 1000.0;
-                    QPointF delta_pixels = QPointF(end.x() - m_inertiaStart.x(), m_inertiaStart.y() - end.y());
-                    QPointF delta_meters = delta_pixels / m_pixels_per_meter;
-
-                    QPointF velocity_mps = delta_meters / dt;
-
-                    const double damping = 0.01;
-                    velocity_mps *= damping;
-
-                    m_inertiaVelocity = velocity_mps;
-                    m_inertiaTimer.start();  // ruft regelmäßig handleInertia() auf
-                }
-                return true;
-            }
-        }
-        // Touch Berührung
-        else if (event->type() == QEvent::TouchBegin ||
-                event->type() == QEvent::TouchUpdate ||
-                event->type() == QEvent::TouchEnd) {
-
-            QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
-            const auto& touchPoints = touchEvent->touchPoints();
-
-            // Touch-Anfang
-            if (event->type() == QEvent::TouchBegin) {
-                
-            }
-            // Touch-Ende
-            if (event->type() == QEvent::TouchEnd) {
-    
-            }
-            // Stoppen bei mehreren Fingern im Inertia Mode
-            if (m_inertiaMode) {
-                if (touchPoints.count() >= 2) {
-                    qDebug() << "Mehrere Finger erkannt – Bremsen";
-
-                    // Roboter stoppen
-                    geometry_msgs::msg::Twist stop;
-                    stop.linear.x = 0;
-                    stop.linear.y = 0;
-                    stop.angular.z = 0;
-                    m_robot_node->publish_velocity({stop.linear.x, stop.linear.y}, stop.angular.z);
-
-                    // Optional: Trägheit beenden
-                    m_inertiaVelocity = QPointF(0, 0);
-                    if (m_inertiaTimer.isActive()) {
-                        m_inertiaTimer.stop();
-                    }
-
-                    return true;
-                }
-            }
-        }
-        // Gesten
-        else if (event->type() == QEvent::Gesture) {
-            QGestureEvent* gestureEvent = static_cast<QGestureEvent*>(event);
-
-            // Zoomen
-            if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
-                QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
-
-                if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
-                    qreal scaleFactor = pinch->scaleFactor();
-                    m_view->scale(scaleFactor, scaleFactor);
-                    return true;
-                }
-            }
-            // Mit Finger verschieben (panning mit 3 Fingern)
-            if (QGesture* g = gestureEvent->gesture(Qt::PanGesture)) {
-                QPanGesture* pan = static_cast<QPanGesture*>(g);
-                QPointF delta = pan->delta();
-
-                // Optionales Debugging
-                qDebug() << "Delta: " << delta;
-
-                // aktuellen Mittelpunkt holen
-                QPointF center = m_view->mapToScene(m_view->viewport()->rect().center());
-
-                // neuen Mittelpunkt berechnen (delta invertieren für natürliches Wischen)
-                QPointF newCenter = center - delta;
-
-                // View auf neuen Mittelpunkt setzen
-                m_view->centerOn(newCenter);
-
-                return true;
-            }
-        }
-    }
-    // Alle anderen Events normal weiterreichen
-    return QWidget::eventFilter(obj, event);
-}
-
-void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta)
-{
-    if (!m_robot_node->has_map()) return;
-
-    //qDebug() << "X vor worldtoscene: " << x;
-    QPointF robo_pos = worldToScene(x, y);
-    m_robot_x_pixels = robo_pos.x();
-    m_robot_y_pixels = robo_pos.y();
-    m_robot_theta_rad = theta;
-    //qDebug() << "x nach Worldtoscene: " << m_robot_x_pixels;
-
-    if (m_robot_ellipse) {
-        // Roboter vorne anzeigen
-        m_robot_ellipse->setZValue(2);
-
-        // Größe und Form des Roboters (immer bei 0,0 relativ zum Item)
-        m_robot_ellipse->setRect(0, 0, m_robot_size, m_robot_size);
-
-        // Position des Roboters in der Szene (Mittelpunkt ausrichten)
-        m_robot_ellipse->setPos(m_robot_x_pixels - m_robot_size / 2, m_robot_y_pixels - m_robot_size / 2);
-
-        m_robot_ellipse->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
-        m_robot_ellipse->setRotation(-m_robot_theta_rad * 180.0 / M_PI);
-        //qDebug() << "robot_theta (rad):" << m_robot_theta_rad << "rot (deg):" << (-m_robot_theta_rad * 180.0 / M_PI);
-
-    }
-    if (m_orientation_line) {
-        double length = 20;
-        double endX = m_robot_x_pixels + length * std::cos(m_robot_theta_rad);
-        double endY = m_robot_y_pixels - length * std::sin(m_robot_theta_rad); 
-        m_orientation_line->setLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY);
-
-        // Orientierung ganz Vorne anzeigen
-        m_orientation_line->setZValue(3);
-    }
-
-    // Ghost Mode
-    if (m_ghostMode) {
-        double current_speed = m_robot_node->getSpeed().x * 100.0;
-        double current_rot = m_robot_node->getRotation();
-        double current_steering = current_rot;
-
-        if (std::abs(m_last_speed - current_speed) > 1e-2 || std::abs(m_last_steering - current_steering) > 1e-2) {
-            startGhostAnimation(current_speed, -current_steering);
-            m_last_speed = current_speed;
-            m_last_steering = current_steering;
-        }
-    } else {
-        deleteGhosts();
-    }
-
-    // Trail Mode
-    if (m_trailMode) {
-        QPointF scenePos = worldToScene(x,y);
-        updateSpeedTrail(scenePos);
-    }
-    
-}
-
-
-void ObstacleMapWidget::resizeEvent(QResizeEvent *event)
-{
-    QWidget::resizeEvent(event);
-    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio); 
-    m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
-}
-
-// Map Koordinaten in Qt-Pixel koordinaten ausrechnen
-QPointF ObstacleMapWidget::worldToScene(double x_m, double y_m) {
-    double scene_x = x_m * m_pixels_per_meter; 
-    double scene_y = -y_m * m_pixels_per_meter;
-    
-    
-    // qDebug() << "worldToScene: x_m=" << x_m << " y_m=" << y_m
-    //          << " -> scene_x=" << scene_x << " scene_y=" << scene_y;
-
-    return QPointF(scene_x, scene_y);
-}
-
-
-QPointF ObstacleMapWidget::sceneToMapCoordinates(const QPointF& scene_pos) {
-    double x_m = scene_pos.x() / m_pixels_per_meter;
-    double y_m = -scene_pos.y() / m_pixels_per_meter;
-
-    return QPointF(x_m, y_m);
-}
-
-
-void ObstacleMapWidget::updateObstaclesFromMap()
-{
-    if (!m_robot_node->has_map()) return;
-
-    // Szene leeren
-    QList<QGraphicsItem*> items = m_scene->items();
-    for (auto item : items) {
-        if (QGraphicsRectItem* rect = dynamic_cast<QGraphicsRectItem*>(item)) {
-            m_scene->removeItem(rect);
-            delete rect;
-        }
-    }
-
-    // Map laden
-    m_map = m_robot_node->get_map();
-    int width = m_map.info.width;
-    int height = m_map.info.height;
-    double resolution = m_map.info.resolution;
-
-    // Skalierung in Pixeln
-    double cellSize = resolution * m_pixels_per_meter;
-
-    // Ursprung der Karte in Weltkoordinaten (Meter)
-    double origin_x = m_map.info.origin.position.x;
-    double origin_y = m_map.info.origin.position.y;
-
-    // Szenegröße in Pixeln
-    double scene_width = width * cellSize;
-    double scene_height = height * cellSize;
-
-    // Szene-Rechteck korrekt setzen (y invertiert, damit Qt nach unten wächst)
-    double scene_left = origin_x * m_pixels_per_meter;
-    double scene_top = -origin_y * m_pixels_per_meter - scene_height;
-
-    m_scene->setSceneRect(scene_left, scene_top, scene_width, scene_height);
-
-    // Hindernisse einzeichnen
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            int i = x + y * width;
-            if (m_map.data[i] == 100) {
-                // Koordinaten in Szene umrechnen
-                double map_x = origin_x + x * resolution;
-                double map_y = origin_y + y * resolution;
-                
-                QPointF scene_pos = worldToScene(map_x, map_y);
-
-                // Zelle zeichnen
-                addObstacle(scene_pos.x(), scene_pos.y(), cellSize, cellSize);
-            }
-        }
-    }
-
-    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
-    m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
-}
-
-
-
-void ObstacleMapWidget::addObstacle(double x, double y, double width, double height)
-{
-    QGraphicsRectItem *rect = new QGraphicsRectItem(x, y, width, height);
-    rect->setBrush(QBrush(Qt::red));  // Hindernis als rotes Rechteck
-    m_scene->addItem(rect);
-}
-
-// Künstlich Parcour aufbauen
-void ObstacleMapWidget::setupStaticObstacles()
-{
-    // Beispiel Parcours: Wände und Hindernisse (Positionen & Größen anpassen)
-    addObstacle(100, 100, 600, 20);  // obere Wand
-    addObstacle(100, 480, 600, 20);  // untere Wand
-    addObstacle(100, 100, 20, 400);  // linke Wand
-    addObstacle(680, 100, 20, 400);  // rechte Wand
-
-    // Ein paar Hindernisse im Innenbereich
-    addObstacle(300, 200, 50, 150);
-    addObstacle(450, 350, 100, 30);
-    addObstacle(550, 150, 20, 150);
-}
-
-void ObstacleMapWidget::updateObstacles()
-{
-    updateObstaclesFromMap();
-}
-
-bool ObstacleMapWidget::isNearObstacle(float x, float y)
-{
-    // Roboter als Kreis mit Mittelpunkt (x,y) und Radius, z.B. 10
-    const float robotRadius = 10.0f;
-
-    for (auto item : m_scene->items()) {
-        auto rectItem = dynamic_cast<QGraphicsRectItem*>(item);
-        if (!rectItem) continue;
-
-        QRectF rect = rectItem->rect();
-
-        // Abstand Kreis-Rechteck minimal berechnen
-        float closestX = std::max(float(rect.left()), std::min(x, float(rect.right())));
-        float closestY = std::max(float(rect.top()), std::min(y, float(rect.bottom())));
-
-        float dx = x - closestX;
-        float dy = y - closestY;
-
-        float distance = std::sqrt(dx*dx + dy*dy);
-
-        if (distance < (robotRadius + EMERGENCY_STOP_RADIUS)) {
-            return true;  // Not-Aus nötig
-        }
-    }
-
-    return false;
-}   
-
-// Im Follow Mode aktuelle Finger/Maus-Position verfolgen (wird jede ...ms geschickt)
-void ObstacleMapWidget::followCurrentPoint() {
-    // Roboter fährt bei keinem Berührungspunkt "zu sich selbst"
-    if (!m_followMode || !m_following) {
-        return;
-    }
-
-    QPointF world = sceneToMapCoordinates(m_current_follow_point);
-    geometry_msgs::msg::PoseStamped goal;
-    goal.header.stamp = m_nav2_node->now();
-    goal.header.frame_id = "map";  
-
-    goal.pose.position.x = world.x();
-    goal.pose.position.y = world.y();
-    goal.pose.position.z = 0.0;
-
-    // Punkt an Client schicken (ausführen)
-    m_nav2_node->sendGoal(goal);
-}
-
-std::vector<ObstacleMapWidget::Pose2D> ObstacleMapWidget::computeGhostTrajectoryDiffDrive(
-    double v,                       // Vorwärtsgeschwindigkeit in cm/s
-    double omega,                   // Drehgeschwindigkeit in rad/s
-    double duration_sec,            // Simulationsdauer
-    int steps,                      // Simulationsschritte
-    double theta_start_rad          // Anfangsorientierung
-) {
-    std::vector<Pose2D> result;
-
-    // omega skalieren für weitere Effekte (schärfere Kurve)
-    omega *= m_curve_gain;
-
-    double x = 0.0, y = 0.0, theta = theta_start_rad;
-    double dt = duration_sec / steps;
-
-    for (int i = 0; i <= steps; ++i) {
-        result.push_back({x, y, theta});
-
-        // Nur updaten, wenn wir noch Schritte vor uns haben
-        if (i == steps) break;
-
-        if (std::abs(omega) < 1e-6) {
-            // Geradeausfahrt
-            x += v * std::cos(theta) * dt;
-            y += v * std::sin(theta) * dt;
-            // theta bleibt gleich
-        } else {
-            // Kreisbewegung
-            double R = v / omega;
-            double dtheta = omega * dt;
-            x += -R * std::sin(theta) + R * std::sin(theta + dtheta);
-            y +=  R * std::cos(theta) - R * std::cos(theta + dtheta);
-            theta += dtheta;
-        }
-    }
-
-    return result;
-}
-
-
-// Für GhostMode: Animation starten
-void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_value) {
-
-    m_ghost_trajectory = computeGhostTrajectoryDiffDrive(speed_cm_s, steering_value, m_ghost_duration, 60, m_robot_theta_rad);
-    m_ghost_frame_index = 0;
-
-    // Items vorbereiten
-    for (auto& item : m_ghostItems) {
-        m_scene->removeItem(item);
-        delete item;
-    }
-    m_ghostItems.clear();
-
-    for (int i = 0; i < static_cast<int>(m_ghost_trajectory.size()); ++i) {
-        QGraphicsEllipseItem* ghost = new QGraphicsEllipseItem(0, 0, m_robot_size, m_robot_size);
-        QColor transparent_color = m_ghost_color;
-        m_ghost_color.setAlpha(100);
-        ghost->setBrush(transparent_color); // halbtransparent
-        ghost->setPen(Qt::NoPen);
-        ghost->setZValue(1); // unter echtem Roboter
-        ghost->setVisible(false);
-        m_scene->addItem(ghost);
-        m_ghostItems.push_back(ghost);
-    }
-
-    if (!m_ghost_timer) {
-        m_ghost_timer = new QTimer(this);
-        connect(m_ghost_timer, &QTimer::timeout, this, [this]() {
-                    updateGhostAnimation(m_robot_x_meters, m_robot_y_meters);
-                });
-    }
-    m_ghost_timer->start(10);
-}
-
-// Für GhostMode: Animieren
-void ObstacleMapWidget::updateGhostAnimation(double x_pos, double y_pos) {
-    if (m_ghost_frame_index >= static_cast<int>(m_ghostItems.size())) {
-        m_ghost_timer->stop();
-        return;
-    }
-
-    const auto& pose = m_ghost_trajectory[m_ghost_frame_index];
-
-    double base_x = x_pos + pose.x / m_pixels_per_meter;
-    double base_y = y_pos + pose.y / m_pixels_per_meter;
-    double theta = m_robot_theta_rad + pose.theta;
-
-    QPointF pos_px = worldToScene(base_x, base_y);
-
-    QGraphicsEllipseItem* ghost = m_ghostItems[m_ghost_frame_index];
-    ghost->setRect(0, 0, m_robot_size, m_robot_size);
-    ghost->setPos(pos_px.x() - m_robot_size / 2, pos_px.y() - m_robot_size / 2);
-    ghost->setTransformOriginPoint(m_robot_size / 2, m_robot_size / 2);
-    ghost->setRotation(-theta * 180.0 / M_PI);
-    ghost->setVisible(true);
-
-    m_ghost_frame_index++;
-}
-
-// Pfad zu Ende gezeichnet
-void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {
-    m_current_path = resamplePath(points, 5.0);
-    m_current_target_index = 0;
-    goToNextPoint();
-}
-
-// Pfad zeichnen - Punkt zeichnen ausführen (je nach größe des Pfads)
-void ObstacleMapWidget::goToNextPoint() {
-    if (m_current_target_index >= m_current_path.size()) {
-        m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
-        return;
-    }
-
-    // Pose-Client (Nur 1 Punkt) 
-    if (m_current_path.size() == 1) {
-        QPointF target = m_current_path[m_current_target_index];
-        QPointF target_world = sceneToMapCoordinates(target);
-
-        geometry_msgs::msg::PoseStamped goal;
-        goal.header.frame_id = "map";
-        goal.header.stamp = m_nav2_node->now();
-
-        goal.pose.position.x = target_world.x();
-        goal.pose.position.y = target_world.y();
-        goal.pose.position.z = 0.0;
-        //goal.pose.orientation.w = 1.0; // keine Drehung
-
-        // Punkt an Client schicken (ausführen)
-        m_nav2_node->sendGoal(goal);
-    }
-    // FollowPath-Client 
-    else {
-        nav_msgs::msg::Path path;
-        path.header.frame_id = "map";
-        path.header.stamp = m_nav2_node->now();
-
-        for (const QPointF &pt : m_current_path) {
-            QPointF world = sceneToMapCoordinates(pt);
-
-            geometry_msgs::msg::PoseStamped pose;
-            pose.header = path.header;
-            pose.pose.position.x = world.x();
-            pose.pose.position.y = world.y();
-            pose.pose.position.z = 0.0;
-            //pose.pose.orientation.w = 1.0;  // keine Drehung
-            path.poses.push_back(pose);
-        }
-
-        // Pfad an Client schicken (ausführen)
-        m_nav2_node->sendPath(path);
-    }
-}
-
-QVector<QPointF> ObstacleMapWidget::resamplePath(const QVector<QPointF>& originalPoints, double spacing = 5.0) {
-    if (originalPoints.size() < 2)
-        return originalPoints;
-
-    QVector<QPointF> newPoints;
-    newPoints.push_back(originalPoints.first());
-
-    double accumulatedDist = 0.0;
-    for (int i = 1; i < originalPoints.size(); ++i) {
-        QPointF p0 = originalPoints[i - 1];
-        QPointF p1 = originalPoints[i];
-        double segmentLength = QLineF(p0, p1).length();
-
-        while (accumulatedDist + segmentLength >= spacing) {
-            double t = (spacing - accumulatedDist) / segmentLength;
-            QPointF newPoint = p0 + t * (p1 - p0);
-            newPoints.push_back(newPoint);
-
-            // neuer Startpunkt für nächsten Interpolationsschritt
-            p0 = newPoint;
-            segmentLength = QLineF(p0, p1).length();
-            accumulatedDist = 0;
-        }
-        accumulatedDist += segmentLength;
-    }
-    // letzten Punkt anfügen
-    if (!newPoints.last().isNull() && newPoints.last() != originalPoints.last())
-        newPoints.push_back(originalPoints.last());
-
-    return newPoints;
-}
-
-
-
-

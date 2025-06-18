@@ -1,0 +1,31 @@
+# .clang-format
+---
+Language:        Cpp
+BasedOnStyle:    LLVM
+IndentWidth:     4
+TabWidth:        4
+UseTab:          Never
+AllowShortFunctionsOnASingleLine: Empty
+ColumnLimit:     100
+
+# Qt-typical settings
+DerivePointerAlignment: false
+PointerAlignment: Left
+
+# Braces
+BraceWrapping:
+  AfterClass:      false
+  AfterControlStatement: false
+  AfterFunction:   false
+  AfterNamespace:  false
+  BeforeElse:      false
+  IndentBraces:    false
+
+# Empty lines between functions
+AllowShortIfStatementsOnASingleLine: false
+
+# Other
+ConstructorInitializerIndentWidth: 4
+BreakBeforeBraces: Custom
+SpacesBeforeTrailingComments: 1
+
