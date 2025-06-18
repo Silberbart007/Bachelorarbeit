@@ -1,76 +1,72 @@
 #include "mainwindow.h"
-#include <QDebug>
 #include "ui_mainwindow.h"
 
+// =====================
+// Public Methods
+// =====================
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
-    , m_ui(new Ui::MainWindow)
-    {
-    // Variablen Initialisieren
-    m_counter = 0;
-    m_parkingMode = false;
-    m_vectorMode = false;
-    m_tapControlMode = false;
+/**
+ * @brief Constructs the main window and initializes all components.
+ *
+ * Sets up the UI, ROS nodes, callbacks, control widgets, styles,
+ * synchronization timers, and initial UI states.
+ *
+ * @param parent Optional parent widget.
+ */
+MainWindow::MainWindow(QWidget* parent)
+    : QMainWindow(parent), m_ui(new Ui::MainWindow), m_parkingMode(false), m_vectorMode(false),
+      m_tapControlMode(false) {
+    // ===== UI Setup =====
+    m_ui->setupUi(this);
+    this->resize(3840, 2160); // Resize window to 4K resolution
 
-    // Robot Node erstellen
+    // ===== ROS Nodes Initialization =====
     m_robot_node = std::make_shared<RobotNode>();
-
-    // Nav2Client erstellen
     m_nav2_node = std::make_shared<Nav2Client>();
 
-    // Kamera-Callback registrieren
+    // ===== Register Callbacks =====
     m_robot_node->on_image_received = [this](const sensor_msgs::msg::Image::SharedPtr msg) {
-        this->image_callback(msg);  // ruft Funktion von MainWindow auf
+        this->image_callback(msg);
     };
-
-    // Scan-Callback registrieren
     m_robot_node->on_scan_received = [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
-        m_ui->obstacle_map_widget->laser_callback(msg); //Lasercallback aus ObstacleWidget
+        m_ui->obstacle_map_widget->laser_callback(msg);
     };
 
-    // UI "aktivieren"
-    m_ui->setupUi(this);
-
-    // robot Node an nötige Widgets übergeben
+    // ===== Assign Nodes to UI Widgets =====
     m_ui->rotation_slider->setRobotNode(m_robot_node);
     m_ui->speed_slider->setRobotNode(m_robot_node);
-    m_ui->wheels->setRobotNode(m_robot_node);
-    m_ui->wheels_2->setRobotNode(m_robot_node);
     m_ui->speed_slider_wheels->setRobotNode(m_robot_node);
     m_ui->rotation_slider_joystick->setRobotNode(m_robot_node);
+    m_ui->wheels->setRobotNode(m_robot_node);
+    m_ui->wheels_2->setRobotNode(m_robot_node);
     m_ui->joysticks->setRobotNode(m_robot_node);
     m_ui->obstacle_map_widget->setRobotNode(m_robot_node);
-
-    // Nav2 Client übergeben
     m_ui->obstacle_map_widget->setNav2Node(m_nav2_node);
 
-    // Lenkräder Styles bestimmen
-    //
+    // ===== Configure Wheel Widget Style =====
     WheelStyle formula1Style;
-    formula1Style.outerRingColor = QColor(20, 20, 20);  // Noch tieferes Schwarz
-    formula1Style.outerRingWidth = 30;                  // Kräftiger Rahmen
-    formula1Style.spokeColor = QColor(255, 0, 0);        // Knalliges Rennrot
-    formula1Style.spokeWidth = 30;                      // Sehr markante Speichen
-    formula1Style.centerCircleColor = QColor(50, 0, 0); // Leicht rötlicher Mittelkreis
-    formula1Style.centerCircleRadius = 35;              // Kompakter
-    formula1Style.centerText = "F1";                    // Oder Icon als Bild laden
-    formula1Style.centerFont = QFont("Orbitron", 20, QFont::Bold); 
+    formula1Style.outerRingColor = QColor(20, 20, 20);
+    formula1Style.outerRingWidth = 30;
+    formula1Style.spokeColor = QColor(255, 0, 0);
+    formula1Style.spokeWidth = 30;
+    formula1Style.centerCircleColor = QColor(50, 0, 0);
+    formula1Style.centerCircleRadius = 35;
+    formula1Style.centerText = "F1";
+    formula1Style.centerFont = QFont("Orbitron", 20, QFont::Bold);
     formula1Style.centerTextColor = Qt::yellow;
-    formula1Style.maxAngle = 270.0;                     
+    formula1Style.maxAngle = 270.0;
     formula1Style.isRound = false;
     m_ui->wheels_2->setStyle(formula1Style);
-    // Ende Lenkräder Styles
-    //
 
-    // Synchronisierung von Steuerungsinterfaces durch timer (Damit z.b. Slider auf aktuelle speed gesetzt werden immer)
+    // ===== Setup Synchronization Timer =====
     QTimer* syncTimer = new QTimer(this);
-    connect(syncTimer, &QTimer::timeout, this, [=]() {
-    if (m_robot_node) {
+    connect(syncTimer, &QTimer::timeout, this, [this]() {
+        if (!m_robot_node)
+            return;
+
         RobotNode::RobotSpeed speedNorm = m_robot_node->getSpeedNormalized();
         double rotNorm = m_robot_node->getRotationNormalized();
 
-        // Werte im Bereich [-1, 1]
         m_ui->speed_slider->setValue(speedNorm.x);
         m_ui->rotation_slider->setValue(rotNorm);
         m_ui->speed_slider_wheels->setValue(speedNorm.x);
@@ -78,22 +74,17 @@ MainWindow::MainWindow(QWidget *parent)
         m_ui->wheels->setValue(rotNorm);
         m_ui->wheels_2->setValue(rotNorm);
         m_ui->joysticks->setValue(speedNorm);
-    }
     });
-    syncTimer->start(50); // alle 50 ms aktualisieren
+    syncTimer->start(50); // every 50 ms
 
-    // Steuerungen verstecken
-    //m_ui->wheels->setVisible(false);
-    //m_ui->speed_slider_wheels->setVisible(false);
+    // ===== Hide Optional UI Elements Initially =====
     m_ui->WheelsLayout->setVisible(false);
     m_ui->JoystickLayout->setVisible(false);
     m_ui->sliders->setVisible(false);
     m_ui->ButtonsLayoutHorizontal->setVisible(false);
-
-    // Optionsmenü verstecken
     m_ui->AllOptionsLayout->setVisible(false);
 
-    // Parametereinstellungen verstecken
+    // Parameter controls hidden at startup
     m_ui->curve_gain_slider->setVisible(false);
     m_ui->curve_gain_label->setVisible(false);
     m_ui->ghost_duration_slider->setVisible(false);
@@ -105,52 +96,60 @@ MainWindow::MainWindow(QWidget *parent)
     m_ui->trail_lifetime_slider->setVisible(false);
     m_ui->trail_lifetime_label->setVisible(false);
     m_ui->trail_color_button->setVisible(false);
+
+    // ===== Initialize Parameter Labels and Sliders =====
     m_ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(1.25));
     m_ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(1.0));
     m_ui->laser_number_label->setText(QString("Laser number: %1").arg(270));
     m_ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(2.0));
 
-    // Hinderniskarte verstecken
-    //m_ui->obstacle_map_widget->setVisible(false);
-
-    // Slider Default Werte
     m_ui->rotation_slider->setValue(0.0);
     m_ui->speed_slider->setValue(0.0);
     m_ui->speed_slider_wheels->setValue(0.0);
     m_ui->rotation_slider_joystick->setValue(0.0);
 
-    // Erstes Element standardmäßig auswählen
-    m_ui->mode_list->setCurrentRow(0); // Wählt das erste Item aus
+    // ===== Initialize Mode Selection =====
+    m_ui->mode_list->setCurrentRow(0);
     m_ui->mode_list_view->item(0)->setSelected(true);
     m_ui->mode_list_view->item(1)->setSelected(true);
 
-    // Cursor verstecken wegen Touch-Display
-    //QCursor cursor(Qt::BlankCursor);
-    //QApplication::setOverrideCursor(cursor);
-    //QApplication::changeOverrideCursor(cursor);
-
+    // ===== Install Event Filter for Camera Label =====
     m_ui->cam_label->installEventFilter(this);
-
-    // Auf vollen Bildschirm (4k) aktivieren
-    this->resize(3840, 2160);
 }
 
-MainWindow::~MainWindow()
-{
+/**
+ * @brief Destructor for MainWindow.
+ *
+ * Cleans up the UI pointer.
+ */
+MainWindow::~MainWindow() {
     delete m_ui;
 }
 
-// Maus/Touch abfangen
-bool MainWindow::eventFilter(QObject *obj, QEvent *event)
-{
-    // Maus gedrückt
-    if (event->type() == QEvent::MouseButtonPress) {
-        QMouseEvent *mouseEvent = static_cast<QMouseEvent*>(event);
-        QPoint clickPos = mouseEvent->pos();  // Klickposition im cam_label
+// =====================
+// Protected Methods
+// =====================
 
-        // Tap Control
-        if (obj == m_ui->cam_label && m_tapControlMode)
-        {
+/**
+ * @brief Event filter to capture mouse and touch events.
+ *
+ * This function intercepts mouse button press events on the camera label widget.
+ * If tap control mode is enabled, it calculates the normalized horizontal position
+ * of the tap relative to the displayed camera image and publishes velocity commands
+ * to the robot accordingly.
+ *
+ * @param obj The object sending the event.
+ * @param event The event to be filtered.
+ * @return True if the event was handled, false otherwise.
+ */
+bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
+    // Handle mouse button press event
+    if (event->type() == QEvent::MouseButtonPress) {
+        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+        QPoint clickPos = mouseEvent->pos(); // Click position within cam_label
+
+        // Only handle taps on the camera label when tap control mode is active
+        if (obj == m_ui->cam_label && m_tapControlMode) {
             const QPixmap* pixmap = m_ui->cam_label->pixmap();
             if (!pixmap || pixmap->isNull())
                 return false;
@@ -159,187 +158,50 @@ bool MainWindow::eventFilter(QObject *obj, QEvent *event)
             QSize pixmapSize = pixmap->size();
             QSize scaledSize = pixmapSize.scaled(labelSize, Qt::KeepAspectRatio);
 
-            // Offset berechnen (zentrierte Darstellung)
+            // Calculate offset for centered pixmap display within label
             int offsetX = (labelSize.width() - scaledSize.width()) / 2;
 
-            // Klickposition relativ zur dargestellten Pixmap
+            // Calculate click position relative to displayed pixmap
             int relativeX = clickPos.x() - offsetX;
 
-            // Sicherstellen, dass der Klick im sichtbaren Bereich der Pixmap liegt
+            // Ignore clicks outside the visible pixmap area
             if (relativeX < 0 || relativeX >= scaledSize.width())
                 return false;
 
-            // Normiere auf [-1.0, 1.0] basierend auf der dargestellten Pixmap
+            // Normalize horizontal click position to range [-1.0, 1.0]
             double dx = (relativeX - scaledSize.width() / 2.0) / (scaledSize.width() / 2.0);
             dx = std::clamp(dx, -1.0, 1.0);
 
-            // Roboter steuern
+            // Publish velocity command to robot: fixed forward speed, steering based on tap
+            // position
             if (m_robot_node) {
                 float linear = 0.2f;
                 m_robot_node->publish_velocity({linear, 0.0}, dx);
             }
 
-            return true;
+            return true; // Event handled
         }
-
-    }   
+    }
+    // Default event processing
     return QMainWindow::eventFilter(obj, event);
 }
 
+// =====================
+// Private Slot Methods
+// =====================
 
-// Hilfsfunktion zum projezieren eines 3D Objekts auf dem 2D Bild
-cv::Point MainWindow::projectToImage(double x, double y, double z,
-                         double fx, double fy,
-                         double cx, double cy) {
-    int img_x = static_cast<int>(fx * x / z + cx);
-    int img_y = static_cast<int>(fy * y / z + cy);
-    return cv::Point(img_x, img_y);
-}
-
-// Callback für Kameradaten (Subscriber)
-void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
-{
-    try {
-        cv::Mat frame = cv_bridge::toCvCopy(msg, "bgr8")->image;
-        if (!frame.empty()) {
-
-            // Aktuelle Steuerwerte holen (-1.0 bis 1.0)
-            RobotNode::RobotSpeed speed_value = m_robot_node->getSpeedNormalized();       // -1.0 = rückwärts, 1.0 = vorwärts bei linear.x
-            double rotation_value = m_robot_node->getRotationNormalized(); // -1.0 = links, 1.0 = rechts
-
-            if (speed_value.x < 0.0) {
-                rotation_value = -rotation_value; // Lenkradspiegelung rückwärts
-            }
-
-            // Winkel berechnen (0° = rechts, 90° = oben, 180° = links, 270° = unten)
-            // Ziel: 1.0 = 180°,  0.0 = 270°, -1.0 = 360°
-            double rotation = 270.0 - rotation_value * 90.0;
-
-            // Startpunkt für Pfeil – z. B. untere Bildmitte
-            cv::Point start((frame.cols - 20) / 2, frame.rows - 100);
-
-            // Rotation in Bogenmaß umwandeln
-            double angle_rad = rotation * CV_PI / 180.0;
-
-            // Richtungseinheitsvektor (Y-Achse im Bild nach oben = negativ)
-            cv::Point2f dir(-std::cos(angle_rad), std::sin(angle_rad));
-
-            // Maximale Pfeillänge in Pixeln
-            double max_length = 120.0;
-
-            // Geschwindigkeit in Pfeillänge skalieren (auch negativ möglich!)
-            double length = speed_value.x * max_length;
-
-            // Endpunkt berechnen
-            cv::Point end = start + cv::Point(dir.x * length, dir.y * length);
-
-            // Pfeilfarbe je nach Richtung: Blau für vorwärts, Rot für rückwärts
-            cv::Scalar arrow_color = (speed_value.x >= 0.0) ? cv::Scalar(255, 0, 0)   // Blau (BGR)
-                                                        : cv::Scalar(0, 0, 255);  // Rot
-
-            // Optional: minimale sichtbare Länge, damit bei kleinen Werten noch etwas angezeigt wird
-            if (std::abs(speed_value.x) > 0.01) {
-                int thickness = 6;
-                // Nur anzeigen wenn vectorMode
-                if (m_vectorMode)
-                    cv::arrowedLine(frame, start, end, arrow_color, thickness);
-            }
-            // Ende Vektorpfeil
-
-            // === Fahrspurhilfslinie für parkingMode ===
-            if (m_parkingMode) {
-                double wheel_base = 50.0; 
-                double max_steering_angle = M_PI / 4; // 45 Grad
-                double steering_angle = rotation_value * max_steering_angle;
-
-                // Kameraparameter (vereinfacht, anpassbar)
-                double fx = 200.0;
-                double fy = 200.0;
-                double cx = frame.cols / 2.0;
-                double cy = frame.rows / 2.0;
-
-                // Kamera ist auf 30 cm Höhe
-                double camera_height = 50.0; // in cm
-
-                // Linienlänge in Z-Richtung (Tiefe) | abhängig von Speed
-                double max_z = std::min(150.0, 60.0 + std::abs(speed_value.x) * 100); // in cm
-                int num_points = 30;
-                double offset = 25.0; // Abstand paralleler Linien (in cm)
-
-                std::vector<cv::Point> left_pts;
-                std::vector<cv::Point> right_pts;
-
-                std::vector<cv::Point2f> base;
-
-                for (int i = 0; i < num_points; ++i) {
-                    double z = (i / (double)num_points) * max_z;
-                    double x = 0.0;
-
-                    if (std::abs(steering_angle) > 1e-3) {
-                        double R = wheel_base / std::tan(steering_angle);
-                        double theta = z / R;
-
-                        x = R * std::sin(theta);
-                        z = R * (1 - std::cos(theta));
-                    } else {
-                        z = 0.0;
-                        x = (i / (double)num_points) * max_z;
-                    }
-
-                    base.emplace_back(x,z);
-                }
-                
-                double y_cam = camera_height;
-
-                for (auto &b : base) {
-                    double len = hypot(b.x, b.y);
-                    double perp_z =  b.y/len;
-                    double perp_x = -b.x/len;
-
-                    cv::Point2f L(b.y + perp_x*offset,
-                                b.x + perp_z*offset);
-                    cv::Point2f R(b.y - perp_x*offset,
-                                b.x - perp_z*offset);
-
-                    if (L.y>0) left_pts.emplace_back(projectToImage(L.x,y_cam,L.y,fx,fy,cx,cy));
-                    if (R.y>0) right_pts.emplace_back(projectToImage(R.x,y_cam,R.y,fx,fy,cx,cy));
-                }
-                
-                // Linien zeichnen
-                cv::polylines(frame, left_pts, false, cv::Scalar(0, 255, 0), 3);
-                cv::polylines(frame, right_pts, false, cv::Scalar(0, 255, 0), 3);
-            }
-            // === Ende Fahrspurhilfslinie ===
-
-
-
-            // Kamera-Bild anzeigen
-            //
-            cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);  // Qt verwendet RGB
-
-            QImage qimg(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
-            QPixmap pixmap = QPixmap::fromImage(qimg);
-            
-            // Skalieren der Pixmap auf die Größe des Labels (auch wenn das Bild pixelig wird)
-            QPixmap scaledPixmap = pixmap.scaled(m_ui->cam_label->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
-
-            // Wichtig: Alles, was GUI betrifft, muss im Qt-Thread passieren
-            QMetaObject::invokeMethod(this, [this, scaledPixmap]() {
-                m_ui->cam_label->setPixmap(scaledPixmap);
-            }, Qt::QueuedConnection);
-        }
-    } catch (cv_bridge::Exception &e) {
-        RCLCPP_ERROR(m_robot_node->get_logger(), "cv_bridge exception: %s", e.what());
-    }
-}
-
-// Optionen-Fenster für Steuerungen
-void MainWindow::on_mode_list_itemSelectionChanged()
-{
-    // Hole alle aktuell ausgewählten Items
+/**
+ * @brief Handles changes in the selection of the control modes list.
+ *
+ * This slot is triggered when the selection in the control mode list changes.
+ * It checks which control modes are selected and shows or hides the corresponding UI widgets
+ * accordingly.
+ */
+void MainWindow::on_mode_list_itemSelectionChanged() {
+    // Get all currently selected items in the mode list
     QList<QListWidgetItem*> selectedItems = m_ui->mode_list->selectedItems();
 
-    // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
+    // Flags to indicate which control widgets should be shown
     bool showWheel = false;
     bool defaultWheel = false;
     bool raceWheel = false;
@@ -347,8 +209,8 @@ void MainWindow::on_mode_list_itemSelectionChanged()
     bool showButtons = false;
     bool showSliders = false;
 
-    // Prüfe die ausgewählten Items
-    for (QListWidgetItem *item : selectedItems) {
+    // Evaluate selected items and set flags
+    for (QListWidgetItem* item : selectedItems) {
         QString text = item->text();
         if (text == "Default Lenkrad") {
             showWheel = true;
@@ -365,9 +227,7 @@ void MainWindow::on_mode_list_itemSelectionChanged()
         }
     }
 
-    // Steuerungswidgets sichtbar oder unsichtbar machen
-    //m_ui->wheels->setVisible(showWheel);
-    //m_ui->speed_slider_wheels->setVisible(showWheel);
+    // Show or hide the control widgets based on selection
     m_ui->WheelsLayout->setVisible(showWheel);
     m_ui->wheels->setVisible(defaultWheel);
     m_ui->wheels_2->setVisible(raceWheel);
@@ -376,19 +236,22 @@ void MainWindow::on_mode_list_itemSelectionChanged()
     m_ui->ButtonsLayoutHorizontal->setVisible(showButtons);
 }
 
-// Optionen Fenster für Anzeigenp
-void MainWindow::on_mode_list_view_itemSelectionChanged() 
-{
-    // Hole alle aktuell ausgewählten Items
+/**
+ * @brief Handles changes in the selection of the display options list.
+ *
+ * This slot is called when the selection in the display mode list changes.
+ * It toggles visibility of the camera and map widgets based on the current selection.
+ */
+void MainWindow::on_mode_list_view_itemSelectionChanged() {
+    // Get all currently selected items in the display options list
     QList<QListWidgetItem*> selectedItems = m_ui->mode_list_view->selectedItems();
 
-    // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
+    // Flags to determine which display widgets to show
     bool showCam = false;
     bool showMap = false;
 
-
-    // Prüfe die ausgewählten Items
-    for (QListWidgetItem *item : selectedItems) {
+    // Check selected items and set visibility flags
+    for (QListWidgetItem* item : selectedItems) {
         QString text = item->text();
         if (text == "Camera") {
             showCam = true;
@@ -397,18 +260,82 @@ void MainWindow::on_mode_list_view_itemSelectionChanged()
         }
     }
 
-    // Anzeigewidgets sichtbar oder unsichtbar machen
+    // Show or hide display widgets accordingly
     m_ui->cam_widget->setVisible(showCam);
     m_ui->ObstacleMapLayout->setVisible(showMap);
 }
 
-// Optionen Fenster der obstacle map, zum Auswählen der Funktionen
-void MainWindow::on_obstacle_map_list_itemSelectionChanged()
-{
-    // Hole alle aktuell ausgewählten Items
+/**
+ * @brief Toggles the visibility of the options panel.
+ *
+ * This slot is called when the "Modes" button is clicked.
+ * It shows or hides the entire options layout.
+ */
+void MainWindow::on_modes_button_clicked() {
+    // Toggle the visibility of the options panel
+    m_ui->AllOptionsLayout->setVisible(!m_ui->AllOptionsLayout->isVisible());
+}
+
+/**
+ * @brief Sends a fast forward velocity command to the robot.
+ */
+void MainWindow::on_fast_button_clicked() {
+    qDebug() << "Speed button pressed: 1.0";
+    m_robot_node->publish_velocity({1.0, 0.0}, m_robot_node->getRotationNormalized());
+}
+
+/**
+ * @brief Sends a slow forward velocity command to the robot.
+ */
+void MainWindow::on_slow_button_clicked() {
+    qDebug() << "Speed button pressed: 0.5";
+    m_robot_node->publish_velocity({0.5, 0.0}, m_robot_node->getRotationNormalized());
+}
+
+/**
+ * @brief Sends a stop command to the robot (zero velocity).
+ */
+void MainWindow::on_stop_button_clicked() {
+    qDebug() << "Speed button pressed: 0.0";
+    m_robot_node->publish_velocity({0.0, 0.0}, m_robot_node->getRotationNormalized());
+}
+
+/**
+ * @brief Sends a slow backward velocity command to the robot.
+ */
+void MainWindow::on_back_slow_button_clicked() {
+    qDebug() << "Speed button pressed: -0.5";
+    m_robot_node->publish_velocity({-0.5, 0.0}, m_robot_node->getRotationNormalized());
+}
+
+/**
+ * @brief Sends a fast backward velocity command to the robot.
+ */
+void MainWindow::on_back_fast_button_clicked() {
+    qDebug() << "Speed button pressed: -1.0";
+    m_robot_node->publish_velocity({-1.0, 0.0}, m_robot_node->getRotationNormalized());
+}
+
+/**
+ * @brief Resets the robot's rotation by setting angular velocity to zero.
+ *
+ * Keeps the current linear speed unchanged.
+ */
+void MainWindow::on_reset_rotation_button_clicked() {
+    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
+}
+
+/**
+ * @brief Handles selection changes in the obstacle map options list.
+ *
+ * Updates the modes of the obstacle map widget and shows/hides
+ * related parameter controls based on the selected options.
+ */
+void MainWindow::on_obstacle_map_list_itemSelectionChanged() {
+    // Get all currently selected items
     QList<QListWidgetItem*> selectedItems = m_ui->obstacle_map_list->selectedItems();
 
-    // Flags, ob die jeweiligen Steuerelemente angezeigt werden sollen
+    // Flags to indicate which obstacle map modes should be active
     bool drawPathMode = false;
     bool beamMode = false;
     bool followMode = false;
@@ -416,8 +343,8 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     bool inertiaMode = false;
     bool trailMode = false;
 
-    // Prüfe die ausgewählten Items
-    for (QListWidgetItem *item : selectedItems) {
+    // Check which items are selected and set the corresponding flags
+    for (QListWidgetItem* item : selectedItems) {
         QString text = item->text();
         if (text == "Draw path") {
             drawPathMode = true;
@@ -434,7 +361,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
         }
     }
 
-    // Anzeigewidgets sichtbar oder unsichtbar machen
+    // Update obstacle map widget modes accordingly
     m_ui->obstacle_map_widget->setDrawPathMode(drawPathMode);
     m_ui->obstacle_map_widget->setBeamMode(beamMode);
     m_ui->obstacle_map_widget->setFollowMode(followMode);
@@ -442,7 +369,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     m_ui->obstacle_map_widget->setInertiaMode(inertiaMode);
     m_ui->obstacle_map_widget->setTrailMode(trailMode);
 
-    // Parmetrisierungen
+    // Show or hide parameter controls based on active modes
     m_ui->curve_gain_slider->setVisible(ghostMode);
     m_ui->curve_gain_label->setVisible(ghostMode);
     m_ui->ghost_duration_slider->setVisible(ghostMode);
@@ -456,23 +383,26 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged()
     m_ui->trail_lifetime_slider->setVisible(trailMode);
 }
 
-// Optionen Fenster des Kamerabildes, zum Auswählen der Funktionen
-void MainWindow::on_cam_list_itemSelectionChanged()
-{
-    // Hole alle aktuell ausgewählten Items
+/**
+ * @brief Handles selection changes in the camera mode options list.
+ *
+ * Updates the enabled camera assistance modes based on the selected options.
+ */
+void MainWindow::on_cam_list_itemSelectionChanged() {
+    // Get all currently selected items
     QList<QListWidgetItem*> selectedItems = m_ui->cam_list->selectedItems();
 
-    // Flags, ob die jeweiligen Assitenzsysteme angezeigt werden sollen
+    // Reset all camera mode flags
     m_vectorMode = false;
     m_parkingMode = false;
     m_tapControlMode = false;
 
-    // Prüfe die ausgewählten Items
-    for (QListWidgetItem *item : selectedItems) {
+    // Set flags based on selected items
+    for (QListWidgetItem* item : selectedItems) {
         QString text = item->text();
-        if (text == "Vektorpfeil") {
+        if (text == "Vector Arrow") {
             m_vectorMode = true;
-        } else if (text == "Parkmodus") {
+        } else if (text == "Parking Mode") {
             m_parkingMode = true;
         } else if (text == "Tap-Control") {
             m_tapControlMode = true;
@@ -480,100 +410,283 @@ void MainWindow::on_cam_list_itemSelectionChanged()
     }
 }
 
-// Optionen Button
-void MainWindow::on_modes_button_clicked() {
-    // Mode-List aktivieren/deaktivieren
-    m_ui->AllOptionsLayout->setVisible(!m_ui->AllOptionsLayout->isVisible());
-}
-
-// Speed Buttons
-//
-
-void MainWindow::on_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 1.0; m_robot_node->publish_velocity({1.0,0.0}, m_robot_node->getRotationNormalized());}
-void MainWindow::on_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.5; m_robot_node->publish_velocity({0.5,0.0}, m_robot_node->getRotationNormalized());}
-void MainWindow::on_stop_button_clicked() { qDebug() << "Button Geschwindigkeit: " << 0.0; m_robot_node->publish_velocity({0.0,0.0}, m_robot_node->getRotationNormalized());}
-void MainWindow::on_back_slow_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -0.5; m_robot_node->publish_velocity({-0.5,0.0}, m_robot_node->getRotationNormalized());}
-void MainWindow::on_back_fast_button_clicked() { qDebug() << "Button Geschwindigkeit: " << -1.0; m_robot_node->publish_velocity({-1.0,0.0}, m_robot_node->getRotationNormalized());}
-
-// Reset Rotation Button
-void MainWindow::on_reset_rotation_button_clicked() {
-    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
-}
-
-// Parameter Slider
-//
+/**
+ * @brief Called when the curve gain slider value changes.
+ *
+ * Updates the curve gain parameter in the obstacle map widget and
+ * updates the corresponding label text.
+ *
+ * @param value The new slider value (0-100 expected).
+ */
 void MainWindow::on_curve_gain_slider_valueChanged(int value) {
-    m_ui->obstacle_map_widget->setCurveGain(static_cast<double>(value)/100);
+    m_ui->obstacle_map_widget->setCurveGain(static_cast<double>(value) / 100.0);
     m_ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(value));
 }
 
+/**
+ * @brief Called when the ghost duration slider value changes.
+ *
+ * Updates the ghost duration parameter in the obstacle map widget and
+ * updates the corresponding label text.
+ *
+ * @param value The new slider value (duration in seconds).
+ */
 void MainWindow::on_ghost_duration_slider_valueChanged(int value) {
     m_ui->obstacle_map_widget->setGhostDuration(static_cast<double>(value));
     m_ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(value));
 }
 
+/**
+ * @brief Called when the laser number slider value changes.
+ *
+ * Updates the number of laser beams in the obstacle map widget and
+ * updates the corresponding label text.
+ *
+ * @param value The new laser number.
+ */
 void MainWindow::on_laser_number_slider_valueChanged(int value) {
     m_ui->obstacle_map_widget->setLaserNumber(value);
     m_ui->laser_number_label->setText(QString("Laser number: %1").arg(value));
 }
 
+/**
+ * @brief Called when the trail lifetime slider value changes.
+ *
+ * Updates the trail lifetime parameter in the obstacle map widget and
+ * updates the corresponding label text.
+ *
+ * @param value The new trail lifetime slider value (tenths of a second).
+ */
 void MainWindow::on_trail_lifetime_slider_valueChanged(int value) {
-    m_ui->obstacle_map_widget->setTrailLifetime(value);
-    m_ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(static_cast<double>(value)/10));
+    double lifetimeSeconds = static_cast<double>(value) / 10.0;
+    m_ui->obstacle_map_widget->setTrailLifetime(lifetimeSeconds);
+    m_ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(lifetimeSeconds));
 }
 
-// Beam Color Button
-void MainWindow::on_beam_color_button_clicked()
-{
-    QColor color = QColorDialog::getColor(Qt::red, this, "Farbe wählen");
+/**
+ * @brief Slot for the Beam Color button click.
+ *
+ * Opens a color picker dialog to select the laser beam color.
+ * Updates the button background and notifies the obstacle map widget.
+ */
+void MainWindow::on_beam_color_button_clicked() {
+    QColor color = QColorDialog::getColor(Qt::red, this, "Choose Color");
 
     if (color.isValid()) {
-        // Farbe erfolgreich gewählt
-        qDebug() << "Gewählte Farbe:" << color;
+        qDebug() << "Selected color:" << color;
 
-        // Button-Hintergrund ändern
+        // Change button background color
         QString qss = QString("background-color: %1").arg(color.name());
         m_ui->beam_color_button->setStyleSheet(qss);
 
-        // An Obstacle Map senden
-        m_ui->obstacle_map_widget->setLaserColor(color); 
+        // Send color to obstacle map widget
+        m_ui->obstacle_map_widget->setLaserColor(color);
     }
 }
 
-// Trail Color Button
-void MainWindow::on_trail_color_button_clicked()
-{
-    QColor color = QColorDialog::getColor(Qt::red, this, "Farbe wählen");
+/**
+ * @brief Slot for the Trail Color button click.
+ *
+ * Opens a color picker dialog to select the trail color.
+ * Updates the button background and notifies the obstacle map widget.
+ */
+void MainWindow::on_trail_color_button_clicked() {
+    QColor color = QColorDialog::getColor(Qt::red, this, "Choose Color");
 
     if (color.isValid()) {
-        // Farbe erfolgreich gewählt
-        qDebug() << "Gewählte Farbe:" << color;
+        qDebug() << "Selected color:" << color;
 
-        // Button-Hintergrund ändern
         QString qss = QString("background-color: %1").arg(color.name());
         m_ui->trail_color_button->setStyleSheet(qss);
 
-        // An Obstacle Map senden
-        m_ui->obstacle_map_widget->setTrailColor(color); 
+        m_ui->obstacle_map_widget->setTrailColor(color);
     }
 }
 
-// Ghost Color Button
-void MainWindow::on_ghost_color_button_clicked()
-{
-    QColor color = QColorDialog::getColor(Qt::red, this, "Farbe wählen");
+/**
+ * @brief Slot for the Ghost Color button click.
+ *
+ * Opens a color picker dialog to select the ghost display color.
+ * Updates the button background and notifies the obstacle map widget.
+ */
+void MainWindow::on_ghost_color_button_clicked() {
+    QColor color = QColorDialog::getColor(Qt::red, this, "Choose Color");
 
     if (color.isValid()) {
-        // Farbe erfolgreich gewählt
-        qDebug() << "Gewählte Farbe:" << color;
+        qDebug() << "Selected color:" << color;
 
-        // Button-Hintergrund ändern
         QString qss = QString("background-color: %1").arg(color.name());
         m_ui->ghost_color_button->setStyleSheet(qss);
 
-        // An Obstacle Map senden
-        m_ui->obstacle_map_widget->setGhostColor(color); 
+        m_ui->obstacle_map_widget->setGhostColor(color);
     }
 }
 
+/**
+ * @brief Projects a 3D point onto a 2D image plane using intrinsic camera parameters.
+ *
+ * This function uses the pinhole camera model to convert 3D coordinates (x, y, z)
+ * into 2D pixel coordinates on the image.
+ *
+ * @param x X coordinate in 3D space.
+ * @param y Y coordinate in 3D space.
+ * @param z Z coordinate (depth) in 3D space. Must be non-zero.
+ * @param fx Focal length in x direction (pixels).
+ * @param fy Focal length in y direction (pixels).
+ * @param cx Principal point offset in x direction (pixels).
+ * @param cy Principal point offset in y direction (pixels).
+ * @return cv::Point The projected 2D point in image coordinates.
+ */
+cv::Point MainWindow::projectToImage(double x, double y, double z, double fx, double fy, double cx,
+                                     double cy) {
+    int img_x = static_cast<int>(fx * x / z + cx);
+    int img_y = static_cast<int>(fy * y / z + cy);
+    return cv::Point(img_x, img_y);
+}
 
+// =====================
+// Private Slot Methods
+// =====================
+
+/**
+ * @brief Callback for receiving camera image data.
+ *
+ * This function converts the incoming ROS image message to OpenCV format,
+ * then overlays visualization graphics such as the velocity vector arrow
+ * and parking assist lane lines depending on the current mode.
+ * Finally, it updates the Qt label with the processed image.
+ *
+ * @param msg Shared pointer to the ROS sensor_msgs::msg::Image message.
+ */
+void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg) {
+    try {
+        // Convert ROS image to OpenCV BGR image
+        cv::Mat frame = cv_bridge::toCvCopy(msg, "bgr8")->image;
+
+        if (!frame.empty()) {
+            // Get normalized robot speed and rotation (-1.0 to 1.0)
+            RobotNode::RobotSpeed speed_value = m_robot_node->getSpeedNormalized();
+            double rotation_value = m_robot_node->getRotationNormalized();
+
+            // Mirror rotation when driving backward
+            if (speed_value.x < 0.0) {
+                rotation_value = -rotation_value;
+            }
+
+            // Compute arrow angle in degrees: 0° = right, 90° = up, 180° = left, 270° = down
+            double rotation = 270.0 - rotation_value * 90.0;
+
+            // Arrow start point near bottom-center of image
+            cv::Point start((frame.cols - 20) / 2, frame.rows - 100);
+
+            // Convert angle to radians
+            double angle_rad = rotation * CV_PI / 180.0;
+
+            // Direction unit vector (image Y axis points downward)
+            cv::Point2f dir(-std::cos(angle_rad), std::sin(angle_rad));
+
+            // Max arrow length in pixels
+            double max_length = 120.0;
+
+            // Scale arrow length by speed
+            double length = speed_value.x * max_length;
+
+            // Calculate arrow end point
+            cv::Point end = start + cv::Point(dir.x * length, dir.y * length);
+
+            // Arrow color: Blue for forward, Red for backward
+            cv::Scalar arrow_color =
+                (speed_value.x >= 0.0) ? cv::Scalar(255, 0, 0) : cv::Scalar(0, 0, 255);
+
+            // Draw arrow if speed is significant and vector mode is enabled
+            if (std::abs(speed_value.x) > 0.01 && m_vectorMode) {
+                int thickness = 6;
+                cv::arrowedLine(frame, start, end, arrow_color, thickness);
+            }
+
+            // === Parking assist lane lines visualization ===
+            if (m_parkingMode) {
+                double wheel_base = 50.0;             // Distance between front and rear wheels (cm)
+                double max_steering_angle = M_PI / 4; // Max steering angle (45°)
+                double steering_angle = rotation_value * max_steering_angle;
+
+                // Camera intrinsic parameters (simplified)
+                double fx = 200.0;
+                double fy = 200.0;
+                double cx = frame.cols / 2.0;
+                double cy = frame.rows / 2.0;
+
+                double camera_height = 50.0; // Camera height in cm
+
+                // Max lane line length in depth direction, scales with speed
+                double max_z = std::min(150.0, 60.0 + std::abs(speed_value.x) * 100);
+
+                int num_points = 30;  // Number of points to generate lane lines
+                double offset = 25.0; // Offset between left/right lane lines in cm
+
+                std::vector<cv::Point> left_pts;
+                std::vector<cv::Point> right_pts;
+                std::vector<cv::Point2f> base;
+
+                // Generate base points along the lane center curve
+                for (int i = 0; i < num_points; ++i) {
+                    double z = (i / (double)num_points) * max_z;
+                    double x = 0.0;
+
+                    if (std::abs(steering_angle) > 1e-3) {
+                        double R = wheel_base / std::tan(steering_angle);
+                        double theta = z / R;
+                        x = R * std::sin(theta);
+                        z = R * (1 - std::cos(theta));
+                    } else {
+                        // Straight line if steering near zero
+                        z = 0.0;
+                        x = (i / (double)num_points) * max_z;
+                    }
+
+                    base.emplace_back(x, z);
+                }
+
+                double y_cam = camera_height;
+
+                // Compute left and right lane line points offset perpendicular to center curve
+                for (auto& b : base) {
+                    double len = hypot(b.x, b.y);
+                    double perp_z = b.y / len;
+                    double perp_x = -b.x / len;
+
+                    cv::Point2f L(b.y + perp_x * offset, b.x + perp_z * offset);
+                    cv::Point2f R(b.y - perp_x * offset, b.x - perp_z * offset);
+
+                    if (L.y > 0)
+                        left_pts.emplace_back(projectToImage(L.x, y_cam, L.y, fx, fy, cx, cy));
+                    if (R.y > 0)
+                        right_pts.emplace_back(projectToImage(R.x, y_cam, R.y, fx, fy, cx, cy));
+                }
+
+                // Draw lane lines in green
+                cv::polylines(frame, left_pts, false, cv::Scalar(0, 255, 0), 3);
+                cv::polylines(frame, right_pts, false, cv::Scalar(0, 255, 0), 3);
+            }
+            // === End parking assist ===
+
+            // Convert BGR to RGB for Qt
+            cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
+
+            // Convert OpenCV Mat to QImage
+            QImage qimg(frame.data, frame.cols, frame.rows, frame.step, QImage::Format_RGB888);
+            QPixmap pixmap = QPixmap::fromImage(qimg);
+
+            // Scale pixmap to label size keeping aspect ratio
+            QPixmap scaledPixmap =
+                pixmap.scaled(m_ui->cam_label->size(), Qt::KeepAspectRatio, Qt::FastTransformation);
+
+            // Update QLabel pixmap in the Qt main thread
+            QMetaObject::invokeMethod(
+                this, [this, scaledPixmap]() { m_ui->cam_label->setPixmap(scaledPixmap); },
+                Qt::QueuedConnection);
+        }
+    } catch (cv_bridge::Exception& e) {
+        RCLCPP_ERROR(m_robot_node->get_logger(), "cv_bridge exception: %s", e.what());
+    }
+}

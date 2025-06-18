@@ -7,37 +7,36 @@
  * including support for modes like path drawing, inertia simulation, ghost prediction, etc.
  */
 
-
 #ifndef OBSTACLEMAPWIDGET_H
 #define OBSTACLEMAPWIDGET_H
 
 // Qt-includes
-#include <QWidget>
+#include <QDebug>
+#include <QGesture>
+#include <QGraphicsRectItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
-#include <QGraphicsRectItem>
-#include <QTimer>
-#include <QtMath>
-#include <QDebug>
+#include <QImage>
 #include <QMouseEvent>
 #include <QRandomGenerator>
-#include <QVBoxLayout>
-#include <QGesture>
 #include <QScrollBar>
-#include <QImage>
+#include <QTimer>
+#include <QVBoxLayout>
+#include <QWidget>
+#include <QtMath>
 
 // ROS2-includes
-#include <tf2/LinearMath/Quaternion.hpp>
 #include <tf2/LinearMath/Matrix3x3.hpp>
+#include <tf2/LinearMath/Quaternion.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 // C++-includes
 #include <algorithm>
 
 // Other own files
-#include "robot_node.h"
-#include "nav2client.h"
 #include "mainwindow.h"
+#include "nav2client.h"
+#include "robot_node.h"
 
 // Forward declaration of Nav2Client, to get the program to run properly
 class Nav2Client;
@@ -47,11 +46,22 @@ namespace Ui {
 class ObstacleMapWidget;
 }
 
-class ObstacleMapWidget : public QWidget
-{
+/**
+ * @class ObstacleMapWidget
+ * @brief Widget that manages the obstacle map, robot movement, and multiple control modes.
+ *
+ * This widget inherits from QWidget and handles rendering and interaction for
+ * robot navigation and environment visualization. It supports various control modes
+ * including path drawing, inertia simulation, ghost prediction, and sensor data display.
+ *
+ * The widget processes user input (mouse, touch, gestures) and integrates with ROS2
+ * to communicate with robot nodes. It also manages timers and graphical elements
+ * such as trails, obstacles, and robot position indicators.
+ */
+class ObstacleMapWidget : public QWidget {
     Q_OBJECT
 
-public:
+  public:
     /**
      * @brief Simple structure representing a 2D pose.
      *
@@ -64,7 +74,7 @@ public:
     };
 
     // ====== Constructor / Destructor ======
-    explicit ObstacleMapWidget(QWidget *parent = nullptr);
+    explicit ObstacleMapWidget(QWidget* parent = nullptr);
     ~ObstacleMapWidget();
 
     // ====== Node Setter ======
@@ -86,24 +96,51 @@ public:
      * The modes control different behaviors like drawing paths, laser beam visualization,
      * following paths, ghost trajectory prediction, inertia simulation, and trail visualization.
      */
-    void setDrawPathMode(bool isEnabled) { m_drawPathMode = isEnabled; }
-    void setBeamMode(bool isEnabled) { m_beamMode = isEnabled; }
-    void setFollowMode(bool isEnabled) { m_followMode = isEnabled; }
-    void setGhostMode(bool isEnabled) { m_ghostMode = isEnabled; }
-    void setInertiaMode(bool isEnabled) { m_inertiaMode = isEnabled; }
-    void setTrailMode(bool isEnabled) { m_trailMode = isEnabled; }
+    void setDrawPathMode(bool isEnabled) {
+        m_drawPathMode = isEnabled;
+    }
+    void setBeamMode(bool isEnabled) {
+        m_beamMode = isEnabled;
+    }
+    void setFollowMode(bool isEnabled) {
+        m_followMode = isEnabled;
+    }
+    void setGhostMode(bool isEnabled) {
+        m_ghostMode = isEnabled;
+    }
+    void setInertiaMode(bool isEnabled) {
+        m_inertiaMode = isEnabled;
+    }
+    void setTrailMode(bool isEnabled) {
+        m_trailMode = isEnabled;
+    }
 
     // ====== Parameter Setters ======
     /**
-     * @brief Set parameters for certain modes such as trail lifetime, colors, durations, gains, and laser settings.
+     * @brief Set parameters for certain modes such as trail lifetime, colors, durations, gains, and
+     * laser settings.
      */
-    void setTrailLifetime(double newLifetime) { m_trail_lifetime_ms = newLifetime * 100; }
-    void setTrailColor(QColor newColor) { m_trail_color = newColor; }
-    void setGhostDuration(double newDuration) { m_ghost_duration = newDuration; }
-    void setGhostColor(QColor newColor) { m_ghost_color = newColor; }
-    void setCurveGain(double newGain) { m_curve_gain = newGain; }
-    void setLaserColor(QColor newColor) { m_beam_color = newColor; }
-    void setLaserNumber(int newNumber) { m_laser_number = newNumber; }
+    void setTrailLifetime(double newLifetime) {
+        m_trail_lifetime_ms = newLifetime * 100;
+    }
+    void setTrailColor(QColor newColor) {
+        m_trail_color = newColor;
+    }
+    void setGhostDuration(double newDuration) {
+        m_ghost_duration = newDuration;
+    }
+    void setGhostColor(QColor newColor) {
+        m_ghost_color = newColor;
+    }
+    void setCurveGain(double newGain) {
+        m_curve_gain = newGain;
+    }
+    void setLaserColor(QColor newColor) {
+        m_beam_color = newColor;
+    }
+    void setLaserNumber(int newNumber) {
+        m_laser_number = newNumber;
+    }
 
     // ====== Other public methods ======
     /**
@@ -117,7 +154,7 @@ public:
      */
     void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
 
-protected:
+  protected:
     /**
      * @brief Handles resizing of the widget.
      *
@@ -125,42 +162,42 @@ protected:
      * Should update internal layouts or scaling as needed.
      * @param event Pointer to the resize event containing new size info.
      */
-    void resizeEvent(QResizeEvent *event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
     /**
      * @brief Event filter to intercept mouse and touch events.
      *
-     * Filters events from the viewport to handle user interactions like clicks, gestures, or touches.
+     * Filters events from the viewport to handle user interactions like clicks, gestures, or
+     * touches.
      * @param obj The object that sent the event.
      * @param event The event to be processed.
      * @return true if the event is handled and should not propagate further; false otherwise.
      */
-    bool eventFilter(QObject *obj, QEvent *event) override;
+    bool eventFilter(QObject* obj, QEvent* event) override;
 
-private slots:
+  private slots:
     /**
      * @brief Slot triggered periodically to handle inertia simulation.
      *
-     * Connected to a QTimer, this function updates the speed and motion of the robot or visualization,
-     * for example to simulate slowing down due to inertia.
+     * Connected to a QTimer, this function updates the speed and motion of the robot or
+     * visualization, for example to simulate slowing down due to inertia.
      */
     void handleInertia();
 
-private:
+  private:
     // ===== Scene and View Rendering =====
 
     /// Scene that holds all graphical elements
-    QGraphicsScene *m_scene;
+    QGraphicsScene* m_scene;
 
     /// View that displays the scene
-    QGraphicsView *m_view;
+    QGraphicsView* m_view;
 
     /// Robot visual representation (position)
-    QGraphicsEllipseItem *m_robot_ellipse;
+    QGraphicsEllipseItem* m_robot_ellipse;
 
     /// Line indicating robot orientation
-    QGraphicsLineItem *m_orientation_line;
-
+    QGraphicsLineItem* m_orientation_line;
 
     // ===== Robot State and Parameters =====
 
@@ -185,7 +222,6 @@ private:
     /// Emergency stop radius (in pixels)
     const double EMERGENCY_STOP_RADIUS = 3.0f;
 
-
     // ===== Active Modes =====
 
     bool m_drawPathMode = false;
@@ -194,7 +230,6 @@ private:
     bool m_ghostMode = false;
     bool m_inertiaMode = false;
     bool m_trailMode = false;
-
 
     // ===== Path Drawing Mode =====
 
@@ -216,7 +251,6 @@ private:
     /// Ellipse marking the current target point
     QGraphicsEllipseItem* m_temp_point_item = nullptr;
 
-
     // ===== Follow Mode =====
 
     /// True if robot is actively following a path
@@ -224,7 +258,6 @@ private:
 
     /// Current target follow point
     QPointF m_current_follow_point;
-
 
     // ===== Ghost Mode (Trajectory Prediction) =====
 
@@ -249,7 +282,6 @@ private:
     /// Color of ghost path
     QColor m_ghost_color;
 
-
     // ===== Inertia Mode =====
 
     /// Starting point of inertia simulation
@@ -263,7 +295,6 @@ private:
 
     /// Velocity vector for inertia simulation
     QPointF m_inertiaVelocity;
-
 
     // ===== Trail Mode (Speed Trace) =====
 
@@ -282,7 +313,6 @@ private:
     /// Color of trail lines
     QColor m_trail_color;
 
-
     // ===== Laser Beam Visualization =====
 
     /// Items representing individual laser beams
@@ -300,7 +330,6 @@ private:
     /// Number of laser beams to display
     int m_laser_number;
 
-
     // ===== ROS and Navigation Nodes =====
 
     /// Custom ROS node for robot communication
@@ -308,7 +337,6 @@ private:
 
     /// Client for Nav2 navigation commands
     std::shared_ptr<Nav2Client> m_nav2_node;
-
 
     // ===== Map and Environment =====
 
@@ -320,7 +348,6 @@ private:
 
     /// Size of robot in pixels
     const double m_robot_size = 40.0;
-
 
     // ===== Support Functions =====
 
@@ -398,7 +425,6 @@ private:
 
     /// @}  // end of Support Functions
 
-
     /// \name Coordinate Conversion Utilities
     /// @{
 
@@ -419,7 +445,6 @@ private:
 
     /// @}  // end of Coordinate Conversion Utilities
 
-
     /// \name Laser Beam Generation
     /// @{
 
@@ -429,7 +454,6 @@ private:
     void generateLaserBeams();
 
     /// @}  // end of Laser Beam Generation
-
 
     /// \name Ghost Mode Utilities
     /// @{
@@ -443,13 +467,8 @@ private:
      * @param theta_start_rad Start orientation in radians.
      * @return Vector of Pose2D representing the trajectory.
      */
-    std::vector<Pose2D> computeGhostTrajectoryDiffDrive(
-        double v,
-        double omega,
-        double duration_sec,
-        int steps,
-        double theta_start_rad
-    );
+    std::vector<Pose2D> computeGhostTrajectoryDiffDrive(double v, double omega, double duration_sec,
+                                                        int steps, double theta_start_rad);
 
     /**
      * @brief Starts the ghost animation based on input.
@@ -472,7 +491,6 @@ private:
 
     /// @}  // end of Ghost Mode Utilities
 
-
     /// \name Trail Mode Utility
     /// @{
 
@@ -483,7 +501,6 @@ private:
     void updateSpeedTrail(const QPointF& currentPosition);
 
     /// @}  // end of Trail Mode Utility
-
 };
 
 #endif // OBSTACLEMAPWIDGET_H
