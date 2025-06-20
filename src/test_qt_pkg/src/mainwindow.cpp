@@ -400,9 +400,9 @@ void MainWindow::on_cam_list_itemSelectionChanged() {
     // Set flags based on selected items
     for (QListWidgetItem* item : selectedItems) {
         QString text = item->text();
-        if (text == "Vector Arrow") {
+        if (text == "Vector arrow") {
             m_vectorMode = true;
-        } else if (text == "Parking Mode") {
+        } else if (text == "Parking mode") {
             m_parkingMode = true;
         } else if (text == "Tap-Control") {
             m_tapControlMode = true;

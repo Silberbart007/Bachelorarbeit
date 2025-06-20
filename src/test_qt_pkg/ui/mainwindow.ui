@@ -362,7 +362,7 @@
            </property>
            <item>
             <property name="text">
-             <string>Vektorpfeil</string>
+             <string>Vector arrow</string>
             </property>
             <property name="font">
              <font>
@@ -372,7 +372,7 @@
            </item>
            <item>
             <property name="text">
-             <string>Parkmodus</string>
+             <string>Parking mode</string>
             </property>
             <property name="font">
              <font>
@@ -1092,7 +1092,7 @@
      <x>0</x>
      <y>0</y>
      <width>1837</width>
-     <height>34</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

@@ -121,7 +121,7 @@ class ObstacleMapWidget : public QWidget {
      * laser settings.
      */
     void setTrailLifetime(double newLifetime) {
-        m_trail_lifetime_ms = newLifetime * 100;
+        m_trail_lifetime_ms = newLifetime * 1000;
     }
     void setTrailColor(QColor newColor) {
         m_trail_color = newColor;
