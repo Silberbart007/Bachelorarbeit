@@ -1,9 +1,15 @@
 #include "robot_node.h"
 #include <chrono>
 
-RobotNode::RobotNode() : Node("robot_node")
-{
-    //Eigenschaften des Roboters setzen
+// =====================
+// Public Methods
+// =====================
+
+/**
+ * @brief Constructor: Initializes publishers, subscribers, and robot parameters.
+ */
+RobotNode::RobotNode() : Node("robot_node") {
+    // Set initial robot speed and limits
     m_speed.x = 0.0;
     m_speed.y = 0.0;
     m_rot = 0.0;
@@ -11,109 +17,187 @@ RobotNode::RobotNode() : Node("robot_node")
     m_max_speed.y = 0.4;
     m_max_rotation = 0.8;
 
-    // cmd_vel Publisher
+    // Create publisher for velocity commands
     m_cmd_pub = this->create_publisher<geometry_msgs::msg::Twist>("cmd_vel", 10);
 
-    // Scan subscriber
+    // Subscribe to laser scan data
     m_scan_sub = this->create_subscription<sensor_msgs::msg::LaserScan>(
-        "/base_scan", 10,
-        std::bind(&RobotNode::scan_callback, this, std::placeholders::_1)
-    );
+        "/base_scan", 10, std::bind(&RobotNode::scan_callback, this, std::placeholders::_1));
 
-    // Kamera Subscriber
+    // Subscribe to camera image stream
     m_image_sub = this->create_subscription<sensor_msgs::msg::Image>(
-        "camera/image_raw", 10,
-        std::bind(&RobotNode::image_callback, this, std::placeholders::_1)
-    );
+        "camera/image_raw", 10, std::bind(&RobotNode::image_callback, this, std::placeholders::_1));
 
-    // Map Subscriber
+    // Subscribe to occupancy grid map with reliable and transient QoS
     auto qos = rclcpp::QoS(10);
-    qos.transient_local();  // Lässt den Subscriber auch alte Nachrichten empfangen
-    qos.reliable();        // Damit Reliability auf Reliable steht
+    qos.transient_local(); // Ensures late joiners still get the last message
+    qos.reliable();        // Ensures delivery
     m_map_sub = this->create_subscription<nav_msgs::msg::OccupancyGrid>(
-        "/map", qos,
-        std::bind(&RobotNode::map_callback, this, std::placeholders::_1));
+        "/map", qos, std::bind(&RobotNode::map_callback, this, std::placeholders::_1));
 
-    // AMCL Subscriber
+    // Subscribe to AMCL pose estimate
     m_amcl_sub = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-        "/amcl_pose", 10,
-        std::bind(&RobotNode::amcl_callback, this, std::placeholders::_1)
-    );
+        "/amcl_pose", 10, std::bind(&RobotNode::amcl_callback, this, std::placeholders::_1));
 }
 
-void RobotNode::publish_velocity(RobotSpeed speed, double rotation)
-{
-    // Message vorbereiten
+/**
+ * @brief Publishes a velocity command to the robot.
+ *
+ * Multiplies normalized input by max speed/rotation before publishing.
+ *
+ * @param speed Normalized linear speed (-1.0 to 1.0) in X and Y.
+ * @param rotation Normalized angular speed (-1.0 to 1.0).
+ */
+void RobotNode::publish_velocity(RobotSpeed speed, double rotation) {
+    // Prepare Twist message
     auto msg = geometry_msgs::msg::Twist();
     m_speed.x = speed.x * m_max_speed.x;
     m_speed.y = speed.y * m_max_speed.y;
     m_rot = rotation * m_max_rotation;
 
-    // Variablen des Roboters setzen
     msg.linear.x = m_speed.x;
     msg.linear.y = m_speed.y;
-    msg.angular.z = -m_rot;
+    msg.angular.z = -m_rot; // Negated for coordinate system alignment
 
-    // Daten an topic publishen
+    // Publish the velocity command
     m_cmd_pub->publish(msg);
 }
 
-void RobotNode::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg)
-{
-    // Führe zugewiesene Funktion von MainWindow aus
+/**
+ * @brief Returns the current unnormalized linear speed.
+ * @return The robot's current RobotSpeed.
+ */
+RobotNode::RobotSpeed RobotNode::getSpeed() {
+    return m_speed;
+}
+
+/**
+ * @brief Returns the current unnormalized angular velocity.
+ * @return The robot's current angular velocity.
+ */
+double RobotNode::getRotation() {
+    return m_rot;
+}
+
+/**
+ * @brief Returns the current speed normalized to [-1.0, 1.0].
+ *
+ * @return Normalized linear speed.
+ */
+RobotNode::RobotSpeed RobotNode::getSpeedNormalized() {
+    RobotSpeed normSpeed;
+    normSpeed.x = (m_max_speed.x != 0.0) ? (m_speed.x / m_max_speed.x) : 0.0;
+    normSpeed.y = (m_max_speed.y != 0.0) ? (m_speed.y / m_max_speed.y) : 0.0;
+    return normSpeed;
+}
+
+/**
+ * @brief Returns the current angular speed normalized to [-1.0, 1.0].
+ *
+ * @return Normalized rotation.
+ */
+double RobotNode::getRotationNormalized() {
+    return (m_max_rotation != 0.0) ? (m_rot / m_max_rotation) : 0.0;
+}
+
+/**
+ * @brief Returns the configured maximum linear speed.
+ * @return The maximum RobotSpeed.
+ */
+RobotNode::RobotSpeed RobotNode::getMaxSpeed() {
+    return m_max_speed;
+}
+
+/**
+ * @brief Returns the configured maximum angular velocity.
+ * @return Maximum angular velocity.
+ */
+double RobotNode::getMaxRotation() {
+    return m_max_rotation;
+}
+
+/**
+ * @brief Returns whether a map has been received.
+ * @return True if a map is available.
+ */
+bool RobotNode::has_map() const {
+    return m_map_received;
+}
+
+/**
+ * @brief Returns the last received occupancy grid map.
+ * @return Latest map as nav_msgs::msg::OccupancyGrid.
+ */
+nav_msgs::msg::OccupancyGrid RobotNode::get_map() const {
+    return m_last_map;
+}
+
+// =====================
+// Private Methods
+// =====================
+
+/**
+ * @brief Callback for laser scan messages.
+ *
+ * Passes the message to the GUI if a callback is connected.
+ *
+ * @param msg LaserScan message received from /base_scan.
+ */
+void RobotNode::scan_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg) {
     if (on_scan_received)
         on_scan_received(msg);
-    else 
-        RCLCPP_INFO(this->get_logger(), "No laserscan function");
+    else
+        RCLCPP_INFO(this->get_logger(), "No laserscan function connected.");
 }
 
-void RobotNode::image_callback(const sensor_msgs::msg::Image::SharedPtr msg)
-{
-    // Führe zugewiesene Funktion von MainWindow aus
+/**
+ * @brief Callback for image messages.
+ *
+ * Passes the image to the GUI if a callback is connected.
+ *
+ * @param msg Image message received from /camera/image_raw.
+ */
+void RobotNode::image_callback(const sensor_msgs::msg::Image::SharedPtr msg) {
     if (on_image_received)
         on_image_received(msg);
-    else 
-        RCLCPP_INFO(this->get_logger(), "No cam-image function");
+    else
+        RCLCPP_INFO(this->get_logger(), "No camera image function connected.");
 }
 
-void RobotNode::map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg)
-{
-    RCLCPP_INFO(this->get_logger(), "Map Callback");
+/**
+ * @brief Callback for occupancy grid map messages.
+ *
+ * Stores the latest map and notifies the GUI if connected.
+ *
+ * @param msg OccupancyGrid map received from /map.
+ */
+void RobotNode::map_callback(const nav_msgs::msg::OccupancyGrid::SharedPtr msg) {
+    RCLCPP_INFO(this->get_logger(), "Map Callback triggered.");
     m_last_map = *msg;
     m_map_received = true;
     RCLCPP_INFO(this->get_logger(), "Received map: %d x %d", msg->info.width, msg->info.height);
 
-    // Map Loaded ausführen (z. B. aus ObstacleMapWidget)
     if (map_loaded)
         map_loaded();
 }
 
-void RobotNode::amcl_callback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
-{
-    if (on_amcl_pose_received) {
+/**
+ * @brief Callback for AMCL pose updates.
+ *
+ * Forwards the data to the GUI if a callback is set.
+ *
+ * @param msg Pose message with covariance from /amcl_pose.
+ */
+void RobotNode::amcl_callback(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg) {
+    if (on_amcl_pose_received)
         on_amcl_pose_received(msg);
-    } else 
-        RCLCPP_INFO(this->get_logger(), "No amcl function");
+    else
+        RCLCPP_INFO(this->get_logger(), "No AMCL pose function connected.");
 }
 
-
-// Normierte Speed [-1.0 bis 1.0] kriegen
-RobotNode::RobotSpeed RobotNode::getSpeedNormalized() {
-    RobotSpeed normSpeed;
-
-    normSpeed.x = (m_max_speed.x != 0.0) ? (m_speed.x / m_max_speed.x) : 0.0;
-    normSpeed.y = (m_max_speed.y != 0.0) ? (m_speed.y / m_max_speed.y) : 0.0;
-
-    return normSpeed;
-}
-
-// Normierte Rotation [-1.0 bis 1.0] kriegen
-double RobotNode::getRotationNormalized() {
-    // Rotation in [-max_rotation .. max_rotation] auf [-1..1] normieren
-    if (m_max_rotation == 0) return 0.0;
-    return m_rot / m_max_rotation;
-}
-
+/**
+ * @brief Starts spinning the RobotNode. Blocking call.
+ */
 void start_robot_node() {
-  rclcpp::spin(std::make_shared<RobotNode>());
+    rclcpp::spin(std::make_shared<RobotNode>());
 }

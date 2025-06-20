@@ -5,6 +5,9 @@
  * This class inherits from QMainWindow and manages the main user interface,
  * including interaction with the robot via ROS2, joystick input, image display,
  * and related control components.
+ * 
+ * @author Max Vtulkin
+ * @date 2025
  */
 
 #ifndef MAINWINDOW_H

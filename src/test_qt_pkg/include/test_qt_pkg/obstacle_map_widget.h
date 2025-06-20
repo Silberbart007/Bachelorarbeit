@@ -5,6 +5,9 @@
  * This widget inherits from QWidget and contains all logic and rendering related to
  * robot movement, visualization of sensor data, and user interaction with the map,
  * including support for modes like path drawing, inertia simulation, ghost prediction, etc.
+ *
+ * @author Max Vtulkin
+ * @date 2025
  */
 
 #ifndef OBSTACLEMAPWIDGET_H
@@ -40,6 +43,7 @@
 
 // Forward declaration of Nav2Client, to get the program to run properly
 class Nav2Client;
+class RobotNode;
 
 // Needed for obstacle_map_widget_ui.h file
 namespace Ui {
