@@ -440,8 +440,30 @@
            <property name="maximumSize">
             <size>
              <width>16777215</width>
-             <height>100</height>
+             <height>150</height>
             </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QScrollBar:vertical {
+    width: 20px;
+}
+
+QScrollBar::handle:vertical {
+    background: #888;
+    min-height: 20px;
+    border-radius: 5px;
+}
+
+QScrollBar:horizontal {
+    height: 40px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #888;
+    min-width: 40px;
+    border-radius: 5px;
+}
+</string>
            </property>
            <property name="verticalScrollBarPolicy">
             <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -490,6 +512,41 @@
            </property>
            <item>
             <property name="text">
+             <string>CONTROL</string>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>25</pointsize>
+              <bold>true</bold>
+              <underline>true</underline>
+              <strikeout>false</strikeout>
+              <kerning>true</kerning>
+             </font>
+            </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>0</red>
+               <green>0</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>255</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="flags">
+             <set>NoItemFlags</set>
+            </property>
+           </item>
+           <item>
+            <property name="text">
              <string>Draw path</string>
             </property>
             <property name="font">
@@ -519,6 +576,49 @@
            </item>
            <item>
             <property name="text">
+             <string>Inertia-Control</string>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>VISUAL</string>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>25</pointsize>
+              <bold>true</bold>
+              <underline>true</underline>
+             </font>
+            </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>0</red>
+               <green>0</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>255</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="flags">
+             <set>NoItemFlags</set>
+            </property>
+           </item>
+           <item>
+            <property name="text">
              <string>Beam</string>
             </property>
             <property name="font">
@@ -530,16 +630,6 @@
            <item>
             <property name="text">
              <string>Ghost Robot</string>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>20</pointsize>
-             </font>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Inertia-Control</string>
             </property>
             <property name="font">
              <font>
