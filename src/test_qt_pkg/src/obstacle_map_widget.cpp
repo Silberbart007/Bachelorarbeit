@@ -30,6 +30,7 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     m_view->viewport()->installEventFilter(this); // Capture mouse/touch events
     m_view->viewport()->grabGesture(Qt::PinchGesture);
     m_view->viewport()->grabGesture(Qt::PanGesture);
+    m_view->viewport()->setAttribute(Qt::WA_AcceptTouchEvents);
     // m_view->setTransformationAnchor(QGraphicsView::AnchorUnderMouse);  // Optional zoom behavior
 
     // ===== Layout management =====
@@ -144,10 +145,10 @@ void ObstacleMapWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
 
     // Fit the scene into the view, preserving aspect ratio
-    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    // m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
 
     // Center the view on the robot's current position in pixel coordinates
-    m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
+    // m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 
 /**
@@ -317,27 +318,36 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
         else if (event->type() == QEvent::Gesture) {
             QGestureEvent* gestureEvent = static_cast<QGestureEvent*>(event);
 
-            // Pinch zoom gesture
+            // Handle pinch gesture for zoom and rotation
             if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
                 QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
 
+                if (pinch->state() == Qt::GestureStarted) {
+                    m_initialScale_view = m_currentScale_view;
+                    m_initialRotation_view = m_currentRotation_view;
+                }
+
                 if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
-                    qreal scaleFactor = pinch->scaleFactor();
-                    m_view->scale(scaleFactor, scaleFactor);
+                    // Absolute scale and rotation based on initial values
+                    m_currentScale_view = m_initialScale_view * pinch->totalScaleFactor();
+                    m_currentRotation_view = m_initialRotation_view + pinch->totalRotationAngle();
+
+                    updateViewTransform();
                     return true;
                 }
             }
 
-            // Pan gesture (e.g., three-finger drag)
+            // Handle pan gesture for panning the view
             if (QGesture* g = gestureEvent->gesture(Qt::PanGesture)) {
                 QPanGesture* pan = static_cast<QPanGesture*>(g);
                 QPointF delta = pan->delta();
 
-                qDebug() << "Pan delta:" << delta;
-
+                // map current center point in view coordinates
                 QPointF center = m_view->mapToScene(m_view->viewport()->rect().center());
-                QPointF newCenter = center - delta; // Invert for natural dragging
+                // calculate new center by subtracting delta (invert for natural dragging)
+                QPointF newCenter = center - delta;
 
+                // update the view center
                 m_view->centerOn(newCenter);
 
                 return true;
@@ -449,7 +459,7 @@ void ObstacleMapWidget::initializeRobot() {
         m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, end_x, end_y, QPen(Qt::blue, 2));
 
     // Center view on the entire scene (map)
-    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    //m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
 
     // Update obstacle visualization on the map
     updateObstacles();
@@ -608,8 +618,8 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     }
 
     // Adjust view to fit the scene rectangle and center on robot position
-    m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
-    m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
+    // m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    // m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 
 /**
@@ -831,6 +841,21 @@ void ObstacleMapWidget::followCurrentPoint() {
 
     // Send the goal to the navigation client
     m_nav2_node->sendGoal(goal);
+}
+
+/**
+ * @brief Applies pan, rotation, and zoom to the view transform.
+ *
+ * Updates the QGraphicsView transform using current values for panning,
+ * rotation (in degrees), and scaling.
+ */
+void ObstacleMapWidget::updateViewTransform() {
+    QTransform t;
+    t.scale(m_currentScale_view, m_currentScale_view);
+    t.rotate(m_currentRotation_view);
+    t.translate(-m_panOffset_view.x(), -m_panOffset_view.y());
+    m_view->setTransform(t);
+    qDebug() << t;
 }
 
 /**

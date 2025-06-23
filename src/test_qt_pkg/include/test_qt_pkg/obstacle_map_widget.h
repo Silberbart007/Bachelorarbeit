@@ -203,6 +203,27 @@ class ObstacleMapWidget : public QWidget {
     /// Line indicating robot orientation
     QGraphicsLineItem* m_orientation_line;
 
+    /// Last rotation angle for view rotation
+    qreal m_lastRotationAngle_view = 0.0;
+
+    /// Accumulated pan movement for view
+    QPointF m_panOffset_view = QPointF(0, 0);
+
+    /// Current scale of view
+    qreal m_currentScale_view = 1.0;
+
+    /// Current rotation of view
+    qreal m_currentRotation_view = 0.0;
+
+    /// Last Scale factor of view
+    qreal m_lastScaleFactor_view = 1.0;
+
+    /// Initial Scale of view
+    qreal m_initialScale_view = 1.0;
+
+    /// Initial Rotation of view
+    qreal m_initialRotation_view = 0.0;
+
     // ===== Robot State and Parameters =====
 
     /// Robot position in pixels
@@ -426,6 +447,11 @@ class ObstacleMapWidget : public QWidget {
      * @brief Updates robot's current follow point.
      */
     void followCurrentPoint();
+
+    /**
+     * @brief Updates the view transform based on pan, rotation, and scale.
+     */
+    void updateViewTransform();
 
     /// @}  // end of Support Functions
 
