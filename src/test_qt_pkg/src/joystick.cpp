@@ -18,7 +18,7 @@ JoystickWidget::JoystickWidget(QWidget *parent)
 
 void JoystickWidget::resizeEvent(QResizeEvent *event)
 {
-    QSize newSize = event->size();
+    //QSize newSize = event->size();
     //int side = qMin(newSize.width(), newSize.height());  // Wähle die kleinere Dimension
     //this->resize(side, side);  // Setze Breite und Höhe auf denselben Wert
 

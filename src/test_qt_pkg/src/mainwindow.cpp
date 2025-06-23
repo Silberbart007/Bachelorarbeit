@@ -150,9 +150,15 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
 
         // Only handle taps on the camera label when tap control mode is active
         if (obj == m_ui->cam_label && m_tapControlMode) {
+            // Ignore deprecated warnings for pixmap
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
             const QPixmap* pixmap = m_ui->cam_label->pixmap();
             if (!pixmap || pixmap->isNull())
                 return false;
+
+#pragma GCC diagnostic pop
 
             QSize labelSize = m_ui->cam_label->size();
             QSize pixmapSize = pixmap->size();
