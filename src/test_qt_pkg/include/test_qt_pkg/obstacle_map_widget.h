@@ -224,6 +224,18 @@ class ObstacleMapWidget : public QWidget {
     /// Initial Rotation of view
     qreal m_initialRotation_view = 0.0;
 
+    /// Initial touch data at pinch start
+    qreal m_initialDistance = 0.0;
+
+    /// Initial touch data at pinch start
+    qreal m_initialAngle = 0.0;
+
+    /// scene coordinate of pinch start midpoint
+    QPointF m_initialCenterScene;
+
+    /// Are two fingers on the map for pinch?
+    bool m_pinchActive = false;
+
     // ===== Robot State and Parameters =====
 
     /// Robot position in pixels

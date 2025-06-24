@@ -148,7 +148,7 @@ void ObstacleMapWidget::resizeEvent(QResizeEvent* event) {
     // m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
 
     // Center the view on the robot's current position in pixel coordinates
-    // m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
+    m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 
 /**
@@ -284,11 +284,13 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
         // =====================
         // Touch Events (Begin, Update, End)
         // =====================
-        else if (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate ||
-                 event->type() == QEvent::TouchEnd) {
+        if (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate ||
+            event->type() == QEvent::TouchEnd) {
 
             QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
             const auto& touchPoints = touchEvent->touchPoints();
+
+            int currentFingerCount = touchEvent->touchPoints().count();
 
             if (m_inertiaMode && touchPoints.count() >= 2) {
                 // Multiple fingers detected — stop inertia and robot movement
@@ -315,7 +317,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
         // =====================
         // Gesture Events (Pinch Zoom and Pan)
         // =====================
-        else if (event->type() == QEvent::Gesture) {
+        if (event->type() == QEvent::Gesture) {
             QGestureEvent* gestureEvent = static_cast<QGestureEvent*>(event);
 
             // Handle pinch gesture for zoom and rotation
@@ -329,25 +331,35 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
                 if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
                     // Absolute scale and rotation based on initial values
+                    qDebug() << "Pinch Rotation Angle: " << pinch->rotationAngle();
+                    qDebug() << "InitialRotation: " << m_initialRotation_view;
                     m_currentScale_view = m_initialScale_view * pinch->totalScaleFactor();
-                    m_currentRotation_view = m_initialRotation_view + pinch->totalRotationAngle();
+                    m_currentRotation_view = m_initialRotation_view + pinch->rotationAngle();
 
                     updateViewTransform();
+                    return true;
+                }
+
+                if (pinch->state() == Qt::GestureFinished ||
+                    pinch->state() == Qt::GestureCanceled) {
+                    qDebug() << "Pinch cancel";
                     return true;
                 }
             }
 
             // Handle pan gesture for panning the view
-            if (QGesture* g = gestureEvent->gesture(Qt::PanGesture)) {
+            else if (QGesture* g = gestureEvent->gesture(Qt::PanGesture)) {
                 QPanGesture* pan = static_cast<QPanGesture*>(g);
                 QPointF delta = pan->delta();
 
-                // map current center point in view coordinates
-                QPointF center = m_view->mapToScene(m_view->viewport()->rect().center());
-                // calculate new center by subtracting delta (invert for natural dragging)
-                QPointF newCenter = center - delta;
+                // Umwandeln von View-Delta in Scene-Delta
+                QPointF deltaScene = m_view->mapToScene(QPoint(0, 0)) -
+                                     m_view->mapToScene(QPoint(delta.x(), delta.y()));
 
-                // update the view center
+                // Aktuelles Zentrum berechnen
+                QPointF center = m_view->mapToScene(m_view->viewport()->rect().center());
+                QPointF newCenter = center + deltaScene;
+
                 m_view->centerOn(newCenter);
 
                 return true;
@@ -459,7 +471,7 @@ void ObstacleMapWidget::initializeRobot() {
         m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, end_x, end_y, QPen(Qt::blue, 2));
 
     // Center view on the entire scene (map)
-    //m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
+    // m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
 
     // Update obstacle visualization on the map
     updateObstacles();
@@ -598,7 +610,11 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     double scene_left = origin_x * m_pixels_per_meter;
     double scene_top = -origin_y * m_pixels_per_meter - scene_height;
 
-    m_scene->setSceneRect(scene_left, scene_top, scene_width, scene_height);
+    // Set "free roam" margin for panning
+    constexpr int margin = 500;
+
+    m_scene->setSceneRect(scene_left - margin, scene_top - margin, scene_width + 2 * margin,
+                          scene_height + 2 * margin);
 
     // Iterate over all map cells and add obstacles for occupied cells
     for (int y = 0; y < height; ++y) {
@@ -618,8 +634,9 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     }
 
     // Adjust view to fit the scene rectangle and center on robot position
-    // m_view->fitInView(m_scene->sceneRect(), Qt::KeepAspectRatio);
-    // m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
+    m_view->fitInView(QRectF(scene_left, scene_top, scene_width, scene_height),
+                      Qt::KeepAspectRatio);
+    m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 
 /**
@@ -851,11 +868,10 @@ void ObstacleMapWidget::followCurrentPoint() {
  */
 void ObstacleMapWidget::updateViewTransform() {
     QTransform t;
-    t.scale(m_currentScale_view, m_currentScale_view);
-    t.rotate(m_currentRotation_view);
     t.translate(-m_panOffset_view.x(), -m_panOffset_view.y());
+    t.rotate(m_currentRotation_view);
+    t.scale(m_currentScale_view, m_currentScale_view);
     m_view->setTransform(t);
-    qDebug() << t;
 }
 
 /**
