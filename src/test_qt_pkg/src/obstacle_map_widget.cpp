@@ -493,6 +493,12 @@ void ObstacleMapWidget::initializeRobot() {
     QTimer* follow_timer = new QTimer(this);
     connect(follow_timer, &QTimer::timeout, this, &ObstacleMapWidget::followCurrentPoint);
     follow_timer->start(1000);
+
+    // Timer to update collision border warning every 100 ms
+    QTimer* collision_border_timer = new QTimer(this);
+    connect(collision_border_timer, &QTimer::timeout, this,
+            &ObstacleMapWidget::updateCollisionWarningBorder);
+    collision_border_timer->start(100);
 }
 
 /**
@@ -873,7 +879,7 @@ void ObstacleMapWidget::followCurrentPoint() {
  */
 void ObstacleMapWidget::updateViewTransform() {
     QTransform t;
-    t.translate(-m_panOffset_view.x(), -m_panOffset_view.y());
+    // t.translate(-m_panOffset_view.x(), -m_panOffset_view.y());
     t.rotate(m_currentRotation_view);
     t.scale(m_currentScale_view, m_currentScale_view);
     m_view->setTransform(t);
@@ -939,12 +945,18 @@ void ObstacleMapWidget::generateLaserBeams() {
         int numRays = m_current_scan.ranges.size();
         int count = std::min(m_laser_number, numRays); // Limit to available rays
 
+        // Saving min distance for collision warnings
+        m_min_laser_distance = std::numeric_limits<float>::max();
+
         for (int i = 0; i < count; ++i) {
             int index = static_cast<int>((i / static_cast<float>(count - 1)) * (numRays - 1));
             float angle = m_current_scan.angle_min + index * m_current_scan.angle_increment;
             float dist = m_current_scan.ranges[index];
             if (!std::isfinite(dist))
                 continue;
+
+            // Get current min_distance for collision warning modes
+            m_min_laser_distance = std::min(m_min_laser_distance, dist);
 
             float theta = angle + m_robot_theta_rad;
 
@@ -1172,5 +1184,44 @@ void ObstacleMapWidget::updateSpeedTrail(const QPointF& currentPosition) {
 
         QGraphicsLineItem* line = m_scene->addLine(QLineF(p1, p2), pen);
         m_trailLines.append(line);
+    }
+}
+
+/**
+ * @brief Updates the widget's border color based on proximity to obstacles.
+ *
+ * This function sets the border color of the ObstacleMapWidget dynamically,
+ * depending on the current minimum laser scan distance to an obstacle. The color
+ * changes to indicate collision risk:
+ * - Red: very close obstacle (< 0.2 m)
+ * - Orange: moderate risk (0.2 m to 0.4 m)
+ * - Yellow: caution (0.4 m to 0.7 m)
+ * - Transparent: safe (> 0.7 m)
+ */
+void ObstacleMapWidget::updateCollisionWarningBorder() {
+    if (m_scan_available && m_collisionBorderMode) {
+        QColor color;
+
+        if (m_min_laser_distance < 0.1f) {
+            color = QColor(255, 0, 0); // Red
+        } else if (m_min_laser_distance < 0.4f) {
+            color = QColor(255, 165, 0); // Orange
+        } else if (m_min_laser_distance < 0.7f) {
+            color = QColor(255, 255, 0); // Yellow
+        } else {
+            color = QColor(0, 0, 0, 0); // Transparent (no border)
+        }
+
+        // Apply the border style dynamically using a stylesheet
+        QString style = QString("border: 5px solid rgb(%1,%2,%3);")
+                            .arg(color.red())
+                            .arg(color.green())
+                            .arg(color.blue());
+
+        this->setStyleSheet(style);
+    } else {
+        // Reset to default style (e.g. light gray border or no border)
+        this->setStyleSheet("border: 1px solid lightgray;");
+        return;
     }
 }

@@ -118,6 +118,9 @@ class ObstacleMapWidget : public QWidget {
     void setTrailMode(bool isEnabled) {
         m_trailMode = isEnabled;
     }
+    void setCollisionBorderMode(bool isEnabled) {
+        m_collisionBorderMode = isEnabled;
+    }
 
     // ====== Parameter Setters ======
     /**
@@ -206,17 +209,11 @@ class ObstacleMapWidget : public QWidget {
     /// Last rotation angle for view rotation
     qreal m_lastRotationAngle_view = 0.0;
 
-    /// Accumulated pan movement for view
-    QPointF m_panOffset_view = QPointF(0, 0);
-
     /// Current scale of view
     qreal m_currentScale_view = 1.0;
 
     /// Current rotation of view
     qreal m_currentRotation_view = 0.0;
-
-    /// Last Scale factor of view
-    qreal m_lastScaleFactor_view = 1.0;
 
     /// Initial Scale of view
     qreal m_initialScale_view = 1.0;
@@ -224,18 +221,7 @@ class ObstacleMapWidget : public QWidget {
     /// Initial Rotation of view
     qreal m_initialRotation_view = 0.0;
 
-    /// Initial touch data at pinch start
-    qreal m_initialDistance = 0.0;
-
-    /// Initial touch data at pinch start
-    qreal m_initialAngle = 0.0;
-
-    /// scene coordinate of pinch start midpoint
-    QPointF m_initialCenterScene;
-
-    /// Are two fingers on the map for pinch?
-    bool m_pinchActive = false;
-
+    /// Remember start rotation of pinch gesture
     qreal m_startPinchRotation = 0.0;
 
     // ===== Robot State and Parameters =====
@@ -269,6 +255,7 @@ class ObstacleMapWidget : public QWidget {
     bool m_ghostMode = false;
     bool m_inertiaMode = false;
     bool m_trailMode = false;
+    bool m_collisionBorderMode = false;
 
     // ===== Path Drawing Mode =====
 
@@ -368,6 +355,9 @@ class ObstacleMapWidget : public QWidget {
 
     /// Number of laser beams to display
     int m_laser_number;
+
+    /// Smallest laser distance
+    float m_min_laser_distance = 0.0f;
 
     // ===== ROS and Navigation Nodes =====
 
@@ -545,6 +535,16 @@ class ObstacleMapWidget : public QWidget {
     void updateSpeedTrail(const QPointF& currentPosition);
 
     /// @}  // end of Trail Mode Utility
+
+    /// \name Collision Warning border Mode Utility
+    /// @{
+
+    /**
+     * @brief Updates the widget's border color based on the minimum laser distance.
+     */
+    void updateCollisionWarningBorder();
+
+    /// @} // end of Collision Warning border Mode Utility
 };
 
 #endif // OBSTACLEMAPWIDGET_H

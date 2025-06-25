@@ -348,6 +348,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged() {
     bool ghostMode = false;
     bool inertiaMode = false;
     bool trailMode = false;
+    bool collisionBorderMode = false;
 
     // Check which items are selected and set the corresponding flags
     for (QListWidgetItem* item : selectedItems) {
@@ -364,6 +365,8 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged() {
             inertiaMode = true;
         } else if (text == "Trail") {
             trailMode = true;
+        } else if (text == "Collision Warning (border)") {
+            collisionBorderMode = true;
         }
     }
 
@@ -374,6 +377,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged() {
     m_ui->obstacle_map_widget->setGhostMode(ghostMode);
     m_ui->obstacle_map_widget->setInertiaMode(inertiaMode);
     m_ui->obstacle_map_widget->setTrailMode(trailMode);
+    m_ui->obstacle_map_widget->setCollisionBorderMode(collisionBorderMode);
 
     // Show or hide parameter controls based on active modes
     m_ui->curve_gain_slider->setVisible(ghostMode);

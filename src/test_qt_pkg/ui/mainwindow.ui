@@ -647,6 +647,16 @@ QScrollBar::handle:horizontal {
              </font>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>Collision Warning (border)</string>
+            </property>
+            <property name="font">
+             <font>
+              <pointsize>20</pointsize>
+             </font>
+            </property>
+           </item>
           </widget>
          </item>
          <item>
