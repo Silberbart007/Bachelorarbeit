@@ -236,6 +236,8 @@ class ObstacleMapWidget : public QWidget {
     /// Are two fingers on the map for pinch?
     bool m_pinchActive = false;
 
+    qreal m_startPinchRotation = 0.0;
+
     // ===== Robot State and Parameters =====
 
     /// Robot position in pixels

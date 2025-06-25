@@ -325,16 +325,21 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                 QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
 
                 if (pinch->state() == Qt::GestureStarted) {
+                    // Remember start rotation
+                    m_startPinchRotation = pinch->rotationAngle();
+
                     m_initialScale_view = m_currentScale_view;
                     m_initialRotation_view = m_currentRotation_view;
                 }
 
                 if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
+
+                    // Relative rotation (always start with 0 rotation)
+                    qreal relativeRotation = pinch->rotationAngle() - m_startPinchRotation;
+
                     // Absolute scale and rotation based on initial values
-                    qDebug() << "Pinch Rotation Angle: " << pinch->rotationAngle();
-                    qDebug() << "InitialRotation: " << m_initialRotation_view;
                     m_currentScale_view = m_initialScale_view * pinch->totalScaleFactor();
-                    m_currentRotation_view = m_initialRotation_view + pinch->rotationAngle();
+                    m_currentRotation_view = m_initialRotation_view + relativeRotation;
 
                     updateViewTransform();
                     return true;
@@ -342,9 +347,9 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
                 if (pinch->state() == Qt::GestureFinished ||
                     pinch->state() == Qt::GestureCanceled) {
-                    qDebug() << "Pinch cancel";
                     return true;
                 }
+
             }
 
             // Handle pan gesture for panning the view
