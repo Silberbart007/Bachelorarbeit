@@ -349,6 +349,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged() {
     bool inertiaMode = false;
     bool trailMode = false;
     bool collisionBorderMode = false;
+    bool zoneMode = false;
 
     // Check which items are selected and set the corresponding flags
     for (QListWidgetItem* item : selectedItems) {
@@ -367,6 +368,8 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged() {
             trailMode = true;
         } else if (text == "Collision Warning (border)") {
             collisionBorderMode = true;
+        } else if (text == "Zone Control") {
+            zoneMode = true;
         }
     }
 
@@ -378,6 +381,7 @@ void MainWindow::on_obstacle_map_list_itemSelectionChanged() {
     m_ui->obstacle_map_widget->setInertiaMode(inertiaMode);
     m_ui->obstacle_map_widget->setTrailMode(trailMode);
     m_ui->obstacle_map_widget->setCollisionBorderMode(collisionBorderMode);
+    m_ui->obstacle_map_widget->setZoneMode(zoneMode);
 
     // Show or hide parameter controls based on active modes
     m_ui->curve_gain_slider->setVisible(ghostMode);

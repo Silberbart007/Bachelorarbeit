@@ -25,6 +25,7 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     // ===== Configure view rendering =====
     m_view->setRenderHint(QPainter::Antialiasing);
     m_view->setRenderHint(QPainter::SmoothPixmapTransform);
+    m_view->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Ignored);
 
     // ===== Input handling (mouse + gestures) =====
     m_view->viewport()->installEventFilter(this); // Capture mouse/touch events
@@ -40,7 +41,7 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     setLayout(layout);
 
     // ===== Scene initialization =====
-    m_scene->setSceneRect(0, 0, 1000, 1000); // Default scene area in pixels
+    m_scene->setSceneRect(0, 0, 4000, 4000); // Default scene area in pixels
 
     // ===== Inertia mode timer setup =====
     m_inertiaTimer.setInterval(30); // Update interval in milliseconds (~33 FPS)
@@ -290,9 +291,85 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
             QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
             const auto& touchPoints = touchEvent->touchPoints();
 
-            int currentFingerCount = touchEvent->touchPoints().count();
+            // ===== Zone Mode =====
+            if (m_zoneMode) {
+                // Start Zone
+                if (event->type() == QEvent::TouchBegin) {
+                    qDebug() << "Zone Start";
+                    if (touchPoints.size() == 0)
+                        return true;
 
-            if (m_inertiaMode && touchPoints.count() >= 2) {
+                    m_zoneDrawingInProgress = true;
+                    m_activeFingerCount = touchPoints.size();
+                    m_touchStartCenter = m_view->mapToScene(touchPoints[0].pos().toPoint());
+
+                    // Setup active zone
+                    m_activeZone.center = m_touchStartCenter;
+                    m_activeZone.radius = 0;
+                    m_activeZone.corners = std::min(m_activeFingerCount, 10);
+                    m_activeZone.valid = true;
+
+                    // Create QGraphicsPolygonItem if noch nicht vorhanden
+                    if (m_activeZone.graphicsItem) {
+                        m_scene->removeItem(m_activeZone.graphicsItem);
+                        delete m_activeZone.graphicsItem;
+                    }
+
+                    QPolygonF poly = m_activeZone.polygon(); // radius = 0 → nur Mittelpunkt
+                    m_activeZone.graphicsItem = m_scene->addPolygon(poly, QPen(Qt::green, 2),
+                                                                    QBrush(QColor(0, 255, 0, 50)));
+
+                    return true;
+                }
+                // Update Zone
+                if (event->type() == QEvent::TouchUpdate && m_zoneDrawingInProgress) {
+                    // qDebug() << "Zone Update";
+                    if (touchPoints.size() != m_activeFingerCount)
+                        return true; // Ignoriere Fingeranzahländerung während Zeichnen
+
+                    // Berechne neuen Radius als größter Abstand zum Startzentrum
+                    qreal maxDistance = 0;
+                    for (const auto& pt : touchPoints) {
+                        QPointF scenePt = m_view->mapToScene(pt.pos().toPoint());
+                        qreal dist = QLineF(m_touchStartCenter, scenePt).length();
+                        if (dist > maxDistance)
+                            maxDistance = dist;
+                    }
+
+                    m_activeZone.radius = maxDistance;
+
+                    // Aktualisiere Polygon im graphicsItem
+                    if (m_activeZone.graphicsItem) {
+                        QPolygonF poly = m_activeZone.polygon();
+                        m_activeZone.graphicsItem->setPolygon(poly);
+                        qDebug() << "Radius:" << m_activeZone.radius;
+                        for (const auto& p : poly) {
+                            qDebug() << "Polygon Point:" << p;
+                        }
+                    }
+
+                    return true;
+                }
+                // End Zone
+                if (event->type() == QEvent::TouchEnd && m_zoneDrawingInProgress) {
+                    qDebug() << "Zone End";
+                    m_zoneDrawingInProgress = false;
+
+                    if (m_activeZone.valid) {
+                        // Füge die aktuelle Zone zur Liste hinzu
+                        m_savedZones.append(m_activeZone);
+
+                        // nullptr setzen, damit aktive Zone getrennt weitergenutzt werden kann
+                        m_activeZone.graphicsItem = nullptr;
+                        m_activeZone.valid = false;
+                    }
+
+                    return true;
+                }
+            }
+
+            // ===== Intertia Mode =====
+            if (m_inertiaMode && !m_zoneMode && touchPoints.count() >= 2) {
                 // Multiple fingers detected — stop inertia and robot movement
 
                 qDebug() << "Multiple fingers detected – stopping inertia";
@@ -322,52 +399,57 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
             // Handle pinch gesture for zoom and rotation
             if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
-                QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
+                if (!m_zoneMode) {
+                    QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
 
-                if (pinch->state() == Qt::GestureStarted) {
-                    // Remember start rotation
-                    m_startPinchRotation = pinch->rotationAngle();
+                    if (pinch->state() == Qt::GestureStarted) {
+                        // Remember start rotation
+                        m_startPinchRotation = pinch->rotationAngle();
 
-                    m_initialScale_view = m_currentScale_view;
-                    m_initialRotation_view = m_currentRotation_view;
+                        m_initialScale_view = m_currentScale_view;
+                        m_initialRotation_view = m_currentRotation_view;
+                    }
+
+                    if (pinch->state() == Qt::GestureStarted ||
+                        pinch->state() == Qt::GestureUpdated) {
+
+                        // Relative rotation (always start with 0 rotation)
+                        qreal relativeRotation = pinch->rotationAngle() - m_startPinchRotation;
+
+                        // Absolute scale and rotation based on initial values
+                        m_currentScale_view = m_initialScale_view * pinch->totalScaleFactor();
+                        m_currentRotation_view = m_initialRotation_view + relativeRotation;
+
+                        updateViewTransform();
+                        return true;
+                    }
+
+                    if (pinch->state() == Qt::GestureFinished ||
+                        pinch->state() == Qt::GestureCanceled) {
+                        return true;
+                    }
                 }
-
-                if (pinch->state() == Qt::GestureStarted || pinch->state() == Qt::GestureUpdated) {
-
-                    // Relative rotation (always start with 0 rotation)
-                    qreal relativeRotation = pinch->rotationAngle() - m_startPinchRotation;
-
-                    // Absolute scale and rotation based on initial values
-                    m_currentScale_view = m_initialScale_view * pinch->totalScaleFactor();
-                    m_currentRotation_view = m_initialRotation_view + relativeRotation;
-
-                    updateViewTransform();
-                    return true;
-                }
-
-                if (pinch->state() == Qt::GestureFinished ||
-                    pinch->state() == Qt::GestureCanceled) {
-                    return true;
-                }
-
             }
 
             // Handle pan gesture for panning the view
             else if (QGesture* g = gestureEvent->gesture(Qt::PanGesture)) {
-                QPanGesture* pan = static_cast<QPanGesture*>(g);
-                QPointF delta = pan->delta();
+                if (!m_zoneMode) {
 
-                // Umwandeln von View-Delta in Scene-Delta
-                QPointF deltaScene = m_view->mapToScene(QPoint(0, 0)) -
-                                     m_view->mapToScene(QPoint(delta.x(), delta.y()));
+                    QPanGesture* pan = static_cast<QPanGesture*>(g);
+                    QPointF delta = pan->delta();
 
-                // Aktuelles Zentrum berechnen
-                QPointF center = m_view->mapToScene(m_view->viewport()->rect().center());
-                QPointF newCenter = center + deltaScene;
+                    // Umwandeln von View-Delta in Scene-Delta
+                    QPointF deltaScene = m_view->mapToScene(QPoint(0, 0)) -
+                                         m_view->mapToScene(QPoint(delta.x(), delta.y()));
 
-                m_view->centerOn(newCenter);
+                    // Aktuelles Zentrum berechnen
+                    QPointF center = m_view->mapToScene(m_view->viewport()->rect().center());
+                    QPointF newCenter = center + deltaScene;
 
-                return true;
+                    m_view->centerOn(newCenter);
+
+                    return true;
+                }
             }
         }
     }
@@ -541,7 +623,8 @@ void ObstacleMapWidget::goToNextPoint() {
         path.header.frame_id = "map";
         path.header.stamp = m_nav2_node->now();
 
-        // Convert each point in the current path from scene to world coordinates and append to path
+        // Convert each point in the current path from scene to world coordinates and append to
+        // path
         for (const QPointF& pt : m_current_path) {
             QPointF world = sceneToMapCoordinates(pt);
 
@@ -645,8 +728,8 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     }
 
     // Adjust view to fit the scene rectangle and center on robot position
-    m_view->fitInView(QRectF(scene_left, scene_top, scene_width, scene_height),
-                      Qt::KeepAspectRatio);
+    // m_view->fitInView(QRectF(scene_left, scene_top, scene_width, scene_height),
+    //                  Qt::KeepAspectRatio);
     m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 
@@ -815,7 +898,8 @@ void ObstacleMapWidget::setupStaticObstacles() {
  *
  * @param x X coordinate of the robot center in scene coordinates.
  * @param y Y coordinate of the robot center in scene coordinates.
- * @return true if the point is too close to an obstacle (emergency stop required), false otherwise.
+ * @return true if the point is too close to an obstacle (emergency stop required), false
+ * otherwise.
  */
 bool ObstacleMapWidget::isNearObstacle(float x, float y) {
     // Robot modeled as circle with center (x,y) and fixed radius
@@ -924,17 +1008,17 @@ QPointF ObstacleMapWidget::sceneToMapCoordinates(const QPointF& scene_pos) {
 /**
  * @brief Generates and visualizes laser beams in the scene based on the latest LIDAR scan data.
  *
- * When beam mode is enabled and scan data is available, this function clears previously drawn beams
- * and draws new laser rays as lines originating from the robot's current position.
- * Each beam corresponds to a LIDAR range measurement, transformed to scene coordinates.
+ * When beam mode is enabled and scan data is available, this function clears previously drawn
+ * beams and draws new laser rays as lines originating from the robot's current position. Each
+ * beam corresponds to a LIDAR range measurement, transformed to scene coordinates.
  *
- * If beam mode is disabled or no scan data is available, all existing beams are removed from the
- * scene.
+ * If beam mode is disabled or no scan data is available, all existing beams are removed from
+ * the scene.
  *
  * The beams visually represent obstacles detected by the LIDAR sensor.
  */
 void ObstacleMapWidget::generateLaserBeams() {
-    if (m_scan_available && m_beamMode) {
+    if (m_scan_available) {
         // Clear previous beams
         for (auto item : m_beam_items) {
             m_scene->removeItem(item);
@@ -963,10 +1047,12 @@ void ObstacleMapWidget::generateLaserBeams() {
             float endX = m_robot_x_pixels + dist * m_pixels_per_meter * std::cos(theta);
             float endY = m_robot_y_pixels - dist * m_pixels_per_meter * std::sin(theta);
 
-            QGraphicsLineItem* line = m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, endX,
-                                                       endY, QPen(m_beam_color));
-            line->setZValue(0);
-            m_beam_items.push_back(line);
+            if (m_beamMode) {
+                QGraphicsLineItem* line = m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, endX,
+                                                           endY, QPen(m_beam_color));
+                line->setZValue(0);
+                m_beam_items.push_back(line);
+            }
         }
     } else {
         // Remove all beams if beam mode is off or no scan data
@@ -1144,11 +1230,12 @@ void ObstacleMapWidget::deleteGhosts() {
 }
 
 /**
- * @brief Updates the speed trail by adding the current position and rendering fading trail lines.
+ * @brief Updates the speed trail by adding the current position and rendering fading trail
+ * lines.
  *
  * This function keeps a history of recent positions with timestamps and removes old ones beyond
- * the configured lifetime. It then clears the old trail lines from the scene and draws new lines
- * between consecutive positions. The lines fade out gradually based on their age.
+ * the configured lifetime. It then clears the old trail lines from the scene and draws new
+ * lines between consecutive positions. The lines fade out gradually based on their age.
  *
  * @param currentPosition The current position of the robot in scene coordinates.
  */
@@ -1202,25 +1289,36 @@ void ObstacleMapWidget::updateCollisionWarningBorder() {
     if (m_scan_available && m_collisionBorderMode) {
         QColor color;
 
-        if (m_min_laser_distance < 0.1f) {
-            color = QColor(255, 0, 0); // Red
-        } else if (m_min_laser_distance < 0.4f) {
-            color = QColor(255, 165, 0); // Orange
-        } else if (m_min_laser_distance < 0.7f) {
-            color = QColor(255, 255, 0); // Yellow
-        } else {
-            color = QColor(0, 0, 0, 0); // Transparent (no border)
-        }
+        float distance = m_min_laser_distance;
+        float smallestDistance = 0.15f;
+        float longestDistance = 0.7f;
 
-        // Apply the border style dynamically using a stylesheet
-        QString style = QString("border: 5px solid rgb(%1,%2,%3);")
+        if (distance < smallestDistance)
+            distance = smallestDistance;
+        else if (distance > longestDistance)
+            distance = longestDistance;
+
+        // Mapping distance 0.1 m to 0.7 m → 0.0 to 1.0
+        float t = (distance - smallestDistance) /
+                  (longestDistance - smallestDistance); // Normalized between 0 (close) and 1 (far)
+
+        // Interpolate color:
+        // From red (255,0,0) to yellow (255,255,0) to transparent (0,0,0,0)
+        int red = 255;
+        int green = static_cast<int>(255 * t); // Green increases with distance
+        int blue = 0;
+        int alpha = static_cast<int>(255 * (1.0f - t)); // Less visible when safe
+
+        color = QColor(red, green, blue, alpha);
+
+        QString style = QString("border: 20px solid rgba(%1,%2,%3,%4);")
                             .arg(color.red())
                             .arg(color.green())
-                            .arg(color.blue());
+                            .arg(color.blue())
+                            .arg(color.alpha());
 
         this->setStyleSheet(style);
     } else {
-        // Reset to default style (e.g. light gray border or no border)
         this->setStyleSheet("border: 1px solid lightgray;");
         return;
     }

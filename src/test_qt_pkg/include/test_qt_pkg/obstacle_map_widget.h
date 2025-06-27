@@ -40,6 +40,7 @@
 #include "mainwindow.h"
 #include "nav2client.h"
 #include "robot_node.h"
+#include "scan_zone.h"
 
 // Forward declaration of Nav2Client, to get the program to run properly
 class Nav2Client;
@@ -120,6 +121,9 @@ class ObstacleMapWidget : public QWidget {
     }
     void setCollisionBorderMode(bool isEnabled) {
         m_collisionBorderMode = isEnabled;
+    }
+    void setZoneMode(bool isEnabled) {
+        m_zoneMode = isEnabled;
     }
 
     // ====== Parameter Setters ======
@@ -256,6 +260,7 @@ class ObstacleMapWidget : public QWidget {
     bool m_inertiaMode = false;
     bool m_trailMode = false;
     bool m_collisionBorderMode = false;
+    bool m_zoneMode = false;
 
     // ===== Path Drawing Mode =====
 
@@ -358,6 +363,26 @@ class ObstacleMapWidget : public QWidget {
 
     /// Smallest laser distance
     float m_min_laser_distance = 0.0f;
+
+    // ===== Zone Mode =====
+
+    /// Indicates whether a zone drawing gesture is currently active.
+    bool m_zoneDrawingInProgress = false;
+
+    /// The currently active scan zone being drawn.
+    ScanZone m_activeZone;
+
+    /// The number of fingers detected at the beginning of the gesture.
+    int m_activeFingerCount = 0;
+
+    /// The starting point of the touch gesture (center of the zone).
+    QPointF m_touchStartCenter;
+
+    /// The current radius of the scan zone.
+    qreal m_touchRadius = 0.0;
+
+    /// A list of all completed scan zones.
+    QList<ScanZone> m_savedZones;
 
     // ===== ROS and Navigation Nodes =====
 

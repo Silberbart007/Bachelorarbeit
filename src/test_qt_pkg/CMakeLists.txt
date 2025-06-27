@@ -59,6 +59,7 @@ set(HEADERS
   include/test_qt_pkg/touch_slider_horizontal.h
   include/test_qt_pkg/robot_node.h
   include/test_qt_pkg/nav2client.h
+  include/test_qt_pkg/scan_zone.h
 )
 
 set(UIS
