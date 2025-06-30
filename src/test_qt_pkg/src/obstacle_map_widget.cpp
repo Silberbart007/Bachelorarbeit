@@ -381,6 +381,13 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                         // Save zone
                         m_savedZones.append(m_activeZone);
 
+                        // Start moving to center of polygon (Here a good zone-search-algorithm can
+                        // be implemented)
+                        m_current_path.clear();
+                        m_current_path.append(m_activeZone.center);
+                        m_current_target_index = 0;
+                        goToNextPoint();
+
                         // reset active zone, so new zones can spawn
                         m_activeZone.graphicsItem = nullptr;
                         m_activeZone.valid = false;
@@ -1302,11 +1309,7 @@ void ObstacleMapWidget::updateSpeedTrail(const QPointF& currentPosition) {
  *
  * This function sets the border color of the ObstacleMapWidget dynamically,
  * depending on the current minimum laser scan distance to an obstacle. The color
- * changes to indicate collision risk:
- * - Red: very close obstacle (< 0.2 m)
- * - Orange: moderate risk (0.2 m to 0.4 m)
- * - Yellow: caution (0.4 m to 0.7 m)
- * - Transparent: safe (> 0.7 m)
+ * changes to indicate collision risk
  */
 void ObstacleMapWidget::updateCollisionWarningBorder() {
     if (m_scan_available && m_collisionBorderMode) {
