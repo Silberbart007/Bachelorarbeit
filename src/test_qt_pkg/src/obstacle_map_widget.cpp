@@ -396,6 +396,8 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
                     return true;
                 }
+            } else {
+                deleteZones();
             }
 
             // ===== Intertia Mode =====

@@ -492,9 +492,6 @@ QScrollBar::handle:horizontal {
            <property name="resizeMode">
             <enum>QListView::Adjust</enum>
            </property>
-           <property name="layoutMode">
-            <enum>QListView::SinglePass</enum>
-           </property>
            <property name="gridSize">
             <size>
              <width>300</width>
@@ -505,7 +502,7 @@ QScrollBar::handle:horizontal {
             <enum>QListView::ListMode</enum>
            </property>
            <property name="uniformItemSizes">
-            <bool>false</bool>
+            <bool>true</bool>
            </property>
            <property name="wordWrap">
             <bool>false</bool>
@@ -532,9 +529,9 @@ QScrollBar::handle:horizontal {
             <property name="background">
              <brush brushstyle="SolidPattern">
               <color alpha="255">
-               <red>0</red>
-               <green>0</green>
-               <blue>0</blue>
+               <red>99</red>
+               <green>78</green>
+               <blue>207</blue>
               </color>
              </brush>
             </property>
@@ -543,7 +540,7 @@ QScrollBar::handle:horizontal {
               <color alpha="255">
                <red>255</red>
                <green>255</green>
-               <blue>255</blue>
+               <blue>112</blue>
               </color>
              </brush>
             </property>
@@ -561,11 +558,20 @@ QScrollBar::handle:horizontal {
              </font>
             </property>
             <property name="background">
-             <brush brushstyle="NoBrush">
+             <brush brushstyle="SolidPattern">
               <color alpha="255">
-               <red>0</red>
-               <green>0</green>
-               <blue>0</blue>
+               <red>99</red>
+               <green>78</green>
+               <blue>207</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>112</blue>
               </color>
              </brush>
             </property>
@@ -579,6 +585,24 @@ QScrollBar::handle:horizontal {
               <pointsize>20</pointsize>
              </font>
             </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>99</red>
+               <green>78</green>
+               <blue>207</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>112</blue>
+              </color>
+             </brush>
+            </property>
            </item>
            <item>
             <property name="text">
@@ -589,6 +613,24 @@ QScrollBar::handle:horizontal {
               <pointsize>20</pointsize>
              </font>
             </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>99</red>
+               <green>78</green>
+               <blue>207</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>112</blue>
+              </color>
+             </brush>
+            </property>
            </item>
            <item>
             <property name="text">
@@ -598,6 +640,24 @@ QScrollBar::handle:horizontal {
              <font>
               <pointsize>20</pointsize>
              </font>
+            </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>99</red>
+               <green>78</green>
+               <blue>207</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>255</red>
+               <green>255</green>
+               <blue>112</blue>
+              </color>
+             </brush>
             </property>
            </item>
            <item>
@@ -614,8 +674,8 @@ QScrollBar::handle:horizontal {
             <property name="background">
              <brush brushstyle="SolidPattern">
               <color alpha="255">
-               <red>0</red>
-               <green>0</green>
+               <red>170</red>
+               <green>85</green>
                <blue>0</blue>
               </color>
              </brush>
@@ -623,7 +683,7 @@ QScrollBar::handle:horizontal {
             <property name="foreground">
              <brush brushstyle="SolidPattern">
               <color alpha="255">
-               <red>255</red>
+               <red>170</red>
                <green>255</green>
                <blue>255</blue>
               </color>
@@ -642,6 +702,24 @@ QScrollBar::handle:horizontal {
               <pointsize>20</pointsize>
              </font>
             </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>170</red>
+               <green>85</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>170</red>
+               <green>255</green>
+               <blue>255</blue>
+              </color>
+             </brush>
+            </property>
            </item>
            <item>
             <property name="text">
@@ -651,6 +729,24 @@ QScrollBar::handle:horizontal {
              <font>
               <pointsize>20</pointsize>
              </font>
+            </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>170</red>
+               <green>85</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>170</red>
+               <green>255</green>
+               <blue>255</blue>
+              </color>
+             </brush>
             </property>
            </item>
            <item>
@@ -662,6 +758,27 @@ QScrollBar::handle:horizontal {
               <pointsize>20</pointsize>
              </font>
             </property>
+            <property name="textAlignment">
+             <set>AlignJustify|AlignVCenter</set>
+            </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>170</red>
+               <green>85</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>170</red>
+               <green>255</green>
+               <blue>255</blue>
+              </color>
+             </brush>
+            </property>
            </item>
            <item>
             <property name="text">
@@ -671,6 +788,27 @@ QScrollBar::handle:horizontal {
              <font>
               <pointsize>20</pointsize>
              </font>
+            </property>
+            <property name="textAlignment">
+             <set>AlignCenter</set>
+            </property>
+            <property name="background">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>170</red>
+               <green>85</green>
+               <blue>0</blue>
+              </color>
+             </brush>
+            </property>
+            <property name="foreground">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>170</red>
+               <green>255</green>
+               <blue>255</blue>
+              </color>
+             </brush>
             </property>
            </item>
           </widget>
