@@ -293,15 +293,20 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
             // ===== Zone Mode =====
             if (m_zoneMode) {
+
+                if (m_activeFingerCount < touchPoints.size())
+                    m_activeFingerCount = touchPoints.size();
+
                 // Start Zone
                 if (event->type() == QEvent::TouchBegin) {
-                    qDebug() << "Zone Start";
                     if (touchPoints.size() == 0)
                         return true;
 
                     m_zoneDrawingInProgress = true;
-                    m_activeFingerCount = touchPoints.size();
                     m_touchStartCenter = m_view->mapToScene(touchPoints[0].pos().toPoint());
+
+                    // Delete current and saved zones
+                    deleteZones();
 
                     // Setup active zone
                     m_activeZone.center = m_touchStartCenter;
@@ -309,13 +314,17 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                     m_activeZone.corners = std::min(m_activeFingerCount, 10);
                     m_activeZone.valid = true;
 
-                    // Create QGraphicsPolygonItem if noch nicht vorhanden
-                    if (m_activeZone.graphicsItem) {
-                        m_scene->removeItem(m_activeZone.graphicsItem);
-                        delete m_activeZone.graphicsItem;
+                    // Initialize rotation
+                    if (touchPoints.size() >= 2) {
+                        QPointF p1 = m_view->mapToScene(touchPoints[0].pos().toPoint());
+                        QPointF p2 = m_view->mapToScene(touchPoints[1].pos().toPoint());
+                        QLineF line(p1, p2);
+                        m_initialRotationAngle_zone = line.angle();
+                        m_currentRotationAngle_zone = 0;
                     }
 
-                    QPolygonF poly = m_activeZone.polygon(); // radius = 0 → nur Mittelpunkt
+                    // Create new Zone (polygon item)
+                    QPolygonF poly = m_activeZone.polygon();
                     m_activeZone.graphicsItem = m_scene->addPolygon(poly, QPen(Qt::green, 2),
                                                                     QBrush(QColor(0, 255, 0, 50)));
 
@@ -323,11 +332,8 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                 }
                 // Update Zone
                 if (event->type() == QEvent::TouchUpdate && m_zoneDrawingInProgress) {
-                    // qDebug() << "Zone Update";
-                    if (touchPoints.size() != m_activeFingerCount)
-                        return true; // Ignoriere Fingeranzahländerung während Zeichnen
 
-                    // Berechne neuen Radius als größter Abstand zum Startzentrum
+                    // Calculate radius from biggest touch distance
                     qreal maxDistance = 0;
                     for (const auto& pt : touchPoints) {
                         QPointF scenePt = m_view->mapToScene(pt.pos().toPoint());
@@ -336,32 +342,49 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                             maxDistance = dist;
                     }
 
+                    // Update radius and polygon corners
                     m_activeZone.radius = maxDistance;
+                    m_activeZone.corners = std::min(m_activeFingerCount, 10);
 
-                    // Aktualisiere Polygon im graphicsItem
+                    // Update rotation
+                    if (touchPoints.size() >= 2) {
+                        QPointF p1 = m_view->mapToScene(touchPoints[0].pos().toPoint());
+                        QPointF p2 = m_view->mapToScene(touchPoints[1].pos().toPoint());
+                        QLineF line(p1, p2);
+                        qreal newAngle = line.angle();
+                        qreal deltaAngle = newAngle - m_initialRotationAngle_zone;
+
+                        // Normiere Delta-Winkel
+                        if (deltaAngle > 180)
+                            deltaAngle -= 360;
+                        if (deltaAngle < -180)
+                            deltaAngle += 360;
+
+                        m_currentRotationAngle_zone = deltaAngle;
+                    }
+
+                    m_activeZone.rotation = m_currentRotationAngle_zone;
+
+                    // Update polygon
                     if (m_activeZone.graphicsItem) {
-                        QPolygonF poly = m_activeZone.polygon();
+                        QPolygonF poly = m_activeZone.polygon(m_activeZone.rotation);
                         m_activeZone.graphicsItem->setPolygon(poly);
-                        qDebug() << "Radius:" << m_activeZone.radius;
-                        for (const auto& p : poly) {
-                            qDebug() << "Polygon Point:" << p;
-                        }
                     }
 
                     return true;
                 }
                 // End Zone
                 if (event->type() == QEvent::TouchEnd && m_zoneDrawingInProgress) {
-                    qDebug() << "Zone End";
                     m_zoneDrawingInProgress = false;
 
                     if (m_activeZone.valid) {
-                        // Füge die aktuelle Zone zur Liste hinzu
+                        // Save zone
                         m_savedZones.append(m_activeZone);
 
-                        // nullptr setzen, damit aktive Zone getrennt weitergenutzt werden kann
+                        // reset active zone, so new zones can spawn
                         m_activeZone.graphicsItem = nullptr;
                         m_activeZone.valid = false;
+                        m_activeFingerCount = 0;
                     }
 
                     return true;
@@ -1321,5 +1344,27 @@ void ObstacleMapWidget::updateCollisionWarningBorder() {
     } else {
         this->setStyleSheet("border: 1px solid lightgray;");
         return;
+    }
+}
+
+/**
+ * @brief Deletes all saved zones from the scene (for zoneMode)
+ */
+void ObstacleMapWidget::deleteZones() {
+    // Remove current zone if available
+    if (m_activeZone.graphicsItem) {
+        m_scene->removeItem(m_activeZone.graphicsItem);
+        delete m_activeZone.graphicsItem;
+    }
+
+    // Remove all saved zones
+    for (auto it = m_savedZones.begin(); it != m_savedZones.end();) {
+        if (it->valid && it->graphicsItem != nullptr) {
+            m_scene->removeItem(it->graphicsItem);
+            delete it->graphicsItem;
+            it = m_savedZones.erase(it);
+        } else {
+            ++it;
+        }
     }
 }

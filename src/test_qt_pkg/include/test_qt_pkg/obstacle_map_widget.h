@@ -381,6 +381,12 @@ class ObstacleMapWidget : public QWidget {
     /// The current radius of the scan zone.
     qreal m_touchRadius = 0.0;
 
+    /// Initial Rotation of zone
+    qreal m_initialRotationAngle_zone = 0;
+    
+    /// Current rotation of zone
+    qreal m_currentRotationAngle_zone = 0;
+
     /// A list of all completed scan zones.
     QList<ScanZone> m_savedZones;
 
@@ -568,6 +574,16 @@ class ObstacleMapWidget : public QWidget {
      * @brief Updates the widget's border color based on the minimum laser distance.
      */
     void updateCollisionWarningBorder();
+
+    /// @} // end of Collision Warning border Mode Utility
+
+    /// \name Zone Mode Utility
+    /// @{
+
+    /**
+     * @brief Removes all zone elements from the scene.
+     */
+    void deleteZones();
 
     /// @} // end of Collision Warning border Mode Utility
 };
