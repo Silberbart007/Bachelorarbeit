@@ -760,8 +760,8 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     }
 
     // Adjust view to fit the scene rectangle and center on robot position
-    // m_view->fitInView(QRectF(scene_left, scene_top, scene_width, scene_height),
-    //                  Qt::KeepAspectRatio);
+     m_view->fitInView(QRectF(scene_left, scene_top, scene_width, scene_height),
+                      Qt::KeepAspectRatio);
     m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 

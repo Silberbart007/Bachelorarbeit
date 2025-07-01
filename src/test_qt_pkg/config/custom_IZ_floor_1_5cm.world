@@ -1,0 +1,74 @@
+# IZ_floor_1_5cm.world
+
+include "include/robots.inc"
+
+# set the resolution of the underlying raytrace model in meters
+resolution 0.05
+
+# simulation timestep in milliseconds
+interval_sim 100
+
+define floorplan model
+(
+  # sombre, sensible, artistic
+  color "gray30"
+
+  # most maps will need a bounding box
+  boundary 1
+
+  gui_nose 0
+  gui_grid 0
+
+  gui_outline 0
+  gripper_return 0
+  fiducial_return 0
+  laser_return 1
+)
+
+# configure the GUI window
+window
+(
+  size [ 635.000 666.000 ] # in pixels
+  scale 20.0   # pixels per meter
+  center [ -0.040  -0.274 ]
+  rotate [ 0  0 ]
+
+  show_data 1              # 1=on 0=off
+)
+
+# load an environment bitmap
+floorplan
+(
+  name "IZ_floor_1_5cm"
+  size [2200.000 2800.000 0.800]
+  pose [-100 -100 0 0]
+  bitmap "/home/user/vtulkinm0/Ros_workspaces/Bachelorarbeit/src/test_qt_pkg/config/custom_maps/Karten_IZ_überarbeitet_2/IZ_floor_1_5cm.pgm"
+  gui_move 0
+)
+
+# define a block
+define my_block model
+(
+  size [0.5 0.5 0.5]
+  gui_nose 0
+)
+
+# define a block
+define mount model
+(
+  size [0.02 0.02 0.5]
+  gui_nose 0
+)
+
+# throw in a block
+my_block( pose [ 5 4 0 180.000 ] color "green")
+
+# throw in a robot
+pioneer2dx_with_laser
+(
+  # can refer to the robot by this name
+  name "robot_0"
+  color "red"
+  pose [ 0 0 0 0 ]
+  drive "omni"
+)
