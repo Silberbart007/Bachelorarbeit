@@ -1,19 +1,16 @@
 #include "wheel.h"
-#include <QPainter>
-#include <QMouseEvent>
-#include <QtMath>
-#include <QDebug>
 #include "rclcpp/rclcpp.hpp"
+#include <QDebug>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QtMath>
 
-WheelWidget::WheelWidget(QWidget *parent)
-    : QWidget(parent)
-{
+WheelWidget::WheelWidget(QWidget* parent) : QWidget(parent) {
     setMinimumSize(150, 150);
-    setAttribute(Qt::WA_AcceptTouchEvents, true);  // Touch-Ereignisse akzeptieren
+    setAttribute(Qt::WA_AcceptTouchEvents, true); // Touch-Ereignisse akzeptieren
 }
 
-void WheelWidget::paintEvent(QPaintEvent *)
-{
+void WheelWidget::paintEvent(QPaintEvent*) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setRenderHint(QPainter::TextAntialiasing);
@@ -52,8 +49,10 @@ void WheelWidget::paintEvent(QPaintEvent *)
             // Radius je nach Position verändern, z.B. oben und unten flacher
             qreal radius = outerRadius;
             // Flach oben (bei 90°) und unten (bei 270°)
-            if (angle >= 60 && angle <= 120) radius *= 0.7;   // oben abflachen
-            if (angle >= 240 && angle <= 300) radius *= 0.7;  // unten abflachen
+            if (angle >= 60 && angle <= 120)
+                radius *= 0.7; // oben abflachen
+            if (angle >= 240 && angle <= 300)
+                radius *= 0.7; // unten abflachen
 
             QPointF pt(radius * std::cos(angleRad), radius * std::sin(angleRad));
             wheelShape << pt;
@@ -66,18 +65,17 @@ void WheelWidget::paintEvent(QPaintEvent *)
     painter.setPen(QPen(m_style.spokeColor, m_style.spokeWidth, Qt::SolidLine, Qt::RoundCap));
     for (int angle : m_style.spokeAnglesDegrees) {
         qreal angleRad = qDegreesToRadians(double(angle));
-        
+
         // Radius für die Speiche berechnen, an abgeflachten Stellen kleiner setzen
         qreal spokeRadius = outerRadius;
         if (!m_style.isRound) {
-            if (angle >= 60 && angle <= 120) spokeRadius *= 0.7;   // oben abgeflacht
-            if (angle >= 240 && angle <= 300) spokeRadius *= 0.7;  // unten abgeflacht
+            if (angle >= 60 && angle <= 120)
+                spokeRadius *= 0.7; // oben abgeflacht
+            if (angle >= 240 && angle <= 300)
+                spokeRadius *= 0.7; // unten abgeflacht
         }
 
-        QPointF end(
-            spokeRadius * std::cos(angleRad),
-            spokeRadius * std::sin(angleRad)
-        );
+        QPointF end(spokeRadius * std::cos(angleRad), spokeRadius * std::sin(angleRad));
         painter.drawLine(QPointF(0, 0), end);
     }
 
@@ -90,33 +88,27 @@ void WheelWidget::paintEvent(QPaintEvent *)
     if (!m_style.centerText.isEmpty()) {
         painter.setPen(m_style.centerTextColor);
         painter.setFont(m_style.centerFont);
-        QRectF textRect(-innerRadius, -innerRadius/2, innerRadius * 2, innerRadius);
+        QRectF textRect(-innerRadius, -innerRadius / 2, innerRadius * 2, innerRadius);
         painter.drawText(textRect, Qt::AlignCenter, m_style.centerText);
     }
 }
 
-
-
-
 // Exakt wie bei Maus-Events, aber speziell für Touch
-bool WheelWidget::event(QEvent *event)
-{
-    if (event->type() == QEvent::TouchBegin ||
-        event->type() == QEvent::TouchUpdate ||
-        event->type() == QEvent::TouchEnd)
-    {
-        QTouchEvent *touchEvent = static_cast<QTouchEvent *>(event);
+bool WheelWidget::event(QEvent* event) {
+    if (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate ||
+        event->type() == QEvent::TouchEnd) {
+        QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
         const QList<QTouchEvent::TouchPoint> touchPoints = touchEvent->touchPoints();
 
         if (!touchPoints.isEmpty()) {
-            const QTouchEvent::TouchPoint &point = touchPoints.first();
+            const QTouchEvent::TouchPoint& point = touchPoints.first();
 
             // Positionen bestimmen
             QPointF center(width() / 2, height() / 2);
             QPointF pos = point.pos();
             qreal dx = pos.x() - center.x();
             qreal dy = pos.y() - center.y();
-            qreal angle = qAtan2(-dy, dx);  // Radiant
+            qreal angle = qAtan2(-dy, dx); // Radiant
 
             // Lenkrad wird berührt
             if (event->type() == QEvent::TouchBegin) {
@@ -127,10 +119,14 @@ bool WheelWidget::event(QEvent *event)
             // Lenkrad wird bewegt
             else if (event->type() == QEvent::TouchUpdate && m_isDragging) {
                 qreal deltaDeg = (angle - m_startAngle) * 180.0 / M_PI;
-                deltaDeg = qBound(-5.0, deltaDeg, 5.0); // Hier kann man 5.0 höher/runter machen, je nachdem wie schnell das Lenkrad drehen soll
+                deltaDeg =
+                    qBound(-5.0, deltaDeg, 5.0); // Hier kann man 5.0 höher/runter machen, je
+                                                 // nachdem wie schnell das Lenkrad drehen soll
 
                 m_currentAngle = m_lastAngle + deltaDeg;
-                m_currentAngle = qBound(-m_style.maxAngle, m_currentAngle, m_style.maxAngle); // Hier m_style.maxAngle ändern, für kleineren/größeren Drehwinkel
+                m_currentAngle = qBound(-m_style.maxAngle, m_currentAngle,
+                                        m_style.maxAngle); // Hier m_style.maxAngle ändern, für
+                                                           // kleineren/größeren Drehwinkel
 
                 qDebug() << "Touch-Winkel: " << m_currentAngle;
 
@@ -148,30 +144,26 @@ bool WheelWidget::event(QEvent *event)
             }
         }
 
-        return true;  // Touch wurde behandelt
+        return true; // Touch wurde behandelt
     }
 
-    return QWidget::event(event);  // Weitergabe an Basis
+    return QWidget::event(event); // Weitergabe an Basis
 }
 
-
 // Wenn Maus gedrückt wird
-void WheelWidget::mousePressEvent(QMouseEvent *event)
-{
+void WheelWidget::mousePressEvent(QMouseEvent* event) {
     QPointF center(width() / 2, height() / 2);
     QPointF pos = event->pos();
     qreal dx = pos.x() - center.x();
     qreal dy = pos.y() - center.y();
 
     m_startAngle = qAtan2(-dy, dx); // in Radiant
-    m_lastAngle = m_currentAngle;  // in Grad
+    m_lastAngle = m_currentAngle;   // in Grad
     m_isDragging = true;
 }
 
-
 // Wenn Maus bewegt wird
-void WheelWidget::mouseMoveEvent(QMouseEvent *event)
-{
+void WheelWidget::mouseMoveEvent(QMouseEvent* event) {
     if (m_isDragging) {
         QPointF center(width() / 2, height() / 2);
         QPointF pos = event->pos();
@@ -204,10 +196,8 @@ void WheelWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-
 // Wenn Maus losgelassen wird
-void WheelWidget::mouseReleaseEvent(QMouseEvent *)
-{
+void WheelWidget::mouseReleaseEvent(QMouseEvent*) {
     m_isDragging = false; // Ende des Ziehens
 }
 
@@ -219,10 +209,7 @@ void WheelWidget::setValue(double newValue) {
 }
 
 // Wheelstyle setzen
-void WheelWidget::setStyle(const WheelStyle &style) {
+void WheelWidget::setStyle(const WheelStyle& style) {
     m_style = style;
     update(); // neu zeichnen
 }
-
-
-

@@ -1,6 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+// ===== Static variables =====
+bool MainWindow::s_dynLock = true;
+bool MainWindow::s_statLock = false;
+
 // =====================
 // Public Methods
 // =====================
@@ -112,6 +116,8 @@ MainWindow::MainWindow(QWidget* parent)
     m_ui->mode_list->setCurrentRow(0);
     m_ui->mode_list_view->item(0)->setSelected(true);
     m_ui->mode_list_view->item(1)->setSelected(true);
+    m_ui->lock_options_list->setCurrentRow(1);
+    m_ui->lock_options_list->item(1)->setSelected(true);
 
     // ===== Install Event Filter for Camera Label =====
     m_ui->cam_label->installEventFilter(this);
@@ -269,6 +275,37 @@ void MainWindow::on_mode_list_view_itemSelectionChanged() {
     // Show or hide display widgets accordingly
     m_ui->cam_widget->setVisible(showCam);
     m_ui->ObstacleMapLayout->setVisible(showMap);
+}
+
+/**
+ * @brief Handles changes in the selection of the lock options list.
+ *
+ * This slot is called when the selection in the lock options list changes.
+ * It toggles the lock options for all active sliders based on the current selection.
+ */
+void MainWindow::on_lock_options_list_itemSelectionChanged() {
+    // Get all currently selected items in the display options list
+    QList<QListWidgetItem*> selectedItems = m_ui->lock_options_list->selectedItems();
+
+    // Flags to determine which display widgets to show
+    bool dynLock = false;
+    bool statLock = false;
+
+    // Check selected items and set visibility flags
+    for (QListWidgetItem* item : selectedItems) {
+        QString text = item->text();
+        if (text == "Dynamic lock") {
+            dynLock = true;
+        } else if (text == "Always lock") {
+            statLock = true;
+        }
+    }
+
+    // Toggle static variables accordingly
+    MainWindow::s_dynLock = dynLock;
+    MainWindow::s_statLock = statLock;
+
+    update();
 }
 
 /**

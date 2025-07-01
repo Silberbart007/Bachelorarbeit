@@ -31,6 +31,7 @@ private:
 
     double mapToSliderValue(double x);  // Mapped die X-Position auf den Sliderwert
     double sliderValueToPixels(double value) const;
+    void lockIn(double absValue); // Resets value to 0 if |value| < absValue
 };
 
 #endif // TOUCH_SLIDER_HORIZONTAL_H

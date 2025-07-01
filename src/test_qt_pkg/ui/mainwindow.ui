@@ -31,6 +31,9 @@
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
   <property name="Res" stdset="0">
    <pixmap/>
   </property>
@@ -46,6 +49,9 @@
      <width>0</width>
      <height>0</height>
     </size>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
@@ -138,7 +144,7 @@
            </property>
            <property name="maximumSize">
             <size>
-             <width>500</width>
+             <width>900</width>
              <height>16777215</height>
             </size>
            </property>
@@ -281,6 +287,73 @@
               </item>
              </widget>
             </item>
+            <item>
+             <widget class="QListWidget" name="lock_options_list">
+              <item>
+               <property name="text">
+                <string>Slider options:</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>20</pointsize>
+                 <bold>true</bold>
+                 <underline>true</underline>
+                </font>
+               </property>
+               <property name="background">
+                <brush brushstyle="NoBrush">
+                 <color alpha="255">
+                  <red>0</red>
+                  <green>0</green>
+                  <blue>0</blue>
+                 </color>
+                </brush>
+               </property>
+               <property name="foreground">
+                <brush brushstyle="SolidPattern">
+                 <color alpha="255">
+                  <red>0</red>
+                  <green>0</green>
+                  <blue>0</blue>
+                 </color>
+                </brush>
+               </property>
+               <property name="flags">
+                <set>NoItemFlags</set>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Dynamic lock</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>20</pointsize>
+                </font>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Always lock</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>20</pointsize>
+                </font>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Lock off</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>20</pointsize>
+                </font>
+               </property>
+              </item>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -342,8 +415,17 @@
            <property name="maximumSize">
             <size>
              <width>16777215</width>
-             <height>50</height>
+             <height>150</height>
             </size>
+           </property>
+           <property name="acceptDrops">
+            <bool>false</bool>
+           </property>
+           <property name="autoFillBackground">
+            <bool>true</bool>
+           </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAlwaysOn</enum>
            </property>
            <property name="selectionMode">
             <enum>QAbstractItemView::MultiSelection</enum>
@@ -352,13 +434,28 @@
             <enum>QListView::LeftToRight</enum>
            </property>
            <property name="resizeMode">
-            <enum>QListView::Fixed</enum>
+            <enum>QListView::Adjust</enum>
+           </property>
+           <property name="layoutMode">
+            <enum>QListView::SinglePass</enum>
            </property>
            <property name="spacing">
             <number>0</number>
            </property>
+           <property name="gridSize">
+            <size>
+             <width>300</width>
+             <height>100</height>
+            </size>
+           </property>
+           <property name="uniformItemSizes">
+            <bool>false</bool>
+           </property>
            <property name="batchSize">
-            <number>200</number>
+            <number>100</number>
+           </property>
+           <property name="selectionRectVisible">
+            <bool>true</bool>
            </property>
            <item>
             <property name="text">

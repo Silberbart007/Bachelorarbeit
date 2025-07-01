@@ -9,3 +9,4 @@
 *.pyc
 /src/__pycache__/
 
+src/test_qt_pkg/config/custom_maps/Karten_IZ_überarbeitet_2*

@@ -11,7 +11,7 @@ def generate_launch_description():
     stage_launch_path = os.path.join(
         FindPackageShare('stage_ros2').find('stage_ros2'),
         'launch',
-        'stage.launch.py'
+        'stage_IZ_floor1.launch.py'
     )
 
     # Pfad zur custom bringup-yaml (Wo auch Amcl, Mapserver etc. gestartet wird)
@@ -29,10 +29,11 @@ def generate_launch_description():
     )
 
     map_yaml_file = PathJoinSubstitution([
-        FindPackageShare("stage_ros2"),
-        "world",
-        "bitmaps",
-        "cave_map.yaml"
+        FindPackageShare("test_qt_pkg"),
+        "config",
+        "custom_maps",
+        "Karten_IZ_überarbeitet_2",
+        "IZ_floor_1_5cm.yaml"
     ])
 
     # Eigene Nodes

@@ -5,7 +5,7 @@
  * This class inherits from QMainWindow and manages the main user interface,
  * including interaction with the robot via ROS2, joystick input, image display,
  * and related control components.
- * 
+ *
  * @author Max Vtulkin
  * @date 2025
  */
@@ -101,6 +101,14 @@ class MainWindow : public QMainWindow {
         return std::static_pointer_cast<rclcpp::Node>(m_nav2_node);
     }
 
+    // ===== Public Static variables =====
+
+    /// @brief Toggle Dynamic Lock of all active sliders
+    static bool s_dynLock; 
+
+    /// @brie Toggle Static Lock of all active sliders
+    static bool s_statLock;
+
   protected:
     /**
      * @brief Filters events sent to this object or its children.
@@ -126,6 +134,11 @@ class MainWindow : public QMainWindow {
      * @brief Slot triggered when the selection changes in the mode list view.
      */
     void on_mode_list_view_itemSelectionChanged();
+
+    /**
+     * @brief Slot triggered when the selection changes in the lock options list
+     */
+    void on_lock_options_list_itemSelectionChanged();
 
     /**
      * @brief Slot triggered when the modes button is clicked.
