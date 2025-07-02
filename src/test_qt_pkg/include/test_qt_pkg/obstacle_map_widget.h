@@ -404,10 +404,10 @@ class ObstacleMapWidget : public QWidget {
     nav_msgs::msg::OccupancyGrid m_map;
 
     /// Scale factor: pixels per meter
-    const double m_pixels_per_meter = 100.0;
+    const double m_pixels_per_meter = 50.0;
 
     /// Size of robot in pixels
-    const double m_robot_size = 40.0;
+    const double m_robot_size = 20.0;
 
     // ===== Support Functions =====
 

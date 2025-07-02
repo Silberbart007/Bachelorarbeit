@@ -694,73 +694,65 @@ void ObstacleMapWidget::pathDrawn(const QVector<QPointF>& points) {
 }
 
 /**
- * @brief Updates the obstacle visualization based on the current occupancy map.
+ * @brief Renders the obstacle visualization based on the current occupancy grid map.
  *
- * This function clears any existing obstacle graphics from the scene,
- * loads the occupancy grid map from the robot node, and draws obstacles
- * as rectangles for all cells marked as occupied (value 100).
- * It also adjusts the scene rectangle and view accordingly.
+ * This function clears the current visualization and generates a new image
+ * representing occupied cells from the occupancy grid map as black pixels.
+ * The image is converted into a single QGraphicsPixmapItem and added to the scene
+ * for efficient rendering. The scene rectangle and view are adjusted accordingly.
  */
 void ObstacleMapWidget::updateObstaclesFromMap() {
-    // Return early if no map is available
     if (!m_robot_node->has_map())
         return;
 
-    // Clear existing rectangular obstacle items from the scene
-    QList<QGraphicsItem*> items = m_scene->items();
-    for (auto item : items) {
-        if (QGraphicsRectItem* rect = dynamic_cast<QGraphicsRectItem*>(item)) {
-            m_scene->removeItem(rect);
-            delete rect;
-        }
-    }
-
-    // Load occupancy grid map data
+    // Load occupancy grid map
     m_map = m_robot_node->get_map();
     int width = m_map.info.width;
     int height = m_map.info.height;
     double resolution = m_map.info.resolution;
-
-    // Calculate cell size in pixels
     double cellSize = resolution * m_pixels_per_meter;
 
     // Map origin in world coordinates (meters)
     double origin_x = m_map.info.origin.position.x;
     double origin_y = m_map.info.origin.position.y;
 
-    // Compute scene size in pixels
-    double scene_width = width * cellSize;
-    double scene_height = height * cellSize;
+    // Create an image representing the map (1 pixel per map cell)
+    QImage image(width, height, QImage::Format_ARGB32);
+    image.fill(Qt::transparent); // Fill with transparent background
 
-    // Set scene rectangle with y inverted to match Qt coordinate system
-    double scene_left = origin_x * m_pixels_per_meter;
-    double scene_top = -origin_y * m_pixels_per_meter - scene_height;
-
-    // Set "free roam" margin for panning
-    constexpr int margin = 500;
-
-    m_scene->setSceneRect(scene_left - margin, scene_top - margin, scene_width + 2 * margin,
-                          scene_height + 2 * margin);
-
-    // Iterate over all map cells and add obstacles for occupied cells
+    // Mark occupied cells (value 100) as black pixels
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int i = x + y * width;
             if (m_map.data[i] == 100) {
-                // Convert map cell coordinates to scene coordinates
-                double map_x = origin_x + x * resolution;
-                double map_y = origin_y + y * resolution;
-
-                QPointF scene_pos = worldToScene(map_x, map_y);
-
-                // Draw obstacle cell as rectangle
-                addObstacle(scene_pos.x(), scene_pos.y(), cellSize, cellSize);
+                image.setPixel(x, y, qRgba(0, 0, 0, 255)); // Black pixel
             }
         }
     }
 
-    // Adjust view to fit the scene rectangle and center on robot position
-     m_view->fitInView(QRectF(scene_left, scene_top, scene_width, scene_height),
+    // Mirror vertically to match Qt's coordinate system (Y-axis downwards)
+    image = image.mirrored(false, true);
+
+    // Convert to pixmap and scale to physical size in pixels
+    QPixmap pixmap = QPixmap::fromImage(image.scaled(
+        width * cellSize, height * cellSize, Qt::IgnoreAspectRatio, Qt::FastTransformation));
+
+    // Convert map origin to scene coordinates
+    double scene_left = origin_x * m_pixels_per_meter;
+    double scene_top = -origin_y * m_pixels_per_meter - height * cellSize;
+
+    // Add the pixmap as a single item to the scene
+    auto* pixmapItem = new QGraphicsPixmapItem(pixmap);
+    pixmapItem->setPos(scene_left, scene_top);
+    m_scene->addItem(pixmapItem);
+
+    // Define the visible area of the scene with some margin
+    constexpr int margin = 500;
+    m_scene->setSceneRect(scene_left - margin, scene_top - margin, width * cellSize + 2 * margin,
+                          height * cellSize + 2 * margin);
+
+    // Adjust the view to fit the scene and center on the robot position
+    m_view->fitInView(QRectF(scene_left, scene_top, width * cellSize, height * cellSize),
                       Qt::KeepAspectRatio);
     m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
@@ -872,7 +864,7 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta) {
 
     if (m_orientation_line) {
         // Update orientation line showing robot heading
-        double length = 20;
+        double length = m_robot_size / 2;
         double endX = m_robot_x_pixels + length * std::cos(m_robot_theta_rad);
         double endY = m_robot_y_pixels - length * std::sin(m_robot_theta_rad);
         m_orientation_line->setLine(m_robot_x_pixels, m_robot_y_pixels, endX, endY);

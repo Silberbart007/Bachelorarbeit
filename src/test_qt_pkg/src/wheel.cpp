@@ -120,7 +120,7 @@ bool WheelWidget::event(QEvent* event) {
             else if (event->type() == QEvent::TouchUpdate && m_isDragging) {
                 qreal deltaDeg = (angle - m_startAngle) * 180.0 / M_PI;
                 deltaDeg =
-                    qBound(-5.0, deltaDeg, 5.0); // Hier kann man 5.0 höher/runter machen, je
+                    qBound(-10.0, deltaDeg, 10.0); // Hier kann man 5.0 höher/runter machen, je
                                                  // nachdem wie schnell das Lenkrad drehen soll
 
                 m_currentAngle = m_lastAngle + deltaDeg;
@@ -175,7 +175,7 @@ void WheelWidget::mouseMoveEvent(QMouseEvent* event) {
         qreal deltaDeg = (currentAngleRad - m_startAngle) * 180.0 / M_PI;
 
         // Änderung eingrenzen
-        deltaDeg = qBound(-5.0, deltaDeg, 5.0);
+        deltaDeg = qBound(-10.0, deltaDeg, 10.0);
 
         m_currentAngle = m_lastAngle + deltaDeg;
 

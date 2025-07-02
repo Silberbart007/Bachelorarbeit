@@ -1259,28 +1259,6 @@ QScrollBar::handle:horizontal {
           <number>0</number>
          </property>
          <item>
-          <widget class="CustomTouchSliderHorizontal" name="rotation_slider" native="true">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>500</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>300</width>
-             <height>16777215</height>
-            </size>
-           </property>
-          </widget>
-         </item>
-         <item alignment="Qt::AlignLeft">
           <widget class="CustomTouchSliderVertical" name="speed_slider" native="true">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1298,6 +1276,28 @@ QScrollBar::handle:horizontal {
             <size>
              <width>16777215</width>
              <height>300</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="CustomTouchSliderHorizontal" name="rotation_slider" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>500</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>300</width>
+             <height>100</height>
             </size>
            </property>
           </widget>
