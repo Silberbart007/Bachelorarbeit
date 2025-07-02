@@ -29,10 +29,10 @@ Der `amcl`-Node benötigt folgende Einstellungen:
 
         set_initial_pose: true
         initial_pose:
-          x: -4.0
-          y: -4.0
-          z: 0.0
-          yaw: 0.785398
+          x: Startposition Roboter x
+          y: Startposition Roboter y
+          z: Startposition Roboter z
+          yaw: Startrotation Roboter yaw
 
         min_particles: 1000
         max_particles: 3000
@@ -156,9 +156,22 @@ Beschreibung: Transformationen zwischen Frames
 
 ## 📝 Hinweise
 
+Für Caveworld:
 - Die initiale Pose muss mit der Startposition im Simulator übereinstimmen.
 - In der cave.world-Datei sollte man die größe der Map auf 10,10 Stellen anstatt 16,16.
 - In der cave.world Datei sollte man die Startposition auf -4,-4 anpassen.
+
+Allgemein Map und amcl korrekt einrichten (Mit stage):
+- World Datei erstellen/verändern, am besten genauso bennen wie die gewünschte Map-pgm (oder png)
+- stage.launch.py-Datei erstellen, die genau diese world-Datei verwendet
+- Pgm-Größe (z.b. 2200x2800) merken, Resolution merken (z.B. 0.05) - steht beides in der gewünschten Map yaml
+- Der Origin-Wert aus der Map-yaml sagt aus, wo genau die untere linke Ecke der map ist. Bei origin = (-100, -100) wäre
+  es also bei x und y = -100.0. (in Metern / stage-Koordinaten)
+- In der World Datei zunächst (Resolution * x-Größe) und (Resolution * y-Größe) der pgm berechnen und unter floorplan bei size
+  entsprechend eingeben.
+- Stage ausführen und schauen, wo die untere linke Ecke der Map ist im Simulator. Entsprechend fehlende Distanz von x|y merken
+  und eintragen bei floorplan pose.
+- Startposition des Roboters beliebig wählen, aber gleich in der world und amcl-Konfigurationsdatei
 ---
 
 ## 📦 Abhängigkeiten
