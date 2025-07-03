@@ -1,26 +1,23 @@
 #include "joystick.h"
-#include <QPainter>
-#include <QMouseEvent>
-#include <QtMath>
-#include <QDebug>
 #include "rclcpp/rclcpp.hpp"
+#include <QDebug>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QtMath>
 
-JoystickWidget::JoystickWidget(QWidget *parent)
-    : QWidget(parent)
-{
-    //setMinimumSize(150, 150);
-    //setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+JoystickWidget::JoystickWidget(QWidget* parent) : QWidget(parent) {
+    // setMinimumSize(150, 150);
+    // setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     m_center = QPointF(width() / 2, height() / 2);
     m_knobPos = m_center;
 
-    setAttribute(Qt::WA_AcceptTouchEvents, true);  // Touch-Ereignisse akzeptieren
+    setAttribute(Qt::WA_AcceptTouchEvents, true); // Touch-Ereignisse akzeptieren
 }
 
-void JoystickWidget::resizeEvent(QResizeEvent *event)
-{
-    //QSize newSize = event->size();
-    //int side = qMin(newSize.width(), newSize.height());  // Wähle die kleinere Dimension
-    //this->resize(side, side);  // Setze Breite und Höhe auf denselben Wert
+void JoystickWidget::resizeEvent(QResizeEvent* event) {
+    // QSize newSize = event->size();
+    // int side = qMin(newSize.width(), newSize.height());  // Wähle die kleinere Dimension
+    // this->resize(side, side);  // Setze Breite und Höhe auf denselben Wert
 
     // Center neu berechnen
     m_center = QPointF(width() / 2, height() / 2);
@@ -28,11 +25,10 @@ void JoystickWidget::resizeEvent(QResizeEvent *event)
     // Korrekte Knob-Position setzen
     if (!m_dragging)
         m_knobPos = m_center;
-    QWidget::resizeEvent(event);  // Event weiterleiten
+    QWidget::resizeEvent(event); // Event weiterleiten
 }
 
-void JoystickWidget::paintEvent(QPaintEvent *)
-{
+void JoystickWidget::paintEvent(QPaintEvent*) {
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing);
 
@@ -43,7 +39,7 @@ void JoystickWidget::paintEvent(QPaintEvent *)
 
     // Aktualisiere Zentrum und maximalen Radius
     m_center = QPointF(width() / 2, height() / 2);
-    m_maxRadius = side / 2 - 20;  // 20 Pixel Puffer
+    m_maxRadius = side / 2 - 20; // 20 Pixel Puffer
 
     // Hintergrundkreis
     p.setBrush(QColor(200, 200, 200));
@@ -55,17 +51,15 @@ void JoystickWidget::paintEvent(QPaintEvent *)
 }
 
 // Exakt wie Mausevents, aber hier für Touch
-bool JoystickWidget::event(QEvent *event)
-{
-    if (event->type() == QEvent::TouchBegin || 
-        event->type() == QEvent::TouchUpdate || 
+bool JoystickWidget::event(QEvent* event) {
+    if (event->type() == QEvent::TouchBegin || event->type() == QEvent::TouchUpdate ||
         event->type() == QEvent::TouchEnd) {
 
-        QTouchEvent *touchEvent = static_cast<QTouchEvent *>(event);
-        const QList<QTouchEvent::TouchPoint> &touchPoints = touchEvent->touchPoints();
+        QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
+        const QList<QTouchEvent::TouchPoint>& touchPoints = touchEvent->touchPoints();
 
         if (!touchPoints.isEmpty()) {
-            const QTouchEvent::TouchPoint &point = touchPoints.first();
+            const QTouchEvent::TouchPoint& point = touchPoints.first();
             QPointF touchPos = point.pos();
 
             if (event->type() == QEvent::TouchBegin) {
@@ -82,39 +76,34 @@ bool JoystickWidget::event(QEvent *event)
 
             if (event->type() == QEvent::TouchEnd) {
                 m_dragging = false;
-                updateKnob(m_center);  // zurück zur Mitte
+                updateKnob(m_center); // zurück zur Mitte
             }
         }
 
-        return true;  // Touch-Ereignis verarbeitet
+        return true; // Touch-Ereignis verarbeitet
     }
 
-    return QWidget::event(event);  // Standardverhalten für andere Events
+    return QWidget::event(event); // Standardverhalten für andere Events
 }
 
-
-void JoystickWidget::mousePressEvent(QMouseEvent *event)
-{
+void JoystickWidget::mousePressEvent(QMouseEvent* event) {
     if ((event->pos() - m_knobPos).manhattanLength() < 40) {
         m_dragging = true;
     }
 }
 
-void JoystickWidget::mouseMoveEvent(QMouseEvent *event)
-{
+void JoystickWidget::mouseMoveEvent(QMouseEvent* event) {
     if (m_dragging) {
         updateKnob(event->pos());
     }
 }
 
-void JoystickWidget::mouseReleaseEvent(QMouseEvent *)
-{
+void JoystickWidget::mouseReleaseEvent(QMouseEvent*) {
     m_dragging = false;
-    updateKnob(m_center);  // zurück zur Mitte
+    updateKnob(m_center); // zurück zur Mitte
 }
 
-void JoystickWidget::updateKnob(const QPointF &pos)
-{
+void JoystickWidget::updateKnob(const QPointF& pos) {
     QPointF delta = pos - m_center;
     qreal distance = std::hypot(delta.x(), delta.y());
 
@@ -127,25 +116,32 @@ void JoystickWidget::updateKnob(const QPointF &pos)
 
     QPointF norm = normalizedPosition();
 
-    double x_speed = -norm.y();  // vertikal invertiert → vorwärts/rückwärts
-    double y_speed = -norm.x();  // horizontal invertiert
+    double x_speed = -norm.y(); // vor/zurück
+    double y_speed = 0.0;
+    double rotation = 0.0;
+
+    if (m_omni) {
+        y_speed = -norm.x(); // strafe
+        rotation = m_robot_node->getRotationNormalized();
+    } else {
+        rotation = norm.x(); // Joystick-x steuert Drehung direkt
+    }
 
     RobotNode::RobotSpeed speed = {x_speed, y_speed};
-    m_robot_node->publish_velocity(speed, m_robot_node->getRotationNormalized());
+    m_robot_node->publish_velocity(speed, rotation);
 }
 
-QPointF JoystickWidget::normalizedPosition() const
-{
+
+QPointF JoystickWidget::normalizedPosition() const {
     QPointF delta = m_knobPos - m_center;
     QPointF normDelta = QPointF(delta.x() / m_maxRadius, delta.y() / m_maxRadius);
     return normDelta;
 }
 
-void JoystickWidget::setValue(const RobotNode::RobotSpeed &speed)
-{
+void JoystickWidget::setValue(const RobotNode::RobotSpeed& speed) {
     QPointF pos;
-    pos.setX(m_center.x() - speed.y * m_maxRadius);  // horizontal invertiert
-    pos.setY(m_center.y() - speed.x * m_maxRadius);  // vertikal invertiert
+    pos.setX(m_center.x() - speed.y * m_maxRadius); // horizontal invertiert
+    pos.setY(m_center.y() - speed.x * m_maxRadius); // vertikal invertiert
 
     m_knobPos = pos;
     update();

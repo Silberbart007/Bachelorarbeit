@@ -223,7 +223,17 @@
               </item>
               <item>
                <property name="text">
-                <string>Joystick</string>
+                <string>Rotation-Joystick</string>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>20</pointsize>
+                </font>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Omni-Joystick</string>
                </property>
                <property name="font">
                 <font>
@@ -536,7 +546,7 @@
               <x>0</x>
               <y>0</y>
               <width>150</width>
-              <height>120</height>
+              <height>110</height>
              </rect>
             </property>
             <property name="sizePolicy">
@@ -554,7 +564,7 @@
             <property name="maximumSize">
              <size>
               <width>150</width>
-              <height>120</height>
+              <height>110</height>
              </size>
             </property>
             <property name="font">
@@ -1381,6 +1391,62 @@ QScrollBar::handle:horizontal {
          <property name="rightMargin">
           <number>0</number>
          </property>
+         <item>
+          <widget class="JoystickWidget" name="rotation_joystick" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>600</width>
+             <height>600</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>600</width>
+             <height>700</height>
+            </size>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <widget class="QLabel" name="rotation_joystick_label">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>20</pointsize>
+                <bold>true</bold>
+                <underline>true</underline>
+               </font>
+              </property>
+              <property name="text">
+               <string>Rotation-Joystick</string>
+              </property>
+              <property name="scaledContents">
+               <bool>false</bool>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignHCenter|Qt::AlignTop</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
          <item alignment="Qt::AlignRight">
           <widget class="CustomTouchSliderHorizontal" name="rotation_slider_joystick" native="true">
            <property name="sizePolicy">
@@ -1411,6 +1477,46 @@ QScrollBar::handle:horizontal {
              <height>600</height>
             </size>
            </property>
+           <property name="maximumSize">
+            <size>
+             <width>600</width>
+             <height>700</height>
+            </size>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <item>
+             <widget class="QLabel" name="omni_joystick_label">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <pointsize>20</pointsize>
+                <bold>true</bold>
+                <underline>true</underline>
+               </font>
+              </property>
+              <property name="text">
+               <string>Omni-Joystick</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignHCenter|Qt::AlignTop</set>
+              </property>
+              <property name="margin">
+               <number>0</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </widget>
          </item>
         </layout>

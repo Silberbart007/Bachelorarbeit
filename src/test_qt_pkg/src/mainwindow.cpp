@@ -44,6 +44,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_ui->wheels->setRobotNode(m_robot_node);
     m_ui->wheels_2->setRobotNode(m_robot_node);
     m_ui->joysticks->setRobotNode(m_robot_node);
+    m_ui->rotation_joystick->setRobotNode(m_robot_node);
     m_ui->obstacle_map_widget->setRobotNode(m_robot_node);
     m_ui->obstacle_map_widget->setNav2Node(m_nav2_node);
 
@@ -118,6 +119,10 @@ MainWindow::MainWindow(QWidget* parent)
     m_ui->mode_list_view->item(1)->setSelected(true);
     m_ui->lock_options_list->setCurrentRow(1);
     m_ui->lock_options_list->item(1)->setSelected(true);
+
+    // ===== Configure Joystick types =====
+    m_ui->joysticks->setOmni(true);
+    m_ui->rotation_joystick->setOmni(false);
 
     // ===== Install Event Filter for Camera Label =====
     m_ui->cam_label->installEventFilter(this);
@@ -220,6 +225,7 @@ void MainWindow::on_mode_list_itemSelectionChanged() {
     bool showJoystick = false;
     bool showButtons = false;
     bool showSliders = false;
+    bool showRotationJoystick = false;
 
     // Evaluate selected items and set flags
     for (QListWidgetItem* item : selectedItems) {
@@ -230,12 +236,14 @@ void MainWindow::on_mode_list_itemSelectionChanged() {
         } else if (text == "Rennauto Lenkrad") {
             showWheel = true;
             raceWheel = true;
-        } else if (text == "Joystick") {
+        } else if (text == "Omni-Joystick") {
             showJoystick = true;
         } else if (text == "Buttons") {
             showButtons = true;
         } else if (text == "Slider") {
             showSliders = true;
+        } else if (text == "Rotation-Joystick") {
+            showRotationJoystick = true;
         }
     }
 
@@ -243,7 +251,10 @@ void MainWindow::on_mode_list_itemSelectionChanged() {
     m_ui->WheelsLayout->setVisible(showWheel);
     m_ui->wheels->setVisible(defaultWheel);
     m_ui->wheels_2->setVisible(raceWheel);
-    m_ui->JoystickLayout->setVisible(showJoystick);
+    m_ui->JoystickLayout->setVisible(showJoystick | showRotationJoystick);
+    m_ui->joysticks->setVisible(showJoystick);
+    m_ui->rotation_slider_joystick->setVisible(showJoystick);
+    m_ui->rotation_joystick->setVisible(showRotationJoystick);
     m_ui->sliders->setVisible(showSliders);
     m_ui->ButtonsLayoutHorizontal->setVisible(showButtons);
 }
