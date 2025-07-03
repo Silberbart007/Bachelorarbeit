@@ -125,6 +125,9 @@ class ObstacleMapWidget : public QWidget {
     void setZoneMode(bool isEnabled) {
         m_zoneMode = isEnabled;
     }
+    void setMapFollow(bool isEnabled) {
+        m_mapFollow = isEnabled;
+    }
 
     // ====== Parameter Setters ======
     /**
@@ -261,6 +264,7 @@ class ObstacleMapWidget : public QWidget {
     bool m_trailMode = false;
     bool m_collisionBorderMode = false;
     bool m_zoneMode = false;
+    bool m_mapFollow = false;
 
     // ===== Path Drawing Mode =====
 
@@ -408,6 +412,12 @@ class ObstacleMapWidget : public QWidget {
 
     /// Size of robot in pixels
     const double m_robot_size = 20.0;
+
+    /// Follow mode of obstacle map | true = center on robot
+    bool m_follow_robot_on_map = true;
+
+    /// Check if amcl data is received
+    bool has_amcl = false;
 
     // ===== Support Functions =====
 

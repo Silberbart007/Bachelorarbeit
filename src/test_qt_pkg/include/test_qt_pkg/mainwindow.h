@@ -236,6 +236,11 @@ class MainWindow : public QMainWindow {
      */
     void on_ghost_color_button_clicked();
 
+    /**
+     * @brief Slot triggered when follow check box on map is clicked
+     */
+    void on_follow_checkBox_stateChanged(int state);
+
     // ===== Projection Helper Function =====
 
     /**

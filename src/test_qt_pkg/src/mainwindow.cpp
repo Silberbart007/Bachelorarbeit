@@ -595,8 +595,22 @@ cv::Point MainWindow::projectToImage(double x, double y, double z, double fx, do
     return cv::Point(img_x, img_y);
 }
 
+/**
+ * @brief Slot for the follow check Box
+ *
+ * Activates follow robot position if checkbox is
+ * checked.
+ */
+void MainWindow::on_follow_checkBox_stateChanged(int state) {
+    if (state == Qt::Checked) {
+        m_ui->obstacle_map_widget->setMapFollow(true);
+    } else if (state == Qt::Unchecked) {
+        m_ui->obstacle_map_widget->setMapFollow(false);
+    }
+}
+
 // =====================
-// Private Slot Methods
+// Private Methods
 // =====================
 
 /**

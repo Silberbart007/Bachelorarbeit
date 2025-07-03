@@ -41,7 +41,8 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     setLayout(layout);
 
     // ===== Scene initialization =====
-    m_scene->setSceneRect(0, 0, 4000, 4000); // Default scene area in pixels
+    m_scene->setSceneRect(0, 0, 2200, 2800); // Default scene area in pixels
+    updateViewTransform();
 
     // ===== Inertia mode timer setup =====
     m_inertiaTimer.setInterval(30); // Update interval in milliseconds (~33 FPS)
@@ -568,12 +569,25 @@ void ObstacleMapWidget::initializeRobot() {
 
             // Update robot orientation (yaw in radians)
             m_robot_theta_rad = yaw;
+
+            has_amcl = true;
         };
 
     // Timer to update robot visualization every 10 ms using latest AMCL pose
     QTimer* update_pose_timer = new QTimer(this);
     connect(update_pose_timer, &QTimer::timeout, this, [this]() {
         updateRobotPosition(m_robot_x_meters, m_robot_y_meters, m_robot_theta_rad);
+        if (has_amcl) {
+            if (m_follow_robot_on_map) {
+                m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
+            }
+
+            if (!m_mapFollow) {
+                m_follow_robot_on_map = false;
+            } else {
+                m_follow_robot_on_map = true;
+            }
+        }
     });
     update_pose_timer->start(10);
 
@@ -724,7 +738,7 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int i = x + y * width;
-            if (m_map.data[i] == 100) {
+            if (m_map.data[i] >= 0.65) {
                 image.setPixel(x, y, qRgba(0, 0, 0, 255)); // Black pixel
             }
         }
@@ -747,13 +761,15 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     m_scene->addItem(pixmapItem);
 
     // Define the visible area of the scene with some margin
-    constexpr int margin = 500;
+    constexpr int margin = 0;
     m_scene->setSceneRect(scene_left - margin, scene_top - margin, width * cellSize + 2 * margin,
                           height * cellSize + 2 * margin);
 
+    updateViewTransform();
+
     // Adjust the view to fit the scene and center on the robot position
-    m_view->fitInView(QRectF(scene_left, scene_top, width * cellSize, height * cellSize),
-                      Qt::KeepAspectRatio);
+    // m_view->fitInView(QRectF(scene_left, scene_top, width * cellSize, height * cellSize),
+    //                   Qt::KeepAspectRatio);
     m_view->centerOn(m_robot_x_pixels, m_robot_y_pixels);
 }
 
