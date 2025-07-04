@@ -1027,10 +1027,13 @@ QScrollBar::handle:horizontal {
          <item>
           <widget class="QSlider" name="trail_lifetime_slider">
            <property name="minimum">
-            <number>10</number>
+            <number>1</number>
            </property>
            <property name="maximum">
             <number>100</number>
+           </property>
+           <property name="singleStep">
+            <number>1</number>
            </property>
            <property name="pageStep">
             <number>1</number>

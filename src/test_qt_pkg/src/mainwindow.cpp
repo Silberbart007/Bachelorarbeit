@@ -512,17 +512,43 @@ void MainWindow::on_laser_number_slider_valueChanged(int value) {
 }
 
 /**
- * @brief Called when the trail lifetime slider value changes.
+ * @brief Slot called when the trail lifetime slider value changes.
  *
- * Updates the trail lifetime parameter in the obstacle map widget and
- * updates the corresponding label text.
+ * Maps the linear slider value to an exponential scale to allow fine
+ * adjustments at low values (up to ~10 seconds) and faster increase at higher
+ * values (up to 10 minutes). Updates the trail lifetime parameter in the obstacle
+ * map widget and the corresponding label.
  *
- * @param value The new trail lifetime slider value (tenths of a second).
+ * @param value The new slider value (expected range: 0 to 100).
  */
 void MainWindow::on_trail_lifetime_slider_valueChanged(int value) {
-    double lifetimeSeconds = static_cast<double>(value) / 10.0;
+    const double minSeconds = 0.1;   ///< Minimum trail lifetime in seconds.
+    const double maxSeconds = 600.0; ///< Maximum trail lifetime in seconds (10 minutes).
+
+    // Normalize slider value to [0,1]
+    double t = static_cast<double>(value) / 100.0;
+
+    // Exponential scaling formula:
+    // lifetimeSeconds = minSeconds * (maxSeconds / minSeconds)^t
+    double lifetimeSeconds = minSeconds * std::pow(maxSeconds / minSeconds, t);
+
+    // clamp very small values to zero for better UX
+    if (lifetimeSeconds < 0.1) {
+        lifetimeSeconds = 0.0;
+    }
+
+    // Update the trail lifetime in the obstacle map widget
     m_ui->obstacle_map_widget->setTrailLifetime(lifetimeSeconds);
-    m_ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(lifetimeSeconds));
+
+    // Format the label: display seconds under 60, otherwise minutes
+    QString labelText;
+    if (lifetimeSeconds < 60.0) {
+        labelText = QString("Trail lifetime: %1 s").arg(lifetimeSeconds, 0, 'f', 2);
+    } else {
+        double minutes = lifetimeSeconds / 60.0;
+        labelText = QString("Trail lifetime: %1 min").arg(minutes, 0, 'f', 2);
+    }
+    m_ui->trail_lifetime_label->setText(labelText);
 }
 
 /**
