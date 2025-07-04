@@ -126,7 +126,9 @@ bool Nav2Client::sendPath(const nav_msgs::msg::Path& path) {
         switch (result.code) {
         case rclcpp_action::ResultCode::SUCCEEDED:
             RCLCPP_INFO(this->get_logger(), "Path successfully followed!");
-            m_obstacle_map->deleteAllDrawings();
+            if (onPathFinishedCallback) {
+                onPathFinishedCallback();
+            }
             break;
         case rclcpp_action::ResultCode::ABORTED:
             RCLCPP_ERROR(this->get_logger(), "FollowPath was aborted");
@@ -224,7 +226,9 @@ void Nav2Client::resultCallback(const GoalHandleNavigateToPose::WrappedResult& r
     switch (result.code) {
     case rclcpp_action::ResultCode::SUCCEEDED:
         RCLCPP_INFO(this->get_logger(), "Navigation succeeded!");
-        m_obstacle_map->deleteAllDrawings();
+        if (onPathFinishedCallback) {
+            onPathFinishedCallback();
+        }
         break;
     case rclcpp_action::ResultCode::ABORTED:
         RCLCPP_ERROR(this->get_logger(), "Navigation aborted!");

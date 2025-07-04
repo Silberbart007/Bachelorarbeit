@@ -157,16 +157,19 @@ class ObstacleMapWidget : public QWidget {
     }
 
     // ====== Other public methods ======
-    /**
-     * @brief Removes all user-drawn content (from drawPathMode) from the map.
-     */
-    void deleteAllDrawings();
 
     /**
      * @brief Callback for handling new laser scan data (called in RobotNode).
      * @param msg Shared pointer to the received LaserScan message.
      */
     void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
+
+    // ===== Public slot methods =====
+  public slots:
+    /**
+     * @brief Removes all user-drawn content (from drawPathMode) from the map.
+     */
+    void deleteAllDrawings();
 
   protected:
     /**

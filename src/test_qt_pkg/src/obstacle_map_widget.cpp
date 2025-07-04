@@ -172,10 +172,10 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
         if (event->type() == QEvent::MouseButtonPress) {
             QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
 
-            // Clear any temporary drawings from previous interactions
-            deleteAllDrawings();
-
             if (m_drawPathMode) {
+                // Clear any temporary drawings from previous interactions
+                deleteAllDrawings();
+
                 // Start drawing a new path
                 m_drawing = true;
                 m_path_points.clear();
@@ -293,7 +293,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
             const auto& touchPoints = touchEvent->touchPoints();
 
             // === 1-Finger Touch Panning (when no special mode is active) ===
-            if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode) {
+            if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode) {
                 if (touchPoints.count() == 1) {
                     const auto& point = touchPoints.first();
 
@@ -470,7 +470,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
             // Handle pinch gesture for zoom and rotation
             if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
-                if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode) {
+                if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode) {
                     QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
 
                     if (pinch->state() == Qt::GestureStarted) {
@@ -629,6 +629,11 @@ void ObstacleMapWidget::initializeRobot() {
     // Register this widget with the navigation node to provide obstacle map access
     m_nav2_node->setObstacleMap(this);
 
+    // Set finish Callback function of nav2 Client, so all drawings will be deleted after path is
+    // traversed This is needed, so the function will be executed on the Qt-Thread
+    m_nav2_node->setOnPathFinishedCallback(
+        [this]() { QMetaObject::invokeMethod(this, "deleteAllDrawings", Qt::QueuedConnection); });
+
     // Timer to generate laser beam visualization every 100 ms
     QTimer* beam_timer = new QTimer(this);
     connect(beam_timer, &QTimer::timeout, this, &ObstacleMapWidget::generateLaserBeams);
@@ -659,7 +664,15 @@ void ObstacleMapWidget::initializeRobot() {
 void ObstacleMapWidget::goToNextPoint() {
     // Stop the robot if all points are processed
     if (m_current_target_index >= m_current_path.size()) {
+        // Stop robot
         m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+
+        // Cleanup or reset internal state here
+        m_current_path.clear();
+        m_current_target_index = 0;
+
+        qDebug() << "Navigation finished, cleaned up.";
+
         return;
     }
 
