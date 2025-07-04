@@ -292,6 +292,44 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
             QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
             const auto& touchPoints = touchEvent->touchPoints();
 
+            // === 1-Finger Touch Panning (when no special mode is active) ===
+            if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode) {
+                if (touchPoints.count() == 1) {
+                    const auto& point = touchPoints.first();
+
+                    if (event->type() == QEvent::TouchBegin) {
+                        // Save the initial touch position
+                        m_lastTouchPos = point.pos();
+                        m_touchPanningActive = true;
+                        return true;
+                    }
+
+                    if (event->type() == QEvent::TouchUpdate && m_touchPanningActive) {
+                        // Calculate movement delta
+                        QPointF delta = m_lastTouchPos - point.pos();
+
+                        // Convert view delta to scene delta
+                        QPointF deltaScene = m_view->mapToScene(QPointF(0, 0).toPoint()) -
+                                             m_view->mapToScene(delta.toPoint());
+
+                        // Move the view's center by the scene delta
+                        QPointF currentCenter =
+                            m_view->mapToScene(m_view->viewport()->rect().center());
+                        m_view->centerOn(currentCenter - deltaScene);
+
+                        // Update last touch position
+                        m_lastTouchPos = point.pos();
+                        return true;
+                    }
+
+                    if (event->type() == QEvent::TouchEnd) {
+                        // End panning
+                        m_touchPanningActive = false;
+                        return true;
+                    }
+                }
+            }
+
             // ===== Zone Mode =====
             if (m_zoneMode) {
 
@@ -432,7 +470,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
             // Handle pinch gesture for zoom and rotation
             if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
-                if (!m_zoneMode) {
+                if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode) {
                     QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
 
                     if (pinch->state() == Qt::GestureStarted) {
@@ -461,27 +499,6 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                         pinch->state() == Qt::GestureCanceled) {
                         return true;
                     }
-                }
-            }
-
-            // Handle pan gesture for panning the view
-            else if (QGesture* g = gestureEvent->gesture(Qt::PanGesture)) {
-                if (!m_zoneMode) {
-
-                    QPanGesture* pan = static_cast<QPanGesture*>(g);
-                    QPointF delta = pan->delta();
-
-                    // Umwandeln von View-Delta in Scene-Delta
-                    QPointF deltaScene = m_view->mapToScene(QPoint(0, 0)) -
-                                         m_view->mapToScene(QPoint(delta.x(), delta.y()));
-
-                    // Aktuelles Zentrum berechnen
-                    QPointF center = m_view->mapToScene(m_view->viewport()->rect().center());
-                    QPointF newCenter = center + deltaScene;
-
-                    m_view->centerOn(newCenter);
-
-                    return true;
                 }
             }
         }

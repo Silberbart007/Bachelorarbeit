@@ -231,6 +231,12 @@ class ObstacleMapWidget : public QWidget {
     /// Remember start rotation of pinch gesture
     qreal m_startPinchRotation = 0.0;
 
+    /// Remember last touch position
+    QPointF m_lastTouchPos;
+
+    /// Track panning
+    bool m_touchPanningActive = false;
+
     // ===== Robot State and Parameters =====
 
     /// Robot position in pixels
@@ -387,7 +393,7 @@ class ObstacleMapWidget : public QWidget {
 
     /// Initial Rotation of zone
     qreal m_initialRotationAngle_zone = 0;
-    
+
     /// Current rotation of zone
     qreal m_currentRotationAngle_zone = 0;
 
