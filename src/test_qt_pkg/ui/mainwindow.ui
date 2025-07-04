@@ -576,7 +576,11 @@
              <string notr="true">QCheckBox::indicator {
     width: 70px;
     height: 70px;
-} </string>
+} 
+
+QCheckBox {
+    color: orange;
+}</string>
             </property>
             <property name="text">
              <string>Follow 
