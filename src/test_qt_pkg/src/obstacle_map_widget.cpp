@@ -41,7 +41,7 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     setLayout(layout);
 
     // ===== Scene initialization =====
-    m_scene->setSceneRect(0, 0, 2200, 2800); // Default scene area in pixels
+    m_scene->setSceneRect(0, 0, 5000, 5000); // Default scene area in pixels
     updateViewTransform();
 
     // ===== Inertia mode timer setup =====
@@ -761,7 +761,7 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     m_scene->addItem(pixmapItem);
 
     // Define the visible area of the scene with some margin
-    constexpr int margin = 0;
+    constexpr int margin = 500;
     m_scene->setSceneRect(scene_left - margin, scene_top - margin, width * cellSize + 2 * margin,
                           height * cellSize + 2 * margin);
 
