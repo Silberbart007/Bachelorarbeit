@@ -387,6 +387,15 @@ void MainWindow::on_reset_rotation_button_clicked() {
 }
 
 /**
+ * @brief Resets the robot's rotation by setting angular velocity to zero.
+ *
+ * Keeps the current linear speed unchanged.
+ */
+void MainWindow::on_reset_rotation_button_2_clicked() {
+    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
+}
+
+/**
  * @brief Handles selection changes in the obstacle map options list.
  *
  * Updates the modes of the obstacle map widget and shows/hides

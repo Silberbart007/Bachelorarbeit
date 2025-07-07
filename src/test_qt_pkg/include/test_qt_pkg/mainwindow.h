@@ -184,6 +184,11 @@ class MainWindow : public QMainWindow {
      */
     void on_reset_rotation_button_clicked();
 
+    /**
+     * @brief Slot triggered when the reset rotation button 2 (sliders) is clicked.
+     */
+    void on_reset_rotation_button_2_clicked();
+
     // ===== Obstacle Map List =====
 
     /**
