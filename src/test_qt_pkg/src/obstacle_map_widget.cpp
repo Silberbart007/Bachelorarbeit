@@ -48,6 +48,10 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     m_inertiaTimer.setInterval(30); // Update interval in milliseconds (~33 FPS)
     connect(&m_inertiaTimer, &QTimer::timeout, this, &ObstacleMapWidget::handleInertia);
 
+    // ====== Trail Mode setup ======
+    m_trailItem = new QGraphicsPathItem();
+    m_scene->addItem(m_trailItem);
+
     // ===== Optional: Add test/static obstacles for debugging =====
     // setupStaticObstacles();
 }
@@ -778,8 +782,7 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     image = image.mirrored(false, true);
 
     // Convert to pixmap and scale to physical size in pixels
-    QPixmap pixmap = QPixmap::fromImage(image.scaled(
-        width * cellSize, height * cellSize, Qt::IgnoreAspectRatio, Qt::FastTransformation));
+    QPixmap pixmap = QPixmap::fromImage(image);
 
     // Convert map origin to scene coordinates
     double scene_left = origin_x * m_pixels_per_meter;
@@ -788,6 +791,7 @@ void ObstacleMapWidget::updateObstaclesFromMap() {
     // Add the pixmap as a single item to the scene
     auto* pixmapItem = new QGraphicsPixmapItem(pixmap);
     pixmapItem->setPos(scene_left, scene_top);
+    pixmapItem->setScale(cellSize);
     m_scene->addItem(pixmapItem);
 
     // Define the visible area of the scene with some margin
@@ -1300,48 +1304,47 @@ void ObstacleMapWidget::deleteGhosts() {
 }
 
 /**
- * @brief Updates the speed trail by adding the current position and rendering fading trail
- * lines.
+ * @brief Updates the speed trail by adding the current position and rendering a fading trail path.
  *
- * This function keeps a history of recent positions with timestamps and removes old ones beyond
- * the configured lifetime. It then clears the old trail lines from the scene and draws new
- * lines between consecutive positions. The lines fade out gradually based on their age.
+ * This function maintains a time-stamped history of recent positions and removes entries 
+ * older than the configured lifetime. It constructs a QPainterPath connecting all valid points 
+ * and updates a single QGraphicsPathItem in the scene to display the trail. The trail's color 
+ * and width are set using the pen.
  *
  * @param currentPosition The current position of the robot in scene coordinates.
  */
+
 void ObstacleMapWidget::updateSpeedTrail(const QPointF& currentPosition) {
     QTime now = QTime::currentTime();
+
+    // Add current position with timestamp to the history
     m_trailHistory.push_back(qMakePair(currentPosition, now));
 
-    // Remove old points beyond the trail lifetime
+    // Remove outdated trail points based on lifetime
     while (!m_trailHistory.empty() &&
            m_trailHistory.front().second.msecsTo(now) > m_trail_lifetime_ms) {
         m_trailHistory.pop_front();
     }
 
-    // Remove old trail lines from the scene and delete them
-    for (auto line : m_trailLines) {
-        m_scene->removeItem(line);
-        delete line;
+    // Create a path from the remaining trail points
+    QPainterPath path;
+    if (m_trailHistory.size() >= 2) {
+        path.moveTo(m_trailHistory[0].first);
+
+        for (unsigned long int i = 1; i < m_trailHistory.size(); ++i) {
+            path.lineTo(m_trailHistory[i].first);
+        }
     }
-    m_trailLines.clear();
 
-    // Draw new trail lines with opacity based on their age
-    for (int i = 1; i < static_cast<int>(m_trailHistory.size()); ++i) {
-        QPointF p1 = m_trailHistory[i - 1].first;
-        QPointF p2 = m_trailHistory[i].first;
-        int age = m_trailHistory[i].second.msecsTo(now);
+    // Configure pen (color and line style)
+    QPen pen(m_trail_color);
+    pen.setWidthF(3.0);
+    pen.setCapStyle(Qt::RoundCap);
+    pen.setJoinStyle(Qt::RoundJoin);
 
-        double opacity = 1.0 - static_cast<double>(age) / m_trail_lifetime_ms;
-        QColor color = m_trail_color;
-        color.setAlphaF(opacity);
-
-        QPen pen(color);
-        pen.setWidthF(3.0);
-
-        QGraphicsLineItem* line = m_scene->addLine(QLineF(p1, p2), pen);
-        m_trailLines.append(line);
-    }
+    // Update the trail graphics item
+    m_trailItem->setPath(path);
+    m_trailItem->setPen(pen);
 }
 
 /**

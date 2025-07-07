@@ -348,6 +348,9 @@ class ObstacleMapWidget : public QWidget {
     /// Lines representing the trail in the scene
     QVector<QGraphicsLineItem*> m_trailLines;
 
+    /// The main trail item
+    QGraphicsPathItem* m_trailItem = nullptr;
+
     /// Max number of points in trail history
     const int TRAIL_MAX_POINTS = 30;
 
