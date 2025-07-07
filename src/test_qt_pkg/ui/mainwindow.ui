@@ -79,7 +79,7 @@
           <height>500</height>
          </size>
         </property>
-        <layout class="QVBoxLayout" name="ModesLayout" stretch="0,0,0">
+        <layout class="QVBoxLayout" name="ModesLayout" stretch="0,0,0,0">
          <property name="spacing">
           <number>0</number>
          </property>
@@ -306,7 +306,6 @@
                <property name="font">
                 <font>
                  <pointsize>20</pointsize>
-                 <weight>75</weight>
                  <bold>true</bold>
                  <underline>true</underline>
                 </font>
@@ -385,7 +384,6 @@
            <property name="font">
             <font>
              <pointsize>26</pointsize>
-             <weight>75</weight>
              <bold>true</bold>
             </font>
            </property>
@@ -397,10 +395,18 @@
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QLabel" name="laser_distance_label">
+           <property name="text">
+            <string>Smallest laser distance:</string>
+           </property>
+          </widget>
+         </item>
         </layout>
         <zorder>stop_full_button</zorder>
         <zorder>modes_button</zorder>
         <zorder>AllOptionsLayout</zorder>
+        <zorder>laser_distance_label</zorder>
        </widget>
       </item>
       <item>
@@ -703,7 +709,6 @@ QScrollBar::handle:horizontal {
             <property name="font">
              <font>
               <pointsize>25</pointsize>
-              <weight>75</weight>
               <bold>true</bold>
               <underline>true</underline>
               <strikeout>false</strikeout>
@@ -851,7 +856,6 @@ QScrollBar::handle:horizontal {
             <property name="font">
              <font>
               <pointsize>25</pointsize>
-              <weight>75</weight>
               <bold>true</bold>
               <underline>true</underline>
              </font>
@@ -1512,7 +1516,6 @@ QScrollBar::handle:horizontal {
               <property name="font">
                <font>
                 <pointsize>20</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                 <underline>true</underline>
                </font>
@@ -1591,7 +1594,6 @@ QScrollBar::handle:horizontal {
               <property name="font">
                <font>
                 <pointsize>20</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                 <underline>true</underline>
                </font>
@@ -1692,7 +1694,7 @@ QScrollBar::handle:horizontal {
      <x>0</x>
      <y>0</y>
      <width>2144</width>
-     <height>34</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

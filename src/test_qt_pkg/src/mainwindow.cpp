@@ -82,6 +82,13 @@ MainWindow::MainWindow(QWidget* parent)
     });
     syncTimer->start(50); // every 50 ms
 
+    // ===== Setup Label timers =====
+    QTimer* laserUpdateTimer = new QTimer(this);
+    connect(laserUpdateTimer, &QTimer::timeout, this, [this]() {
+        m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(m_ui->obstacle_map_widget->getMinLaserDistance(), 'f', 2) + " m");
+    });
+    laserUpdateTimer->start(200);
+
     // ===== Hide Optional UI Elements Initially =====
     m_ui->WheelsLayout->setVisible(false);
     m_ui->JoystickLayout->setVisible(false);
@@ -355,7 +362,8 @@ void MainWindow::on_stop_button_clicked() {
 }
 
 /**
- * @brief Sends a full stop command to the robot (zero velocity AND rotation AND stop followPath/Pose-Client).
+ * @brief Sends a full stop command to the robot (zero velocity AND rotation AND stop
+ * followPath/Pose-Client).
  */
 void MainWindow::on_stop_full_button_clicked() {
     m_robot_node->publish_velocity({0.0, 0.0}, 0.0);

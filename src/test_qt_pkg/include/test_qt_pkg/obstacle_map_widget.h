@@ -156,6 +156,11 @@ class ObstacleMapWidget : public QWidget {
         m_laser_number = newNumber;
     }
 
+    // ====== Getter methods ======
+    float getMinLaserDistance() {
+        return m_min_laser_distance;
+    }
+
     // ====== Other public methods ======
 
     /**
