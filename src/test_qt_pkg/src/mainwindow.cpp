@@ -355,10 +355,12 @@ void MainWindow::on_stop_button_clicked() {
 }
 
 /**
- * @brief Sends a full stop command to the robot (zero velocity AND rotation).
+ * @brief Sends a full stop command to the robot (zero velocity AND rotation AND stop followPath/Pose-Client).
  */
 void MainWindow::on_stop_full_button_clicked() {
     m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+    m_nav2_node->cancelGoalsPose();
+    m_nav2_node->cancelGoalsFollow();
 }
 
 /**

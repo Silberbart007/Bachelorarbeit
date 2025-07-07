@@ -78,6 +78,12 @@ class Nav2Client : public rclcpp::Node {
     bool cancelGoalsPose();
 
     /**
+     * @brief Attempts to cancel the current goal sent to the FollowPath server.
+     * @return True if a cancellation request was made (not necessarily successful).
+     */
+    bool cancelGoalsFollow();
+
+    /**
      * @brief Sets the associated obstacle map widget to be updated with feedback/status.
      * @param obstacle_map Pointer to the ObstacleMapWidget UI element.
      */

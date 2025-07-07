@@ -177,8 +177,38 @@ bool Nav2Client::cancelGoalsPose() {
     }
 }
 
+/**
+ * @brief Cancels all currently active goals sent to the FollowPath action server.
+ *
+ * This function attempts to cancel all outstanding or currently executing goals for
+ * the FollowPath action client. It waits up to 2 seconds for the cancellation to be
+ * acknowledged.
+ *
+ * @return true if the goals were successfully cancelled, false if the server was unavailable or the
+ * cancellation timed out.
+ */
+bool Nav2Client::cancelGoalsFollow() {
+    // Ensure the action server is available before sending a cancel request
+    if (!m_path_client->wait_for_action_server(std::chrono::seconds(5))) {
+        RCLCPP_ERROR(this->get_logger(), "Action server (FollowPath) not available");
+        return false;
+    }
+
+    // Request cancellation of all current goals
+    auto cancel_future = m_path_client->async_cancel_all_goals();
+
+    // Wait up to 2 seconds for the cancellation to complete
+    if (cancel_future.wait_for(std::chrono::seconds(2)) == std::future_status::ready) {
+        RCLCPP_INFO(this->get_logger(), "All FollowPath goals successfully cancelled");
+        return true;
+    } else {
+        RCLCPP_ERROR(this->get_logger(), "Cancelling goals took too long or failed");
+        return false;
+    }
+}
+
 // =====================
-// Public Methods
+// Private Methods
 // =====================
 
 /**
