@@ -355,6 +355,13 @@ void MainWindow::on_stop_button_clicked() {
 }
 
 /**
+ * @brief Sends a full stop command to the robot (zero velocity AND rotation).
+ */
+void MainWindow::on_stop_full_button_clicked() {
+    m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+}
+
+/**
  * @brief Sends a slow backward velocity command to the robot.
  */
 void MainWindow::on_back_slow_button_clicked() {

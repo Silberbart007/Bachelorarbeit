@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1837</width>
-    <height>808</height>
+    <width>2144</width>
+    <height>1470</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -70,7 +70,7 @@
         <property name="minimumSize">
          <size>
           <width>500</width>
-          <height>500</height>
+          <height>650</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -306,6 +306,7 @@
                <property name="font">
                 <font>
                  <pointsize>20</pointsize>
+                 <weight>75</weight>
                  <bold>true</bold>
                  <underline>true</underline>
                 </font>
@@ -368,19 +369,38 @@
           </widget>
          </item>
          <item>
-          <spacer name="verticalSpacer">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
+          <widget class="QPushButton" name="stop_full_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
            </property>
-           <property name="sizeHint" stdset="0">
+           <property name="maximumSize">
             <size>
-             <width>20</width>
-             <height>40</height>
+             <width>400</width>
+             <height>200</height>
             </size>
            </property>
-          </spacer>
+           <property name="font">
+            <font>
+             <pointsize>26</pointsize>
+             <weight>75</weight>
+             <bold>true</bold>
+            </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: red</string>
+           </property>
+           <property name="text">
+            <string>STOP</string>
+           </property>
+          </widget>
          </item>
         </layout>
+        <zorder>stop_full_button</zorder>
+        <zorder>modes_button</zorder>
+        <zorder>AllOptionsLayout</zorder>
        </widget>
       </item>
       <item>
@@ -683,6 +703,7 @@ QScrollBar::handle:horizontal {
             <property name="font">
              <font>
               <pointsize>25</pointsize>
+              <weight>75</weight>
               <bold>true</bold>
               <underline>true</underline>
               <strikeout>false</strikeout>
@@ -830,6 +851,7 @@ QScrollBar::handle:horizontal {
             <property name="font">
              <font>
               <pointsize>25</pointsize>
+              <weight>75</weight>
               <bold>true</bold>
               <underline>true</underline>
              </font>
@@ -1436,6 +1458,7 @@ QScrollBar::handle:horizontal {
               <property name="font">
                <font>
                 <pointsize>20</pointsize>
+                <weight>75</weight>
                 <bold>true</bold>
                 <underline>true</underline>
                </font>
@@ -1454,7 +1477,7 @@ QScrollBar::handle:horizontal {
            </layout>
           </widget>
          </item>
-         <item alignment="Qt::AlignRight">
+         <item>
           <widget class="CustomTouchSliderHorizontal" name="rotation_slider_joystick" native="true">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1466,6 +1489,12 @@ QScrollBar::handle:horizontal {
             <size>
              <width>450</width>
              <height>200</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>300</width>
+             <height>100</height>
             </size>
            </property>
           </widget>
@@ -1508,6 +1537,7 @@ QScrollBar::handle:horizontal {
               <property name="font">
                <font>
                 <pointsize>20</pointsize>
+                <weight>75</weight>
                 <bold>true</bold>
                 <underline>true</underline>
                </font>
@@ -1541,7 +1571,7 @@ QScrollBar::handle:horizontal {
          <property name="rightMargin">
           <number>1</number>
          </property>
-         <item alignment="Qt::AlignRight">
+         <item>
           <widget class="CustomTouchSliderVertical" name="speed_slider_wheels" native="true">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1607,8 +1637,8 @@ QScrollBar::handle:horizontal {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1837</width>
-     <height>22</height>
+     <width>2144</width>
+     <height>34</height>
     </rect>
    </property>
   </widget>

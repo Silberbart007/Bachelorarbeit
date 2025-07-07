@@ -104,7 +104,7 @@ class MainWindow : public QMainWindow {
     // ===== Public Static variables =====
 
     /// @brief Toggle Dynamic Lock of all active sliders
-    static bool s_dynLock; 
+    static bool s_dynLock;
 
     /// @brie Toggle Static Lock of all active sliders
     static bool s_statLock;
@@ -161,6 +161,11 @@ class MainWindow : public QMainWindow {
      * @brief Slot triggered when the stop button is clicked.
      */
     void on_stop_button_clicked();
+
+    /**
+     * @brief Slot triggered when the red stop button is clicked.
+     */
+    void on_stop_full_button_clicked();
 
     /**
      * @brief Slot triggered when the back slow button is clicked.
