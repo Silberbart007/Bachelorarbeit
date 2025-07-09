@@ -177,6 +177,26 @@ class MainWindow : public QMainWindow {
      */
     void on_back_fast_button_clicked();
 
+    /**
+     * @brief Slot triggered when the clockwise slow button is clicked.
+     */
+    void on_clockwise_slow_button_clicked();
+
+    /**
+     * @brief Slot triggered when the clockwise fast button is clicked.
+     */
+    void on_clockwise_fast_button_clicked();
+
+    /**
+     * @brief Slot triggered when the anticlockwise slow button is clicked.
+     */
+    void on_anticlockwise_slow_button_clicked();
+
+    /**
+     * @brief Slot triggered when the anticlockwise fast button is clicked.
+     */
+    void on_anticlockwise_fast_button_clicked();
+
     // ===== Reset Rotation Button =====
 
     /**

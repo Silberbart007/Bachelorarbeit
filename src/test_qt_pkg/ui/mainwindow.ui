@@ -1178,6 +1178,12 @@ QScrollBar::handle:horizontal {
       </property>
       <item>
        <widget class="QWidget" name="ButtonsLayoutHorizontal" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
           <width>0</width>
@@ -1186,11 +1192,73 @@ QScrollBar::handle:horizontal {
         </property>
         <property name="maximumSize">
          <size>
-          <width>700</width>
+          <width>800</width>
           <height>16777215</height>
          </size>
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QPushButton" name="anticlockwise_fast_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>120</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>8</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Anticlockwise
+fast</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="anticlockwise_slow_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>120</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>8</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Anticlockwise
+slow</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QWidget" name="buttons" native="true">
            <property name="enabled">
@@ -1297,6 +1365,68 @@ QScrollBar::handle:horizontal {
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="clockwise_slow_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>120</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>8</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Clockwise
+slow</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="clockwise_fast_button">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>120</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>8</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Clockwise
+fast</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="reset_rotation_button">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1316,7 +1446,8 @@ QScrollBar::handle:horizontal {
             </font>
            </property>
            <property name="text">
-            <string>Reset Rotation</string>
+            <string>Reset
+Rotation</string>
            </property>
           </widget>
          </item>
@@ -1456,6 +1587,12 @@ QScrollBar::handle:horizontal {
       </item>
       <item>
        <widget class="QWidget" name="JoystickLayout" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
           <width>600</width>
@@ -1710,16 +1847,6 @@ QScrollBar::handle:horizontal {
     <bool>false</bool>
    </attribute>
   </widget>
-  <action name="actionsussy">
-   <property name="text">
-    <string>sussy</string>
-   </property>
-  </action>
-  <action name="actionshrek">
-   <property name="text">
-    <string>shrek</string>
-   </property>
-  </action>
  </widget>
  <customwidgets>
   <customwidget>

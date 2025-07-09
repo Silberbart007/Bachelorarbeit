@@ -85,7 +85,9 @@ MainWindow::MainWindow(QWidget* parent)
     // ===== Setup Label timers =====
     QTimer* laserUpdateTimer = new QTimer(this);
     connect(laserUpdateTimer, &QTimer::timeout, this, [this]() {
-        m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(m_ui->obstacle_map_widget->getMinLaserDistance(), 'f', 2) + " m");
+        m_ui->laser_distance_label->setText(
+            "Smallest distance: " +
+            QString::number(m_ui->obstacle_map_widget->getMinLaserDistance(), 'f', 2) + " m");
     });
     laserUpdateTimer->start(200);
 
@@ -385,6 +387,34 @@ void MainWindow::on_back_slow_button_clicked() {
 void MainWindow::on_back_fast_button_clicked() {
     qDebug() << "Speed button pressed: -1.0";
     m_robot_node->publish_velocity({-1.0, 0.0}, m_robot_node->getRotationNormalized());
+}
+
+/**
+ * @brief Sends a slow clockwise rotation velocity command to the robot.
+ */
+void MainWindow::on_clockwise_slow_button_clicked() {
+    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.5);
+}
+
+/**
+ * @brief Sends a fast clockwise rotation velocity command to the robot.
+ */
+void MainWindow::on_clockwise_fast_button_clicked() {
+    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 1.0);
+}
+
+/**
+ * @brief Sends a slow anticlockwise rotation velocity command to the robot.
+ */
+void MainWindow::on_anticlockwise_slow_button_clicked() {
+    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), -0.5);
+}
+
+/**
+ * @brief Sends a fast anticlockwise rotation velocity command to the robot.
+ */
+void MainWindow::on_anticlockwise_fast_button_clicked() {
+    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), -1.0);
 }
 
 /**
