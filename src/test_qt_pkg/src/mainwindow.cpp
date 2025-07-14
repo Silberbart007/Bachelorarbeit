@@ -85,9 +85,17 @@ MainWindow::MainWindow(QWidget* parent)
     // ===== Setup Label timers =====
     QTimer* laserUpdateTimer = new QTimer(this);
     connect(laserUpdateTimer, &QTimer::timeout, this, [this]() {
-        m_ui->laser_distance_label->setText(
-            "Smallest distance: " +
-            QString::number(m_ui->obstacle_map_widget->getMinLaserDistance(), 'f', 2) + " m");
+        float min = m_ui->obstacle_map_widget->getMinLaserDistance();
+        float avg = 0.0;
+
+        m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(min, 'f', 2) +
+                                            " m");
+
+        // Write in logfile
+        if (laser_logFile.isOpen()) {
+            laser_logStream << QDateTime::currentDateTime().toString(Qt::ISODate) << "," << min
+                            << "," << "N/A" << "\n";
+        }
     });
     laserUpdateTimer->start(200);
 
@@ -135,6 +143,9 @@ MainWindow::MainWindow(QWidget* parent)
 
     // ===== Install Event Filter for Camera Label =====
     m_ui->cam_label->installEventFilter(this);
+
+    // ===== Initialize logging files =====
+    initLogging();
 }
 
 /**
@@ -143,6 +154,10 @@ MainWindow::MainWindow(QWidget* parent)
  * Cleans up the UI pointer.
  */
 MainWindow::~MainWindow() {
+    if (laser_logFile.isOpen()) {
+        laser_logFile.close();
+    }
+
     delete m_ui;
 }
 
@@ -705,6 +720,19 @@ void MainWindow::on_follow_checkBox_stateChanged(int state) {
 // =====================
 // Private Methods
 // =====================
+
+/**
+ * @brief Initialize logging files
+ */
+void MainWindow::initLogging() {
+    laser_logFile.setFileName("laser_log.csv");
+    if (laser_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        laser_logStream.setDevice(&laser_logFile);
+        laser_logStream << "Timestamp,MinDistance,AvgDistance\n";
+    } else {
+        qWarning() << "Cannot open logfile!";
+    }
+}
 
 /**
  * @brief Callback for receiving camera image data.

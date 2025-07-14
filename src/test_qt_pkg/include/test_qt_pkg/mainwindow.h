@@ -309,6 +309,15 @@ class MainWindow : public QMainWindow {
     /// True if tap control mode is active
     bool m_tapControlMode;
 
+    /// Logging file for laser distances
+    QFile laser_logFile;
+
+    /// Logging stream for laser distances
+    QTextStream laser_logStream;
+
+    /// Initialize Logging files
+    void initLogging();
+
     // ===== Callbacks =====
 
     /**
