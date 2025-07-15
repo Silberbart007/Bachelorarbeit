@@ -128,7 +128,7 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Slot triggered when the selection changes in the mode list.
      */
-    void on_mode_list_itemSelectionChanged();
+    void on_mode_list_2_itemSelectionChanged();
 
     /**
      * @brief Slot triggered when the selection changes in the mode list view.

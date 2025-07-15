@@ -86,7 +86,7 @@ MainWindow::MainWindow(QWidget* parent)
     QTimer* laserUpdateTimer = new QTimer(this);
     connect(laserUpdateTimer, &QTimer::timeout, this, [this]() {
         float min = m_ui->obstacle_map_widget->getMinLaserDistance();
-        float avg = 0.0;
+        //float avg = 0.0;
 
         m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(min, 'f', 2) +
                                             " m");
@@ -131,7 +131,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_ui->rotation_slider_joystick->setValue(0.0);
 
     // ===== Initialize Mode Selection =====
-    m_ui->mode_list->setCurrentRow(0);
+    m_ui->mode_list_2->setCurrentRow(0);
     m_ui->mode_list_view->item(0)->setSelected(true);
     m_ui->mode_list_view->item(1)->setSelected(true);
     m_ui->lock_options_list->setCurrentRow(1);
@@ -146,6 +146,9 @@ MainWindow::MainWindow(QWidget* parent)
 
     // ===== Initialize logging files =====
     initLogging();
+
+    // Fullscreen
+    this->showFullScreen();
 }
 
 /**
@@ -238,9 +241,9 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
  * It checks which control modes are selected and shows or hides the corresponding UI widgets
  * accordingly.
  */
-void MainWindow::on_mode_list_itemSelectionChanged() {
+void MainWindow::on_mode_list_2_itemSelectionChanged() {
     // Get all currently selected items in the mode list
-    QList<QListWidgetItem*> selectedItems = m_ui->mode_list->selectedItems();
+    QList<QListWidgetItem*> selectedItems = m_ui->mode_list_2->selectedItems();
 
     // Flags to indicate which control widgets should be shown
     bool showWheel = false;
