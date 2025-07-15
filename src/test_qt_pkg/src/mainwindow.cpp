@@ -86,7 +86,7 @@ MainWindow::MainWindow(QWidget* parent)
     QTimer* laserUpdateTimer = new QTimer(this);
     connect(laserUpdateTimer, &QTimer::timeout, this, [this]() {
         float min = m_ui->obstacle_map_widget->getMinLaserDistance();
-        //float avg = 0.0;
+        // float avg = 0.0;
 
         m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(min, 'f', 2) +
                                             " m");
@@ -97,7 +97,7 @@ MainWindow::MainWindow(QWidget* parent)
                             << "," << "N/A" << "\n";
         }
     });
-    laserUpdateTimer->start(200);
+    laserUpdateTimer->start(1000);
 
     // ===== Hide Optional UI Elements Initially =====
     m_ui->WheelsLayout->setVisible(false);
