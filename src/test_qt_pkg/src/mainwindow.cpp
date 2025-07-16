@@ -88,6 +88,7 @@ MainWindow::MainWindow(QWidget* parent)
         float min = m_ui->obstacle_map_widget->getMinLaserDistance();
         QString timer_text = m_ui->timer_label->text();
         QString only_time_text = timer_text.mid(7);
+        geometry_msgs::msg::Twist vel = m_robot_node->getLastCmdVel();
 
         m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(min, 'f', 2) +
                                             " m");
@@ -95,7 +96,8 @@ MainWindow::MainWindow(QWidget* parent)
         // Write in logfile
         if (m_laser_logFile.isOpen()) {
             m_laser_logStream << QDateTime::currentDateTime().toString(Qt::ISODate) << "," << min
-                              << "," << only_time_text << "\n";
+                              << "," << only_time_text << "," << vel.linear.x << "," << vel.linear.y
+                              << "," << vel.angular.z << "\n";
             m_laser_logStream.flush();
         }
     });
@@ -752,7 +754,8 @@ void MainWindow::initLogging() {
     m_laser_logFile.setFileName("laser_log.csv");
     if (m_laser_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         m_laser_logStream.setDevice(&m_laser_logFile);
-        m_laser_logStream << "Timestamp,MinDistance,Timer\n";
+        m_laser_logStream << "Timestamp,MinDistance [m],Timer [min:s.ms],linear velocity (x) [m/s],linear velocity "
+                             "(y) [m/s],angular velocity (z) [m/s]\n";
     } else {
         qWarning() << "Cannot open logfile!";
     }

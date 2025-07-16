@@ -89,6 +89,12 @@ class RobotNode : public rclcpp::Node {
     double getMaxRotation();
 
     /**
+     * @brief Get current cmd Speed
+     * @return Robot Speed
+     *  */
+    geometry_msgs::msg::Twist getLastCmdVel() const;
+
+    /**
      * @brief Check if a map has been received from the map topic.
      * @return True if map is available.
      */
@@ -128,6 +134,7 @@ class RobotNode : public rclcpp::Node {
     double m_rot;           ///< Current angular velocity.
     RobotSpeed m_max_speed; ///< Maximum allowed linear speed.
     double m_max_rotation;  ///< Maximum allowed angular velocity.
+    geometry_msgs::msg::Twist m_last_cmd_vel;
 
     // --- Map state ---
 
@@ -149,6 +156,7 @@ class RobotNode : public rclcpp::Node {
         m_map_sub; ///< Subscriber for the occupancy map.
     rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
         m_amcl_sub; ///< Subscriber for AMCL poses.
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr m_cmd_sub;
 
     // --- Internal Callbacks ---
 

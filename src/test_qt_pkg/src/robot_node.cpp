@@ -38,6 +38,11 @@ RobotNode::RobotNode() : Node("robot_node") {
     // Subscribe to AMCL pose estimate
     m_amcl_sub = this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
         "/amcl_pose", 10, std::bind(&RobotNode::amcl_callback, this, std::placeholders::_1));
+
+    // Subscribe to cmd
+    m_cmd_sub = this->create_subscription<geometry_msgs::msg::Twist>(
+        "/cmd_vel", 10,
+        [this](const geometry_msgs::msg::Twist::SharedPtr msg) { m_last_cmd_vel = *msg; });
 }
 
 /**
@@ -114,6 +119,14 @@ RobotNode::RobotSpeed RobotNode::getMaxSpeed() {
  */
 double RobotNode::getMaxRotation() {
     return m_max_rotation;
+}
+
+/**
+ * @brief Get current cmd Speed
+ * @return Robot Speed
+ */
+geometry_msgs::msg::Twist RobotNode::getLastCmdVel() const {
+    return m_last_cmd_vel;
 }
 
 /**

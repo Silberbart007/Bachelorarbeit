@@ -25,6 +25,7 @@
 
 // ROS2 includes
 #include "sensor_msgs/msg/image.hpp"
+#include <geometry_msgs/msg/twist.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/int32.hpp>
 #include <std_msgs/msg/string.hpp>
