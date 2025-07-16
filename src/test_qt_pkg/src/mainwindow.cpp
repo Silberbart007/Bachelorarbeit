@@ -86,18 +86,25 @@ MainWindow::MainWindow(QWidget* parent)
     QTimer* laserUpdateTimer = new QTimer(this);
     connect(laserUpdateTimer, &QTimer::timeout, this, [this]() {
         float min = m_ui->obstacle_map_widget->getMinLaserDistance();
-        // float avg = 0.0;
+        QString timer_text = m_ui->timer_label->text();
+        QString only_time_text = timer_text.mid(7);
 
         m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(min, 'f', 2) +
                                             " m");
 
         // Write in logfile
-        if (laser_logFile.isOpen()) {
-            laser_logStream << QDateTime::currentDateTime().toString(Qt::ISODate) << "," << min
-                            << "," << "N/A" << "\n";
+        if (m_laser_logFile.isOpen()) {
+            m_laser_logStream << QDateTime::currentDateTime().toString(Qt::ISODate) << "," << min
+                              << "," << only_time_text << "\n";
+            m_laser_logStream.flush();
         }
     });
-    laserUpdateTimer->start(1000);
+    laserUpdateTimer->start(100);
+
+    m_ui->timer_label->setText(QString("Timer: 00:00.00"));
+    m_timer = new QTimer(this);
+    m_timer->setInterval(100);
+    connect(m_timer, &QTimer::timeout, this, &MainWindow::updateTimerLabel);
 
     // ===== Hide Optional UI Elements Initially =====
     m_ui->WheelsLayout->setVisible(false);
@@ -157,8 +164,8 @@ MainWindow::MainWindow(QWidget* parent)
  * Cleans up the UI pointer.
  */
 MainWindow::~MainWindow() {
-    if (laser_logFile.isOpen()) {
-        laser_logFile.close();
+    if (m_laser_logFile.isOpen()) {
+        m_laser_logFile.close();
     }
 
     delete m_ui;
@@ -385,7 +392,7 @@ void MainWindow::on_stop_button_clicked() {
  * @brief Sends a full stop command to the robot (zero velocity AND rotation AND stop
  * followPath/Pose-Client).
  */
-void MainWindow::on_stop_full_button_clicked() {
+void MainWindow::on_stop_full_button_2_clicked() {
     m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
     m_nav2_node->cancelGoalsPose();
     m_nav2_node->cancelGoalsFollow();
@@ -451,6 +458,20 @@ void MainWindow::on_reset_rotation_button_clicked() {
  */
 void MainWindow::on_reset_rotation_button_2_clicked() {
     m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
+}
+
+/**
+ * @brief Starts timer
+ */
+void MainWindow::on_start_timer_button_clicked() {
+    startTimer();
+}
+
+/**
+ * @brief Stops timer
+ */
+void MainWindow::on_stop_timer_button_clicked() {
+    stopTimer();
 }
 
 /**
@@ -728,13 +749,48 @@ void MainWindow::on_follow_checkBox_stateChanged(int state) {
  * @brief Initialize logging files
  */
 void MainWindow::initLogging() {
-    laser_logFile.setFileName("laser_log.csv");
-    if (laser_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        laser_logStream.setDevice(&laser_logFile);
-        laser_logStream << "Timestamp,MinDistance,AvgDistance\n";
+    m_laser_logFile.setFileName("laser_log.csv");
+    if (m_laser_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        m_laser_logStream.setDevice(&m_laser_logFile);
+        m_laser_logStream << "Timestamp,MinDistance,Timer\n";
     } else {
         qWarning() << "Cannot open logfile!";
     }
+}
+
+/**
+ * @brief Start timer
+ */
+void MainWindow::startTimer() {
+    m_timer_elapsedTenthsSecond = 0;
+    m_timer->start();
+}
+
+/**
+ * @brief Stop timer
+ */
+void MainWindow::stopTimer() {
+    if (m_timer->isActive())
+        m_timer->stop();
+    else
+        m_timer->start();
+}
+
+/**
+ * @brief Update timer label
+ */
+void MainWindow::updateTimerLabel() {
+    m_timer_elapsedTenthsSecond++;
+
+    int totalSeconds = m_timer_elapsedTenthsSecond / 10;
+    int minutes = totalSeconds / 60;
+    int seconds = totalSeconds % 60;
+    int tenths = m_timer_elapsedTenthsSecond % 10;
+
+    m_ui->timer_label->setText(QString("Timer: %1:%2.%3")
+                                   .arg(minutes, 2, 10, QChar('0'))
+                                   .arg(seconds, 2, 10, QChar('0'))
+                                   .arg(tenths));
 }
 
 /**

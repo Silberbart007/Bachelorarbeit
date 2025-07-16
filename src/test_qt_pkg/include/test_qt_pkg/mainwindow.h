@@ -165,7 +165,7 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Slot triggered when the red stop button is clicked.
      */
-    void on_stop_full_button_clicked();
+    void on_stop_full_button_2_clicked();
 
     /**
      * @brief Slot triggered when the back slow button is clicked.
@@ -208,6 +208,16 @@ class MainWindow : public QMainWindow {
      * @brief Slot triggered when the reset rotation button 2 (sliders) is clicked.
      */
     void on_reset_rotation_button_2_clicked();
+
+    /**
+     * @brief Slot triggered when the start timer button is clicked.
+     */
+    void on_start_timer_button_clicked();
+
+    /**
+     * @brief Slot triggered when the stop timer button is clicked.
+     */
+    void on_stop_timer_button_clicked();
 
     // ===== Obstacle Map List =====
 
@@ -310,13 +320,28 @@ class MainWindow : public QMainWindow {
     bool m_tapControlMode;
 
     /// Logging file for laser distances
-    QFile laser_logFile;
+    QFile m_laser_logFile;
 
     /// Logging stream for laser distances
-    QTextStream laser_logStream;
+    QTextStream m_laser_logStream;
+
+    /// Timer vor logging
+    QTimer* m_timer;
+
+    /// How much time passed since timer
+    int m_timer_elapsedTenthsSecond;
 
     /// Initialize Logging files
     void initLogging();
+
+    /// Start timer
+    void startTimer();
+
+    /// Stop timer
+    void stopTimer();
+
+    /// update timer label
+    void updateTimerLabel();
 
     // ===== Callbacks =====
 

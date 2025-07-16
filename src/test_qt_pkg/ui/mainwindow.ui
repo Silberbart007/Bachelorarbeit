@@ -131,7 +131,7 @@ border-radius: 10px;
 }
 </string>
          </property>
-         <layout class="QVBoxLayout" name="ModesLayout" stretch="0,0,0,0,0">
+         <layout class="QVBoxLayout" name="ModesLayout" stretch="0,0,0,0,0,0">
           <property name="spacing">
            <number>0</number>
           </property>
@@ -475,7 +475,13 @@ border-radius: 10px;
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_7">
              <item>
-              <widget class="QPushButton" name="pushButton">
+              <widget class="QPushButton" name="start_timer_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>1000</width>
@@ -488,7 +494,13 @@ border-radius: 10px;
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="pushButton_2">
+              <widget class="QPushButton" name="stop_timer_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="maximumSize">
                 <size>
                  <width>1000</width>
@@ -504,12 +516,29 @@ border-radius: 10px;
            </widget>
           </item>
           <item>
+           <widget class="QLabel" name="timer_label">
+            <property name="font">
+             <font>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Timer:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QLabel" name="laser_distance_label">
             <property name="maximumSize">
              <size>
               <width>400</width>
               <height>16777215</height>
              </size>
+            </property>
+            <property name="font">
+             <font>
+              <bold>true</bold>
+             </font>
             </property>
             <property name="text">
              <string>Smallest laser distance:</string>
@@ -522,6 +551,7 @@ border-radius: 10px;
          <zorder>AllOptionsLayout</zorder>
          <zorder>laser_distance_label</zorder>
          <zorder>timer_buttons_layout</zorder>
+         <zorder>timer_label</zorder>
         </widget>
        </item>
        <item>
