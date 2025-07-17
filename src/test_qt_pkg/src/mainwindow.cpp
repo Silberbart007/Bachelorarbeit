@@ -110,11 +110,27 @@ MainWindow::MainWindow(QWidget* parent)
     m_timer->setInterval(100);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::updateTimerLabel);
 
+    // ===== Wrap all control widgets ======
+    // (e.g. for displaying the default stop button)
+    std::vector<QWidget**> controls = {&m_ui->buttons_container};
+    for (QWidget** pw : controls) {
+        QWidget* oldWidget = *pw;
+        QWidget* parent = oldWidget->parentWidget();
+        QLayout* layout = parent ? parent->layout() : nullptr;
+
+        auto* wrapper = new ControlWidgetWrapper(oldWidget);
+        layout->replaceWidget(oldWidget, wrapper);
+        wrapper->setParent(parent);
+
+        *pw = wrapper;
+        qDebug() << "Parent widget objectName:" << wrapper->parentWidget()->objectName();
+    }
+
     // ===== Hide Optional UI Elements Initially =====
     m_ui->WheelsLayout->setVisible(false);
     m_ui->JoystickLayout->setVisible(false);
     m_ui->sliders->setVisible(false);
-    m_ui->ButtonsLayoutHorizontal->setVisible(false);
+    m_ui->buttons_container->setVisible(false);
     m_ui->AllOptionsLayout->setVisible(false);
 
     // Parameter controls hidden at startup
@@ -294,7 +310,7 @@ void MainWindow::on_mode_list_2_itemSelectionChanged() {
     m_ui->rotation_slider_joystick->setVisible(showJoystick);
     m_ui->rotation_joystick->setVisible(showRotationJoystick);
     m_ui->sliders->setVisible(showSliders);
-    m_ui->ButtonsLayoutHorizontal->setVisible(showButtons);
+    m_ui->buttons_container->setVisible(showButtons);
 }
 
 /**

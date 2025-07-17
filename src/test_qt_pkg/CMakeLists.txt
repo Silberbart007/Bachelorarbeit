@@ -44,7 +44,9 @@ set(SOURCES
   src/touch_test.cpp
   src/touch_slider_vertical.cpp
   src/touch_slider_horizontal.cpp
+  src/stop_button.cpp
   src/robot_node.cpp
+  src/control_widget_wrapper.cpp
 )
 
 set(HEADERS
@@ -60,6 +62,8 @@ set(HEADERS
   include/test_qt_pkg/robot_node.h
   include/test_qt_pkg/nav2client.h
   include/test_qt_pkg/scan_zone.h
+  include/test_qt_pkg/stop_button.h
+  include/test_qt_pkg/control_widget_wrapper.h
 )
 
 set(UIS
@@ -80,6 +84,8 @@ add_executable(gui_main
   src/touch_test.cpp
   src/touch_slider_vertical.cpp
   src/touch_slider_horizontal.cpp
+  src/stop_button.cpp
+  src/control_widget_wrapper.cpp
   ui/mainwindow.ui
   ${HEADERS}
 )

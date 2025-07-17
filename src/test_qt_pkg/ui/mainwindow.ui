@@ -370,6 +370,7 @@ border-radius: 10px;
                 <property name="font">
                  <font>
                   <pointsize>20</pointsize>
+                  <weight>75</weight>
                   <bold>true</bold>
                   <underline>true</underline>
                  </font>
@@ -448,6 +449,7 @@ border-radius: 10px;
             <property name="font">
              <font>
               <pointsize>26</pointsize>
+              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -519,6 +521,7 @@ border-radius: 10px;
            <widget class="QLabel" name="timer_label">
             <property name="font">
              <font>
+              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -537,6 +540,7 @@ border-radius: 10px;
             </property>
             <property name="font">
              <font>
+              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -984,6 +988,7 @@ QScrollBar::handle:horizontal {
              <property name="font">
               <font>
                <pointsize>25</pointsize>
+               <weight>75</weight>
                <bold>true</bold>
                <underline>true</underline>
                <strikeout>false</strikeout>
@@ -1131,6 +1136,7 @@ QScrollBar::handle:horizontal {
              <property name="font">
               <font>
                <pointsize>25</pointsize>
+               <weight>75</weight>
                <bold>true</bold>
                <underline>true</underline>
               </font>
@@ -1466,10 +1472,10 @@ QScrollBar::handle:horizontal {
 }</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_5">
-       <item>
-        <widget class="QWidget" name="ButtonsLayoutHorizontal" native="true">
+       <item alignment="Qt::AlignHCenter">
+        <widget class="QWidget" name="buttons_container" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -1482,271 +1488,302 @@ QScrollBar::handle:horizontal {
          </property>
          <property name="maximumSize">
           <size>
-           <width>800</width>
-           <height>16777215</height>
+           <width>16777215</width>
+           <height>111111</height>
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">QWidget#ButtonsLayoutHorizontal {
+          <string notr="true">QWidget#buttons_container {
 background-color: rgba(146, 56, 214, 100);
 border: 2px solid rgb(91, 32, 135);
 border-radius: 10px;
 }
 </string>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <layout class="QVBoxLayout" name="verticalLayout_7">
           <item>
-           <widget class="QPushButton" name="anticlockwise_fast_button">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>120</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>8</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Anticlockwise
-fast</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="anticlockwise_slow_button">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>120</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>8</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Anticlockwise
-slow</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QWidget" name="buttons" native="true">
-            <property name="enabled">
-             <bool>true</bool>
-            </property>
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <layout class="QVBoxLayout" name="verticalLayout_2">
-             <item>
-              <widget class="QPushButton" name="fast_button">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>14</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string>Fast</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="slow_button">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>14</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string>Slow</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="stop_button">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>14</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string>Stop</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="back_slow_button">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>14</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string>Back slow</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="back_fast_button">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="font">
-                <font>
-                 <pointsize>14</pointsize>
-                </font>
-               </property>
-               <property name="text">
-                <string>Back fast</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="clockwise_slow_button">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>120</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>8</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Clockwise
-slow</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="clockwise_fast_button">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>120</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>8</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string>Clockwise
-fast</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="reset_rotation_button">
+           <widget class="QWidget" name="ButtonsLayoutHorizontal" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
             </property>
-            <property name="maximumSize">
+            <property name="minimumSize">
              <size>
-              <width>100</width>
-              <height>16777215</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
-            <property name="font">
-             <font>
-              <pointsize>9</pointsize>
-             </font>
+            <property name="maximumSize">
+             <size>
+              <width>100000</width>
+              <height>111111</height>
+             </size>
             </property>
-            <property name="text">
-             <string>Reset
+            <property name="styleSheet">
+             <string notr="true">
+</string>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <property name="topMargin">
+              <number>6</number>
+             </property>
+             <item>
+              <widget class="QPushButton" name="anticlockwise_fast_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>120</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>8</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Anticlockwise
+fast</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="anticlockwise_slow_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>120</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>8</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Anticlockwise
+slow</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QWidget" name="buttons" native="true">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_2">
+                <item>
+                 <widget class="QPushButton" name="fast_button">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>14</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Fast</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="slow_button">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>14</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Slow</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="stop_button">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>14</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Stop</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="back_slow_button">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>14</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Back slow</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="back_fast_button">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="font">
+                   <font>
+                    <pointsize>14</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Back fast</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="clockwise_slow_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>120</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>8</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Clockwise
+slow</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="clockwise_fast_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>120</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>8</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Clockwise
+fast</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="reset_rotation_button">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>100</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="font">
+                <font>
+                 <pointsize>9</pointsize>
+                </font>
+               </property>
+               <property name="text">
+                <string>Reset
 Rotation</string>
-            </property>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
@@ -1929,7 +1966,7 @@ border-radius: 10px;
           <property name="rightMargin">
            <number>0</number>
           </property>
-          <item alignment="Qt::AlignRight">
+          <item>
            <widget class="JoystickWidget" name="rotation_joystick" native="true">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -1975,6 +2012,7 @@ border-radius: 10px;
                <property name="font">
                 <font>
                  <pointsize>20</pointsize>
+                 <weight>75</weight>
                  <bold>true</bold>
                  <underline>true</underline>
                 </font>
@@ -2061,6 +2099,7 @@ border-radius: 10px;
                <property name="font">
                 <font>
                  <pointsize>20</pointsize>
+                 <weight>75</weight>
                  <bold>true</bold>
                  <underline>true</underline>
                 </font>
@@ -2194,7 +2233,7 @@ border-radius: 10px;
      <x>0</x>
      <y>0</y>
      <width>2144</width>
-     <height>22</height>
+     <height>34</height>
     </rect>
    </property>
   </widget>

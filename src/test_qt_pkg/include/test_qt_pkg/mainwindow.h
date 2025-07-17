@@ -39,6 +39,7 @@
 #include <functional>
 
 // Own project includes
+#include "control_widget_wrapper.h"
 #include "joystick.h"
 #include "nav2client.h"
 #include "robot_node.h"
@@ -343,6 +344,9 @@ class MainWindow : public QMainWindow {
 
     /// update timer label
     void updateTimerLabel();
+
+    /// Handles all standard stop buttons
+    void handleStopButton();
 
     // ===== Callbacks =====
 
