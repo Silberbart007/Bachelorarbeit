@@ -2,6 +2,9 @@
 
 ControlWidgetWrapper::ControlWidgetWrapper(QWidget* controlWidget, QWidget* parent)
     : QWidget(parent), m_contentWidget(controlWidget) {
+
+    this->setObjectName("control_wrapper");
+    
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(5, 5, 5, 5);
 
@@ -10,8 +13,8 @@ ControlWidgetWrapper::ControlWidgetWrapper(QWidget* controlWidget, QWidget* pare
 
     topBar->addWidget(m_stopButton);
 
-    mainLayout->addLayout(topBar);
+    topBar->setAlignment(m_stopButton, Qt::AlignLeft | Qt::AlignTop);
 
-    m_contentWidget->setParent(this);
+    mainLayout->addLayout(topBar);
     mainLayout->addWidget(m_contentWidget);
 }

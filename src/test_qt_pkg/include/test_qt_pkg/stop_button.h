@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QDebug>
 #include <QPushButton>
 
 class StopButton : public QPushButton {

@@ -118,12 +118,27 @@ MainWindow::MainWindow(QWidget* parent)
         QWidget* parent = oldWidget->parentWidget();
         QLayout* layout = parent ? parent->layout() : nullptr;
 
-        auto* wrapper = new ControlWidgetWrapper(oldWidget);
-        layout->replaceWidget(oldWidget, wrapper);
-        wrapper->setParent(parent);
+        if (layout) {
+            layout->removeWidget(oldWidget);
+        }
+
+        oldWidget->setParent(nullptr);
+
+        auto* wrapper = new ControlWidgetWrapper(oldWidget, parent);
+
+        if (layout) {
+            layout->addWidget(wrapper);
+            layout->setAlignment(wrapper, Qt::AlignHCenter);
+        }
 
         *pw = wrapper;
-        qDebug() << "Parent widget objectName:" << wrapper->parentWidget()->objectName();
+    }
+    
+    // Connect all standard stop buttons to custom function
+    QList<StopButton*> buttons = this->findChildren<StopButton*>();
+
+    for (StopButton* btn : buttons) {
+        connect(btn, &QPushButton::clicked, this, &MainWindow::on_stop_full_button_2_clicked);
     }
 
     // ===== Hide Optional UI Elements Initially =====

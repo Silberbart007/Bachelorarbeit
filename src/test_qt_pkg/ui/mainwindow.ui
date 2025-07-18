@@ -1475,7 +1475,7 @@ QScrollBar::handle:horizontal {
        <item alignment="Qt::AlignHCenter">
         <widget class="QWidget" name="buttons_container" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
@@ -1488,8 +1488,8 @@ QScrollBar::handle:horizontal {
          </property>
          <property name="maximumSize">
           <size>
-           <width>16777215</width>
-           <height>111111</height>
+           <width>700</width>
+           <height>1200</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -1504,7 +1504,7 @@ border-radius: 10px;
           <item>
            <widget class="QWidget" name="ButtonsLayoutHorizontal" native="true">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -1517,13 +1517,12 @@ border-radius: 10px;
             </property>
             <property name="maximumSize">
              <size>
-              <width>100000</width>
-              <height>111111</height>
+              <width>700</width>
+              <height>1200</height>
              </size>
             </property>
             <property name="styleSheet">
-             <string notr="true">
-</string>
+             <string notr="true"/>
             </property>
             <layout class="QHBoxLayout" name="horizontalLayout_3">
              <property name="topMargin">
