@@ -112,7 +112,9 @@ MainWindow::MainWindow(QWidget* parent)
 
     // ===== Wrap all control widgets ======
     // (e.g. for displaying the default stop button)
-    std::vector<QWidget**> controls = {&m_ui->buttons_container};
+    std::vector<QWidget**> controls = {&m_ui->buttons_container, &m_ui->sliders,
+                                       &m_ui->JoystickLayout,    &m_ui->WheelsLayout,
+                                       &m_ui->cam_widget,        &m_ui->ObstacleMapLayout};
     for (QWidget** pw : controls) {
         QWidget* oldWidget = *pw;
         QWidget* parent = oldWidget->parentWidget();
@@ -128,12 +130,13 @@ MainWindow::MainWindow(QWidget* parent)
 
         if (layout) {
             layout->addWidget(wrapper);
-            layout->setAlignment(wrapper, Qt::AlignHCenter);
+            if (*pw != m_ui->cam_widget && *pw != m_ui->ObstacleMapLayout)
+                layout->setAlignment(wrapper, Qt::AlignHCenter);
         }
 
         *pw = wrapper;
     }
-    
+
     // Connect all standard stop buttons to custom function
     QList<StopButton*> buttons = this->findChildren<StopButton*>();
 
@@ -326,6 +329,8 @@ void MainWindow::on_mode_list_2_itemSelectionChanged() {
     m_ui->rotation_joystick->setVisible(showRotationJoystick);
     m_ui->sliders->setVisible(showSliders);
     m_ui->buttons_container->setVisible(showButtons);
+
+    update();
 }
 
 /**
@@ -355,6 +360,11 @@ void MainWindow::on_mode_list_view_itemSelectionChanged() {
     // Show or hide display widgets accordingly
     m_ui->cam_widget->setVisible(showCam);
     m_ui->ObstacleMapLayout->setVisible(showMap);
+
+    m_ui->cam_label->clear();
+    m_ui->cam_label->updateGeometry();
+
+    update();
 }
 
 /**
@@ -800,8 +810,13 @@ void MainWindow::initLogging() {
  * @brief Start timer
  */
 void MainWindow::startTimer() {
-    m_timer_elapsedTenthsSecond = 0;
-    m_timer->start();
+    if (m_timer_elapsedTenthsSecond > 0) {
+        m_timer->stop();
+        m_timer_elapsedTenthsSecond = -1;
+        updateTimerLabel();
+    } else {
+        m_timer->start();
+    }
 }
 
 /**

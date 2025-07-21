@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2144</width>
+    <width>2425</width>
     <height>1470</height>
    </rect>
   </property>
@@ -78,7 +78,7 @@
 	background-color: rgba(56,188,214,100);
 }</string>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,0,0">
+      <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,1">
        <property name="spacing">
         <number>6</number>
        </property>
@@ -94,7 +94,7 @@
        <property name="bottomMargin">
         <number>9</number>
        </property>
-       <item>
+       <item alignment="Qt::AlignLeft">
         <widget class="QWidget" name="ModesLayout_2" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -561,15 +561,15 @@ border-radius: 10px;
        <item>
         <widget class="QWidget" name="cam_widget" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>100</width>
-           <height>300</height>
+           <width>0</width>
+           <height>0</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -580,8 +580,8 @@ border-radius: 10px;
 }
 </string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="0">
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
            <widget class="QLabel" name="cam_label">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -603,8 +603,14 @@ border-radius: 10px;
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
+          <item>
            <widget class="QListWidget" name="cam_list">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -800,14 +806,14 @@ QListWidget {
        <item>
         <widget class="QWidget" name="ObstacleMapLayout" native="true">
          <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
          <property name="minimumSize">
           <size>
-           <width>100</width>
+           <width>0</width>
            <height>0</height>
           </size>
          </property>
@@ -2231,7 +2237,7 @@ border-radius: 10px;
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>2144</width>
+     <width>2425</width>
      <height>34</height>
     </rect>
    </property>
