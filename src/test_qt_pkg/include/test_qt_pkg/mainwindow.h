@@ -22,6 +22,7 @@
 #include <QSlider>
 #include <QTimer>
 #include <QTouchEvent>
+#include <QMutex>
 
 // ROS2 includes
 #include "sensor_msgs/msg/image.hpp"
@@ -333,6 +334,18 @@ class MainWindow : public QMainWindow {
     /// How much time passed since timer
     int m_timer_elapsedTenthsSecond;
 
+    /// Struct for capturing current interaction with GUI (for logging)
+    struct Interaction {
+        QString widgetName;
+        QPointF position; 
+    };
+
+    /// Collection of current interactions with GUI (for logging)
+    QVector<Interaction> m_recentInteractions;
+
+    /// for avoiding capturing multiple logging interactions at the same time
+    QMutex m_interactionMutex;
+
     /// Initialize Logging files
     void initLogging();
 
@@ -347,6 +360,9 @@ class MainWindow : public QMainWindow {
 
     /// Handles all standard stop buttons
     void handleStopButton();
+
+    /// All logging functionality
+    void logEvent();
 
     // ===== Callbacks =====
 

@@ -84,25 +84,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     // ===== Setup Label timers =====
     QTimer* laserUpdateTimer = new QTimer(this);
-    connect(laserUpdateTimer, &QTimer::timeout, this, [this]() {
-        float min = m_ui->obstacle_map_widget->getMinLaserDistance();
-        QString timer_text = m_ui->timer_label->text();
-        QString only_time_text = timer_text.mid(7);
-        geometry_msgs::msg::Twist vel = m_robot_node->getLastCmdVel();
-        ObstacleMapWidget::Pose2D robot_pos = m_ui->obstacle_map_widget->getRobotPositionMeters();
-
-        m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(min, 'f', 2) +
-                                            " m");
-
-        // Write in logfile
-        if (m_laser_logFile.isOpen()) {
-            m_laser_logStream << QDateTime::currentDateTime().toString(Qt::ISODate) << "," << min
-                              << "," << only_time_text << "," << vel.linear.x << "," << vel.linear.y
-                              << "," << vel.angular.z << "," << robot_pos.x << "," << robot_pos.y
-                              << "," << robot_pos.theta << "\n";
-            m_laser_logStream.flush();
-        }
-    });
+    connect(laserUpdateTimer, &QTimer::timeout, this, [this]() { logEvent(); });
     laserUpdateTimer->start(100);
 
     m_ui->timer_label->setText(QString("Timer: 00:00.00"));
@@ -141,6 +123,7 @@ MainWindow::MainWindow(QWidget* parent)
     QList<StopButton*> buttons = this->findChildren<StopButton*>();
 
     for (StopButton* btn : buttons) {
+        btn->installEventFilter(this);
         connect(btn, &QPushButton::clicked, this, &MainWindow::on_stop_full_button_2_clicked);
     }
 
@@ -186,8 +169,29 @@ MainWindow::MainWindow(QWidget* parent)
     m_ui->joysticks->setOmni(true);
     m_ui->rotation_joystick->setOmni(false);
 
-    // ===== Install Event Filter for Camera Label =====
-    m_ui->cam_label->installEventFilter(this);
+    // ===== Install Event Filters =====
+    QList<QWidget*> widgetsToMonitor = {m_ui->cam_label,
+                                        m_ui->joysticks,
+                                        m_ui->rotation_joystick,
+                                        m_ui->rotation_slider_joystick,
+                                        m_ui->speed_slider_wheels,
+                                        m_ui->wheels,
+                                        m_ui->wheels_2,
+                                        m_ui->anticlockwise_fast_button,
+                                        m_ui->anticlockwise_slow_button,
+                                        m_ui->fast_button,
+                                        m_ui->slow_button,
+                                        m_ui->stop_button,
+                                        m_ui->clockwise_fast_button,
+                                        m_ui->clockwise_slow_button,
+                                        m_ui->reset_rotation_button,
+                                        m_ui->rotation_slider,
+                                        m_ui->reset_rotation_button_2,
+                                        m_ui->speed_slider};
+
+    for (QWidget* w : widgetsToMonitor) {
+        w->installEventFilter(this);
+    }
 
     // ===== Initialize logging files =====
     initLogging();
@@ -226,6 +230,35 @@ MainWindow::~MainWindow() {
  * @return True if the event was handled, false otherwise.
  */
 bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
+
+    // Save current GUI interaction for logging reasons
+    if (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::TouchBegin ||
+        event->type() == QEvent::TouchUpdate || event->type() == QEvent::TouchEnd) {
+        QWidget* widget = qobject_cast<QWidget*>(obj);
+        if (widget) {
+            QString name = widget->objectName();
+            if (name.isEmpty())
+                name = widget->metaObject()->className();
+
+            QPointF pos;
+
+            if (event->type() == QEvent::MouseButtonPress) {
+                QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+                pos = mouseEvent->pos();
+            } else if (event->type() == QEvent::TouchBegin ||
+                       event->type() == QEvent::TouchUpdate || event->type() == QEvent::TouchEnd) {
+                QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
+                if (!touchEvent->touchPoints().isEmpty()) {
+                    pos = touchEvent->touchPoints().first().pos();
+                }
+            }
+
+            // In den Zwischenspeicher eintragen
+            QMutexLocker locker(&m_interactionMutex);
+            m_recentInteractions.append({name, pos});
+        }
+    }
+
     // Handle mouse button press event
     if (event->type() == QEvent::MouseButtonPress) {
         QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
@@ -797,10 +830,11 @@ void MainWindow::initLogging() {
     m_laser_logFile.setFileName("laser_log.csv");
     if (m_laser_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         m_laser_logStream.setDevice(&m_laser_logFile);
-        m_laser_logStream << "Timestamp,MinDistance [m],Timer [min:s.100ms],linear velocity (x) "
-                             "[m/s],linear velocity "
-                             "(y) [m/s],angular velocity (z) [m/s],Robot amcl-position (x) "
-                             "[m],Robot amcl-position (y) [m],Robot amcl-theta (x) [rad]\n";
+        m_laser_logStream << "Timestamp,MinDistance [m],Timer [min:s.100ms],linear velocity (x)"
+                             "[m/s],linear velocity"
+                             "(y) [m/s],angular velocity (z) [m/s],Robot amcl-position (x)"
+                             "[m],Robot amcl-position (y) [m],Robot amcl-theta (x) "
+                             "[rad],Interaction names,Interaction positions [pixels]\n";
     } else {
         qWarning() << "Cannot open logfile!";
     }
@@ -986,5 +1020,43 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg) {
         }
     } catch (cv_bridge::Exception& e) {
         RCLCPP_ERROR(m_robot_node->get_logger(), "cv_bridge exception: %s", e.what());
+    }
+}
+
+void MainWindow::logEvent() {
+    float min = m_ui->obstacle_map_widget->getMinLaserDistance();
+    QString timer_text = m_ui->timer_label->text();
+    QString only_time_text = timer_text.mid(7);
+    geometry_msgs::msg::Twist vel = m_robot_node->getLastCmdVel();
+    ObstacleMapWidget::Pose2D robot_pos = m_ui->obstacle_map_widget->getRobotPositionMeters();
+
+    m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(min, 'f', 2) +
+                                        " m");
+
+    // Information about current interactions
+    QString interactionNames;
+    QString interactionPositions;
+
+    {
+        QMutexLocker locker(&m_interactionMutex);
+        for (const auto& inter : m_recentInteractions) {
+
+            interactionNames += inter.widgetName + "|";
+
+            interactionPositions += QString("(%1,%2)|")
+                                        .arg(inter.position.x(), 0, 'f', 0)
+                                        .arg(inter.position.y(), 0, 'f', 0);
+        }
+        m_recentInteractions.clear();
+    }
+
+    // Write in logfile
+    if (m_laser_logFile.isOpen()) {
+        m_laser_logStream << QDateTime::currentDateTime().toString(Qt::ISODate) << "," << min << ","
+                          << only_time_text << "," << vel.linear.x << "," << vel.linear.y << ","
+                          << vel.angular.z << "," << robot_pos.x << "," << robot_pos.y << ","
+                          << robot_pos.theta << "," << interactionNames << ","
+                          << interactionPositions << "\n";
+        m_laser_logStream.flush();
     }
 }
