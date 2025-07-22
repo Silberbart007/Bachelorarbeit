@@ -827,7 +827,9 @@ void MainWindow::on_follow_checkBox_stateChanged(int state) {
  * @brief Initialize logging files
  */
 void MainWindow::initLogging() {
-    m_laser_logFile.setFileName("laser_log.csv");
+    QString timestamp = QDateTime::currentDateTime().toString(Qt::ISODate);
+    QString filename = QString("custom_log/log_%1.csv").arg(timestamp);
+    m_laser_logFile.setFileName(filename);
     if (m_laser_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         m_laser_logStream.setDevice(&m_laser_logFile);
         m_laser_logStream << "Timestamp,MinDistance [m],Timer [min:s.100ms],linear velocity (x)"
