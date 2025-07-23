@@ -6,6 +6,23 @@ from datetime import datetime
 from collections import Counter
 import matplotlib.image as mpimg
 
+def parse_timer(timer_str):
+    # Entfernt das "Timer: " Prefix und wandelt dann um
+    try:
+        timer_clean = timer_str.replace("Timer: ", "")
+        mm, ss_xx = timer_clean.split(":")
+        ss, xx = ss_xx.split(".")
+        total_seconds = int(mm) * 60 + int(ss) + int(xx) / 100
+        # Filter: Werte über 1 Stunde (3600 Sekunden) ignorieren
+        if total_seconds > 3600:
+            print(f"Warnung: Unplausibler Timerwert {timer_str} (>{total_seconds}s), setze auf 0")
+            return 0.0
+        return total_seconds
+    except Exception as e:
+        print(f"Fehler beim Parsen von Timer '{timer_str}': {e}")
+        return None
+
+
 # Kommandozeilenargument: Pfad zur CSV-Datei
 if len(sys.argv) < 2:
     print("Fehler: Bitte gib den Dateinamen als Argument an.\nBeispiel: python plot.py log_2025-07-22T11:20:15.csv")
@@ -27,6 +44,7 @@ pos_x = []
 pos_y = []
 interaction_names_raw = []
 interaction_positions_raw = []
+timer_seconds = []
 
 with open(csv_filename, "r") as file:
     reader = csv.DictReader(file)
@@ -41,8 +59,51 @@ with open(csv_filename, "r") as file:
             pos_y.append(float(row["Robot amcl-position (y) [m]"]))
             interaction_names_raw.append(row.get("Interaction names", ""))
             interaction_positions_raw.append(row.get("Interaction positions [pixels]", ""))
+            timer_sec = parse_timer(row["Timer [min:s.100ms]"])
+            if timer_sec is not None:
+                timer_seconds.append(timer_sec)
         except Exception as e:
             print(f"Fehler in Zeile: {e}")
+
+# aktive Zeitbereiche erkennen: sobald sich der Timer merklich verändert
+active_periods = []
+start_idx = 0
+
+for i in range(1, len(timer_seconds)):
+    # Wenn Timer nicht (mehr) ansteigt, endet die Phase
+    if timer_seconds[i] <= timer_seconds[i - 1]:
+        # Phase beenden
+        if start_idx < i - 1:  # Phase mit mind. 2 Messpunkten
+            active_periods.append((start_idx, i - 1))
+        start_idx = i  # Neue Phase starten
+
+# Letzte Phase am Ende des Arrays hinzufügen, wenn gültig
+if start_idx < len(timer_seconds) - 1:
+    active_periods.append((start_idx, len(timer_seconds) - 1))
+
+
+merged_periods = []
+if active_periods:
+    current_start, current_end = active_periods[0]
+
+    for start, end in active_periods[1:]:
+        if start - current_end <= 5:  # Lücke maximal 5 Indizes
+            current_end = end
+        else:
+            merged_periods.append((current_start, current_end))
+            current_start, current_end = start, end
+    merged_periods.append((current_start, current_end))
+else:
+    merged_periods = []
+
+min_duration = 1.0  # Sekunde
+filtered_periods = []
+
+for start_i, end_i in merged_periods:
+    duration = timer_seconds[end_i] - timer_seconds[start_i]
+    if duration >= min_duration:
+        filtered_periods.append((start_i, end_i))
+
 
 # Plot 1: Minimale Distanz über Zeit
 plt.figure(figsize=(10, 4))
@@ -54,6 +115,55 @@ plt.grid(True)
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, "min_distance_over_time.png"))
 plt.close()
+
+# Plot 1.5: Minimale Distanz über Zeit mit Timer
+label_spacing = 4.0  # Sekundenschritte für Zwischenlabels
+max_dist = max(min_distances)  # y-Max für Textpositionierung
+
+def find_closest_index(timer_seconds, start_i, end_i, target):
+    subset = timer_seconds[start_i:end_i+1]
+    closest_idx_rel = min(range(len(subset)), key=lambda i: abs(subset[i] - target))
+    return start_i + closest_idx_rel
+
+plt.figure(figsize=(20, 8))
+plt.plot(timestamps, min_distances, label="Minimale Distanz [m]")
+
+for start_i, end_i in filtered_periods:
+    # Gelber Hintergrundbereich
+    plt.axvspan(timestamps[start_i], timestamps[end_i], color='yellow', alpha=0.3)
+
+    # Vertikale Linien für Start und Ende
+    plt.axvline(timestamps[start_i], color='orange', linestyle='--', alpha=0.7)
+    plt.axvline(timestamps[end_i], color='orange', linestyle='--', alpha=0.7)
+
+    # Start- und End-Label
+    plt.text(timestamps[start_i], max_dist * 0.95,
+             f"{timer_seconds[start_i]:.1f}s", ha='left', va='top',
+             fontsize=8, color='black')
+    plt.text(timestamps[end_i], max_dist * 0.95,
+             f"{timer_seconds[end_i]:.1f}s", ha='right', va='top',
+             fontsize=8, color='black')
+
+    # Zwischenlabels und Linien alle ~2 Sekunden
+    t = timer_seconds[start_i] + label_spacing
+    while t < timer_seconds[end_i]:
+        mid_i = find_closest_index(timer_seconds, start_i, end_i, t)
+        plt.axvline(timestamps[mid_i], color='orange', linestyle=':', alpha=0.5)
+        plt.text(timestamps[mid_i], max_dist * 0.9,
+                 f"{timer_seconds[mid_i]:.1f}s", ha='center', va='top',
+                 fontsize=7, color='black')
+        t += label_spacing
+
+
+plt.xlabel("Zeit")
+plt.ylabel("Distanz [m]")
+plt.title("Minimale Hindernisdistanz mit aktiven Timerphasen")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig(os.path.join(plot_dir, "min_distance_over_time_with_timer.png"))
+plt.close()
+
 
 # Plot 2: Lineare Geschwindigkeiten über Zeit
 plt.figure(figsize=(10, 4))
