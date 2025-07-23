@@ -241,21 +241,24 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
                 name = widget->metaObject()->className();
 
             QPointF pos;
+            QPointF globalPos;
 
             if (event->type() == QEvent::MouseButtonPress) {
                 QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
                 pos = mouseEvent->pos();
+                globalPos = widget->mapTo(widget->window(), pos.toPoint());
             } else if (event->type() == QEvent::TouchBegin ||
                        event->type() == QEvent::TouchUpdate || event->type() == QEvent::TouchEnd) {
                 QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
                 if (!touchEvent->touchPoints().isEmpty()) {
                     pos = touchEvent->touchPoints().first().pos();
+                    globalPos = widget->mapTo(widget->window(), pos.toPoint());
                 }
             }
 
             // In den Zwischenspeicher eintragen
             QMutexLocker locker(&m_interactionMutex);
-            m_recentInteractions.append({name, pos});
+            m_recentInteractions.append({name, globalPos});
         }
     }
 
@@ -1045,7 +1048,7 @@ void MainWindow::logEvent() {
 
             interactionNames += inter.widgetName + "|";
 
-            interactionPositions += QString("(%1,%2)|")
+            interactionPositions += QString("(%1/%2)|")
                                         .arg(inter.position.x(), 0, 'f', 0)
                                         .arg(inter.position.y(), 0, 'f', 0);
         }
