@@ -165,6 +165,10 @@ class ObstacleMapWidget : public QWidget {
         return {m_robot_x_meters, m_robot_y_meters, m_robot_theta_rad};
     }
 
+    QGraphicsView* view() const {
+        return m_view;
+    }
+
     // ====== Other public methods ======
 
     /**

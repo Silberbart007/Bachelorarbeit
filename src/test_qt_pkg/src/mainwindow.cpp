@@ -187,11 +187,33 @@ MainWindow::MainWindow(QWidget* parent)
                                         m_ui->reset_rotation_button,
                                         m_ui->rotation_slider,
                                         m_ui->reset_rotation_button_2,
-                                        m_ui->speed_slider};
+                                        m_ui->speed_slider,
+                                        m_ui->AllOptionsLayout,
+                                        m_ui->modes_button,
+                                        m_ui->stop_full_button_2,
+                                        m_ui->start_timer_button,
+                                        m_ui->stop_timer_button,
+                                        m_ui->beam_color_button,
+                                        m_ui->curve_gain_slider,
+                                        m_ui->ghost_color_button,
+                                        m_ui->ghost_duration_slider,
+                                        m_ui->laser_number_slider,
+                                        m_ui->follow_checkBox,
+                                        m_ui->trail_color_button,
+                                        m_ui->trail_lifetime_slider,
+                                        m_ui->cam_label};
 
     for (QWidget* w : widgetsToMonitor) {
         w->installEventFilter(this);
     }
+
+    m_ui->obstacle_map_widget->view()->viewport()->setObjectName("obstacle_map");
+    m_ui->obstacle_map_list->viewport()->setObjectName("obstacle_map_list");
+    m_ui->cam_list->viewport()->setObjectName("cam_list");
+
+    m_ui->obstacle_map_widget->view()->viewport()->installEventFilter(this);
+    m_ui->obstacle_map_list->viewport()->installEventFilter(this);
+    m_ui->cam_list->viewport()->installEventFilter(this);
 
     // ===== Initialize logging files =====
     initLogging();
