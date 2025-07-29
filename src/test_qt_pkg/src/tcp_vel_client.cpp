@@ -1,18 +1,15 @@
-#include <rclcpp/rclcpp.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#include <sys/socket.h>
 #include <arpa/inet.h>
-#include <unistd.h>
 #include <cstring>
 #include <mutex>
+#include <sys/socket.h>
+#include <unistd.h>
 
-class TcpVelClientNode : public rclcpp::Node
-{
-public:
-    TcpVelClientNode()
-    : Node("tcp_vel_client"), socket_fd_(-1)
-    {
+class TcpVelClientNode : public rclcpp::Node {
+  public:
+    TcpVelClientNode() : Node("tcp_vel_client"), socket_fd_(-1) {
         // Parameter: IP und Port des Roboters (Server)
         this->declare_parameter<std::string>("robot_ip", "172.26.1.1");
         this->declare_parameter<int>("robot_port", 2077);
@@ -33,9 +30,8 @@ public:
         }
     }
 
-private:
-    void connect_to_robot()
-    {
+  private:
+    void connect_to_robot() {
         if (socket_fd_ != -1) {
             close(socket_fd_);
         }
@@ -56,7 +52,8 @@ private:
             return;
         }
 
-        RCLCPP_INFO(this->get_logger(), "Connecting to robot at %s:%d ...", robot_ip_.c_str(), robot_port_);
+        RCLCPP_INFO(this->get_logger(), "Connecting to robot at %s:%d ...", robot_ip_.c_str(),
+                    robot_port_);
         if (connect(socket_fd_, (sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
             RCLCPP_ERROR(this->get_logger(), "Connection failed");
             close(socket_fd_);
@@ -66,12 +63,12 @@ private:
         RCLCPP_INFO(this->get_logger(), "Connected to robot");
     }
 
-    void cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
-    {
+    void cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg) {
         std::lock_guard<std::mutex> lock(send_mutex_);
 
         if (socket_fd_ == -1) {
-            RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000, "Not connected to robot, trying to reconnect...");
+            RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 5000,
+                                 "Not connected to robot, trying to reconnect...");
             connect_to_robot();
             if (socket_fd_ == -1) {
                 return; // Noch keine Verbindung
@@ -79,10 +76,9 @@ private:
         }
 
         // Serialisiere linear.x und angular.z als Text (z.B. "0.5 0.1\n")
-        char buffer[64];
-        int len = snprintf(buffer, sizeof(buffer), "%f %f\n", msg->linear.x, msg->angular.z);
-
-        ssize_t sent = send(socket_fd_, buffer, len, 0);
+        float data[3] = {msg->linear.x, msg->linear.y, msg->angular.z};
+        
+        send(socket_fd_, (char*)data, sizeof(data), 0);
         if (sent == -1) {
             RCLCPP_ERROR(this->get_logger(), "Send failed, closing socket");
             close(socket_fd_);
@@ -99,8 +95,7 @@ private:
     std::mutex send_mutex_;
 };
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
     auto node = std::make_shared<TcpVelClientNode>();
     rclcpp::spin(node);

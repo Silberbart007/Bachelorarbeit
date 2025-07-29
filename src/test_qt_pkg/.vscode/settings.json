@@ -69,6 +69,11 @@
         "typeindex": "cpp",
         "typeinfo": "cpp",
         "variant": "cpp",
-        "source_location": "cpp"
+        "source_location": "cpp",
+        "any": "cpp",
+        "codecvt": "cpp",
+        "ranges": "cpp",
+        "shared_mutex": "cpp",
+        "valarray": "cpp"
     }
 }
