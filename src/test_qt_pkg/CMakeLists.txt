@@ -47,6 +47,8 @@ set(SOURCES
   src/stop_button.cpp
   src/robot_node.cpp
   src/control_widget_wrapper.cpp
+  src/tcp_vel_client.cpp
+  src/tcp_robot_listener.cpp
 )
 
 set(HEADERS
@@ -123,6 +125,26 @@ ament_target_dependencies(camera_node
   OpenCV
 )
 
+# Robot TCP listener Node
+add_executable(tcp_robot_listener_node src/tcp_robot_listener.cpp)
+ament_target_dependencies(tcp_robot_listener_node
+  rclcpp
+  std_msgs
+  sensor_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+  tf2_geometry_msgs
+)
+
+# Tcp vel client Node
+add_executable(tcp_vel_client_node src/tcp_vel_client.cpp)
+ament_target_dependencies(tcp_vel_client_node
+  rclcpp
+  std_msgs
+  sensor_msgs
+)
+
 # Header files für die executables
 target_include_directories(gui_main PUBLIC include/test_qt_pkg ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(camera_node PUBLIC include/test_qt_pkg)
@@ -131,6 +153,8 @@ target_include_directories(camera_node PUBLIC include/test_qt_pkg)
 install(TARGETS
   gui_main
   camera_node
+  tcp_robot_listener_node
+  tcp_vel_client_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

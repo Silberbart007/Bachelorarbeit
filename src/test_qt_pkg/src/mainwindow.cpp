@@ -83,6 +83,7 @@ MainWindow::MainWindow(QWidget* parent)
     syncTimer->start(50); // every 50 ms
 
     // ===== Setup Label timers =====
+    m_timer_elapsedTenthsSecond = 0;
     QTimer* laserUpdateTimer = new QTimer(this);
     connect(laserUpdateTimer, &QTimer::timeout, this, [this]() { logEvent(); });
     laserUpdateTimer->start(100);

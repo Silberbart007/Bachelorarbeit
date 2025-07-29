@@ -117,7 +117,7 @@ plt.savefig(os.path.join(plot_dir, "min_distance_over_time.png"))
 plt.close()
 
 # Plot 1.5: Minimale Distanz über Zeit mit Timer
-label_spacing = 4.0  # Sekundenschritte für Zwischenlabels
+label_spacing = 100.0  # Sekundenschritte für Zwischenlabels
 max_dist = max(min_distances)  # y-Max für Textpositionierung
 
 def find_closest_index(timer_seconds, start_i, end_i, target):
@@ -144,15 +144,15 @@ for start_i, end_i in filtered_periods:
              f"{timer_seconds[end_i]:.1f}s", ha='right', va='top',
              fontsize=8, color='black')
 
-    # Zwischenlabels und Linien alle ~2 Sekunden
-    t = timer_seconds[start_i] + label_spacing
-    while t < timer_seconds[end_i]:
-        mid_i = find_closest_index(timer_seconds, start_i, end_i, t)
-        plt.axvline(timestamps[mid_i], color='orange', linestyle=':', alpha=0.5)
-        plt.text(timestamps[mid_i], max_dist * 0.9,
-                 f"{timer_seconds[mid_i]:.1f}s", ha='center', va='top',
-                 fontsize=7, color='black')
-        t += label_spacing
+    # # Zwischenlabels und Linien alle ~2 Sekunden
+    # t = timer_seconds[start_i] + label_spacing
+    # while t < timer_seconds[end_i]:
+    #     mid_i = find_closest_index(timer_seconds, start_i, end_i, t)
+    #     plt.axvline(timestamps[mid_i], color='orange', linestyle=':', alpha=0.5)
+    #     plt.text(timestamps[mid_i], max_dist * 0.9,
+    #              f"{timer_seconds[mid_i]:.1f}s", ha='center', va='top',
+    #              fontsize=7, color='black')
+    #     t += label_spacing
 
 
 plt.xlabel("Zeit")
@@ -304,6 +304,18 @@ plt.title("Interaktionen pro Widget")
 plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, "widget_interactions.png"))
+plt.close()
+
+# Kreisdiagramm
+top_n = 5
+widget_names = widget_names[:top_n]
+widget_counts = widget_counts[:top_n]
+plt.figure(figsize=(8, 8))
+plt.pie(widget_counts, labels=widget_names, autopct='%1.1f%%', startangle=140)
+plt.title("Interaktionen pro Widget")
+plt.axis('equal')  # Kreis statt Ellipse
+plt.tight_layout()
+plt.savefig(os.path.join(plot_dir, "widget_interactions_pie.png"))
 plt.close()
 
 print(f"Alle Plots wurden erstellt und im Ordner '{plot_dir}/' gespeichert.")
