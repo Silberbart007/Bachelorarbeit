@@ -76,15 +76,15 @@ class TcpVelClientNode : public rclcpp::Node {
         }
 
         // Serialisiere linear.x und angular.z als Text (z.B. "0.5 0.1\n")
-        float data[3] = {msg->linear.x, msg->linear.y, msg->angular.z};
-        
-        send(socket_fd_, (char*)data, sizeof(data), 0);
+        double data[3] = {msg->linear.x, msg->linear.y, msg->angular.z};
+
+        ssize_t sent = send(socket_fd_, (char*)data, sizeof(data), 0);
         if (sent == -1) {
             RCLCPP_ERROR(this->get_logger(), "Send failed, closing socket");
             close(socket_fd_);
             socket_fd_ = -1;
         } else {
-            RCLCPP_DEBUG(this->get_logger(), "Sent velocity: %s", buffer);
+            RCLCPP_DEBUG(this->get_logger(), "Sent velocity:");
         }
     }
 
