@@ -7,12 +7,14 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "bridge_protocol.h"
+
 class TcpVelClientNode : public rclcpp::Node {
   public:
     TcpVelClientNode() : Node("tcp_vel_client"), socket_fd_(-1) {
         // Parameter: IP und Port des Roboters (Server)
         this->declare_parameter<std::string>("robot_ip", "172.26.1.1");
-        this->declare_parameter<int>("robot_port", 2077);
+        this->declare_parameter<int>("robot_port", 2205);
         this->get_parameter("robot_ip", robot_ip_);
         this->get_parameter("robot_port", robot_port_);
 
@@ -75,16 +77,19 @@ class TcpVelClientNode : public rclcpp::Node {
             }
         }
 
-        // Serialisiere linear.x und angular.z als Text (z.B. "0.5 0.1\n")
-        double data[3] = {msg->linear.x, msg->linear.y, msg->angular.z};
+        VelocityData data;
+        data.linear_x = msg->linear.x;
+        data.linear_y = msg->linear.y;
+        data.angular_z = msg->angular.z;
 
-        ssize_t sent = send(socket_fd_, (char*)data, sizeof(data), 0);
+        ssize_t sent = send(socket_fd_, (char*)&data, sizeof(data), 0);
         if (sent == -1) {
             RCLCPP_ERROR(this->get_logger(), "Send failed, closing socket");
             close(socket_fd_);
             socket_fd_ = -1;
         } else {
-            RCLCPP_DEBUG(this->get_logger(), "Sent velocity:");
+            RCLCPP_DEBUG(this->get_logger(), "Sent velocity: %.2f, %.2f, %.2f", data.linear_x,
+                         data.linear_y, data.angular_z);
         }
     }
 

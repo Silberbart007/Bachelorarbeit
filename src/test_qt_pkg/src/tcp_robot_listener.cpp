@@ -1,165 +1,123 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
+#include <tf2_msgs/msg/tf_message.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
-#include <tf2_ros/transform_broadcaster.h>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <thread>
 #include <cstring>
+#include <thread>
 
-class TcpRobotListener : public rclcpp::Node {
+#include "bridge_protocol.h"  // enthält CombinedData, LaserScanData, TFData
+
+class TcpRobotListenerNode : public rclcpp::Node {
 public:
-    TcpRobotListener()
-    : Node("tcp_robot_listener"), socket_fd_(-1)
+    TcpRobotListenerNode()
+        : Node("tcp_robot_listener")
     {
-        this->declare_parameter<std::string>("robot_ip", "172.26.1.1");
-        this->declare_parameter<int>("robot_port", 2077);
-        this->get_parameter("robot_ip", robot_ip_);
-        this->get_parameter("robot_port", robot_port_);
+        laser_pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("/scan", 10);
+        tf_pub_ = this->create_publisher<tf2_msgs::msg::TFMessage>("/tf", 10);
 
-        laser_pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("/base_scan", 10);
-        tf_broadcaster_ = std::make_shared<tf2_ros::TransformBroadcaster>(this);
-
-        connect_to_robot();
-        recv_thread_ = std::thread(&TcpRobotListener::recv_loop, this);
-    }
-
-    ~TcpRobotListener() {
-        running_ = false;
-        if (recv_thread_.joinable()) recv_thread_.join();
-        if (socket_fd_ != -1) close(socket_fd_);
-    }
-
-private:
-    void connect_to_robot() {
-        socket_fd_ = socket(AF_INET, SOCK_STREAM, 0);
+        socket_fd_ = connect_to_server("172.26.1.1", 2077);
         if (socket_fd_ < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Socket creation failed");
+            RCLCPP_ERROR(this->get_logger(), "Verbindung zum Server fehlgeschlagen");
+            rclcpp::shutdown();
             return;
         }
 
-        sockaddr_in server_addr{};
-        server_addr.sin_family = AF_INET;
-        server_addr.sin_port = htons(robot_port_);
-        inet_pton(AF_INET, robot_ip_.c_str(), &server_addr.sin_addr);
-
-        if (connect(socket_fd_, (sockaddr*)&server_addr, sizeof(server_addr)) < 0) {
-            RCLCPP_ERROR(this->get_logger(), "Connection to robot failed");
-            close(socket_fd_);
-            socket_fd_ = -1;
-        } else {
-            RCLCPP_INFO(this->get_logger(), "Connected to robot at %s:%d", robot_ip_.c_str(), robot_port_);
-        }
+        recv_thread_ = std::thread(&TcpRobotListenerNode::receive_loop, this);
+        recv_thread_.detach();
     }
 
-    void recv_loop() {
-        running_ = true;
-        while (running_ && socket_fd_ != -1) {
-            // Header: 1 byte type + 4 byte length
-            uint8_t msg_type;
-            uint32_t payload_size = 0;
+    ~TcpRobotListenerNode() {
+        if (socket_fd_ >= 0) close(socket_fd_);
+    }
 
-            if (!recv_all((char*)&msg_type, 1)) break;
-            if (!recv_all((char*)&payload_size, 4)) break;
+private:
+    int socket_fd_;
+    std::thread recv_thread_;
+    rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_pub_;
+    rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr tf_pub_;
 
-            std::vector<char> payload(payload_size);
-            if (!recv_all(payload.data(), payload_size)) break;
+    int connect_to_server(const std::string& ip, int port) {
+        int sock = socket(AF_INET, SOCK_STREAM, 0);
+        if (sock < 0) return -1;
 
-            if (msg_type == 0x01) {
-                handle_tf(payload);
-            } else if (msg_type == 0x02) {
-                handle_laserscan(payload);
-            } else {
-                RCLCPP_WARN(this->get_logger(), "Unknown message type: %d", msg_type);
+        sockaddr_in addr{};
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(port);
+        inet_pton(AF_INET, ip.c_str(), &addr.sin_addr);
+
+        if (connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+            return -1;
+
+        RCLCPP_INFO(this->get_logger(), "Verbindung hergestellt zu %s:%d", ip.c_str(), port);
+        return sock;
+    }
+
+    void receive_loop() {
+        while (rclcpp::ok()) {
+            CombinedData data;
+            if (!recv_all((char*)&data, sizeof(data))) {
+                RCLCPP_WARN(this->get_logger(), "Fehler beim Empfang von CombinedData");
+                break;
             }
+
+            publish_laser(data.laser_data);
+            publish_tf(data.tf_data);
         }
-
-        RCLCPP_WARN(this->get_logger(), "Disconnected from robot");
     }
 
-    void handle_tf(const std::vector<char>& data) {
-        const char* ptr = data.data();
-
-        float tx = *(float*)(ptr); ptr += 4;
-        float ty = *(float*)(ptr); ptr += 4;
-        float tz = *(float*)(ptr); ptr += 4;
-
-        float qx = *(float*)(ptr); ptr += 4;
-        float qy = *(float*)(ptr); ptr += 4;
-        float qz = *(float*)(ptr); ptr += 4;
-        float qw = *(float*)(ptr); ptr += 4;
-
-        std::string frame_id(ptr, 32); ptr += 32;
-        std::string child_frame_id(ptr, 32); ptr += 32;
-
-        geometry_msgs::msg::TransformStamped tf;
-        tf.header.stamp = this->now();
-        tf.header.frame_id = frame_id.c_str();
-        tf.child_frame_id = child_frame_id.c_str();
-
-        tf.transform.translation.x = tx;
-        tf.transform.translation.y = ty;
-        tf.transform.translation.z = tz;
-        tf.transform.rotation.x = qx;
-        tf.transform.rotation.y = qy;
-        tf.transform.rotation.z = qz;
-        tf.transform.rotation.w = qw;
-
-        tf_broadcaster_->sendTransform(tf);
-    }
-
-    void handle_laserscan(const std::vector<char>& data) {
-        const char* ptr = data.data();
-
-        float angle_min = *(float*)(ptr); ptr += 4;
-        float angle_increment = *(float*)(ptr); ptr += 4;
-        float range_min = *(float*)(ptr); ptr += 4;
-        float range_max = *(float*)(ptr); ptr += 4;
-
-        uint32_t count = *(uint32_t*)(ptr); ptr += 4;
-
-        std::vector<float> ranges(count);
-        std::memcpy(ranges.data(), ptr, count * sizeof(float));
-
-        sensor_msgs::msg::LaserScan msg;
-        msg.header.stamp = this->now();
-        msg.header.frame_id = "laser";
-        msg.angle_min = angle_min;
-        msg.angle_increment = angle_increment;
-        msg.angle_max = angle_min + angle_increment * count;
-        msg.range_min = range_min;
-        msg.range_max = range_max;
-        msg.ranges = ranges;
-
-        laser_pub_->publish(msg);
-    }
-
-    // returns false if connection broke
     bool recv_all(char* buffer, size_t size) {
-        size_t total = 0;
-        while (total < size) {
-            ssize_t n = recv(socket_fd_, buffer + total, size - total, MSG_WAITALL);
+        size_t received = 0;
+        while (received < size) {
+            ssize_t n = recv(socket_fd_, buffer + received, size - received, 0);
             if (n <= 0) return false;
-            total += n;
+            received += n;
         }
         return true;
     }
 
-    std::string robot_ip_;
-    int robot_port_;
-    int socket_fd_;
-    std::atomic<bool> running_;
+    void publish_laser(const LaserScanData& d) {
+        auto msg = sensor_msgs::msg::LaserScan();
+        msg.header.stamp = rclcpp::Time(d.stamp * 1e9);
+        msg.header.frame_id = std::string(d.frame_id);
+        msg.angle_min = d.angle_min;
+        msg.angle_max = d.angle_max;
+        msg.angle_increment = d.angle_increment;
+        msg.time_increment = d.time_increment;
+        msg.scan_time = d.scan_time;
+        msg.range_min = d.range_min;
+        msg.range_max = d.range_max;
+        msg.ranges.assign(d.ranges, d.ranges + 541);
+        msg.intensities.assign(d.intensities, d.intensities + 541);
 
-    std::thread recv_thread_;
-    rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_pub_;
-    std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+        laser_pub_->publish(msg);
+    }
+
+    void publish_tf(const TFData& d) {
+        geometry_msgs::msg::TransformStamped tf;
+        tf.header.stamp = rclcpp::Time(d.stamp * 1e9);
+        tf.header.frame_id = std::string(d.frame_id);
+        tf.child_frame_id = std::string(d.child_frame_id);
+        tf.transform.translation.x = d.trans[0];
+        tf.transform.translation.y = d.trans[1];
+        tf.transform.translation.z = d.trans[2];
+        tf.transform.rotation.x = d.rot[0];
+        tf.transform.rotation.y = d.rot[1];
+        tf.transform.rotation.z = d.rot[2];
+        tf.transform.rotation.w = d.rot[3];
+
+        tf2_msgs::msg::TFMessage tf_msg;
+        tf_msg.transforms.push_back(tf);
+        tf_pub_->publish(tf_msg);
+    }
 };
 
 int main(int argc, char* argv[]) {
     rclcpp::init(argc, argv);
-    auto node = std::make_shared<TcpRobotListener>();
+    auto node = std::make_shared<TcpRobotListenerNode>();
     rclcpp::spin(node);
     rclcpp::shutdown();
     return 0;

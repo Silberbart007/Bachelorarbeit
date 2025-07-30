@@ -250,7 +250,7 @@ plt.xlabel("Zeit")
 plt.ylabel("Anzahl Interaktionen")
 plt.title("Anzahl der Interaktionen über Zeit")
 plt.grid(True)
-plt.tight_layout()
+# plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, "interactions_over_time.png"))
 plt.close()
 

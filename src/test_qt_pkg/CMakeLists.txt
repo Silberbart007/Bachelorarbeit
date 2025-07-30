@@ -66,6 +66,7 @@ set(HEADERS
   include/test_qt_pkg/scan_zone.h
   include/test_qt_pkg/stop_button.h
   include/test_qt_pkg/control_widget_wrapper.h
+  include/test_qt_pkg/bridge_protocol.h
 )
 
 set(UIS
@@ -148,6 +149,8 @@ ament_target_dependencies(tcp_vel_client_node
 # Header files für die executables
 target_include_directories(gui_main PUBLIC include/test_qt_pkg ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(camera_node PUBLIC include/test_qt_pkg)
+target_include_directories(tcp_robot_listener_node PUBLIC include/test_qt_pkg)
+target_include_directories(tcp_vel_client_node PUBLIC include/test_qt_pkg)
 
 # Installation
 install(TARGETS
