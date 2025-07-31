@@ -25,9 +25,24 @@ struct TFData {
     float rot[4];
 };
 
+struct OdomData {
+    double stamp;
+    char frame_id[64];
+    char child_frame_id[64];
+    double pose_position[3];
+    double pose_orientation[4];
+    double pose_cov[36];
+    double twist_linear[3];
+    double twist_angular[3];
+    double twist_cov[36];
+};
+
 struct CombinedData {
     LaserScanData laser_data;
-    TFData tf_data;
+    TFData tf_data_odom;
+    TFData tf_data_base_foot;
+    TFData tf_data_base_link;
+    OdomData odom_data;
 };
 
 struct VelocityData {

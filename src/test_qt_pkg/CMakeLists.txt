@@ -136,6 +136,7 @@ ament_target_dependencies(tcp_robot_listener_node
   tf2
   tf2_ros
   tf2_geometry_msgs
+  nav_msgs
 )
 
 # Tcp vel client Node

@@ -13,7 +13,7 @@ class TcpVelClientNode : public rclcpp::Node {
   public:
     TcpVelClientNode() : Node("tcp_vel_client"), socket_fd_(-1) {
         // Parameter: IP und Port des Roboters (Server)
-        this->declare_parameter<std::string>("robot_ip", "172.26.1.1");
+        this->declare_parameter<std::string>("robot_ip", "131.220.7.86");
         this->declare_parameter<int>("robot_port", 2205);
         this->get_parameter("robot_ip", robot_ip_);
         this->get_parameter("robot_port", robot_port_);

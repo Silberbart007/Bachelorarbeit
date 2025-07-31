@@ -1382,10 +1382,10 @@ QScrollBar::handle:horizontal {
              <number>1</number>
             </property>
             <property name="maximum">
-             <number>270</number>
+             <number>541</number>
             </property>
             <property name="value">
-             <number>270</number>
+             <number>541</number>
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>

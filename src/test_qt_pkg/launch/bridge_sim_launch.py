@@ -8,11 +8,11 @@ import os
 
 def generate_launch_description():
 
-    stage_launch_path = os.path.join(
-        FindPackageShare('stage_ros2').find('stage_ros2'),
-        'launch',
-        'custom_fun_map.launch.py'
-    )
+    # stage_launch_path = os.path.join(
+    #     FindPackageShare('stage_ros2').find('stage_ros2'),
+    #     'launch',
+    #     'custom_fun_map.launch.py'
+    # )
 
     # Pfad zur custom bringup-yaml (Wo auch Amcl, Mapserver etc. gestartet wird)
     custom_params_path = PathJoinSubstitution([
@@ -32,7 +32,7 @@ def generate_launch_description():
         FindPackageShare("test_qt_pkg"),
         "config",
         "custom_maps",
-        "custom_fun_map.yaml"
+        "IZ_f0.yaml"
     ])
 
     # Eigene Nodes
@@ -67,18 +67,18 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(bringup_launch_path),
             launch_arguments={
                 'map': map_yaml_file,
-                'use_sim_time': 'true',
+                'use_sim_time': 'false',
                 'autostart': 'true',
                 'params_file': custom_params_path
             }.items()
         ),
 
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(stage_launch_path),
-            launch_arguments={
-                'use_sim_time' : 'true'
-            }.items()
-        ),
+        # IncludeLaunchDescription(
+        #     PythonLaunchDescriptionSource(stage_launch_path),
+        #     launch_arguments={
+        #         'use_sim_time' : 'true'
+        #     }.items()
+        # ),
 
         # Eigene Nodes starten
         camera_node,
