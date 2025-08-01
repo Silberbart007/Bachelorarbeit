@@ -12,8 +12,9 @@
 #include <unistd.h>
 #include <vector>
 
-#include "bridge_protocol.h" // enthält CombinedData, LaserScanData, TFData
+#include "bridge_protocol.h"
 
+// Node for receiving data from ROS1/Robot and publishing to correct topics
 class TcpRobotListenerNode : public rclcpp::Node {
   public:
     TcpRobotListenerNode() : Node("tcp_robot_listener") {
@@ -61,6 +62,7 @@ class TcpRobotListenerNode : public rclcpp::Node {
         return sock;
     }
 
+    // Runs all the time to get latest data from TCP connection
     void receive_loop() {
         while (rclcpp::ok()) {
             CombinedData data;
@@ -78,6 +80,7 @@ class TcpRobotListenerNode : public rclcpp::Node {
         }
     }
 
+    // Receive data
     bool recv_all(char* buffer, size_t size) {
         size_t received = 0;
         while (received < size) {
@@ -95,7 +98,7 @@ class TcpRobotListenerNode : public rclcpp::Node {
         int32_t sec = static_cast<int32_t>(d.stamp);
         uint32_t nanosec = static_cast<uint32_t>((d.stamp - sec) * 1e9);
 
-        //msg.header.stamp = rclcpp::Time(sec, nanosec);
+        // msg.header.stamp = rclcpp::Time(sec, nanosec);
         msg.header.stamp = this->now();
         msg.header.frame_id = std::string(d.frame_id);
         msg.angle_min = d.angle_min;
@@ -115,24 +118,26 @@ class TcpRobotListenerNode : public rclcpp::Node {
         tf2_msgs::msg::TFMessage tf_msg;
 
         for (const auto& d : tf_datas) {
-            geometry_msgs::msg::TransformStamped tf;
+            if (std::strcmp(d.frame_id, "err_no_frame") != 0) {
+                geometry_msgs::msg::TransformStamped tf;
 
-            int32_t sec = static_cast<int32_t>(d.stamp);
-            uint32_t nanosec = static_cast<uint32_t>((d.stamp - sec) * 1e9);
+                int32_t sec = static_cast<int32_t>(d.stamp);
+                uint32_t nanosec = static_cast<uint32_t>((d.stamp - sec) * 1e9);
 
-            //tf.header.stamp = rclcpp::Time(sec, nanosec);
-            tf.header.stamp = this->now();
-            tf.header.frame_id = std::string(d.frame_id);
-            tf.child_frame_id = std::string(d.child_frame_id);
-            tf.transform.translation.x = d.trans[0];
-            tf.transform.translation.y = d.trans[1];
-            tf.transform.translation.z = d.trans[2];
-            tf.transform.rotation.x = d.rot[0];
-            tf.transform.rotation.y = d.rot[1];
-            tf.transform.rotation.z = d.rot[2];
-            tf.transform.rotation.w = d.rot[3];
+                // tf.header.stamp = rclcpp::Time(sec, nanosec);
+                tf.header.stamp = this->now();
+                tf.header.frame_id = std::string(d.frame_id);
+                tf.child_frame_id = std::string(d.child_frame_id);
+                tf.transform.translation.x = d.trans[0];
+                tf.transform.translation.y = d.trans[1];
+                tf.transform.translation.z = d.trans[2];
+                tf.transform.rotation.x = d.rot[0];
+                tf.transform.rotation.y = d.rot[1];
+                tf.transform.rotation.z = d.rot[2];
+                tf.transform.rotation.w = d.rot[3];
 
-            tf_msg.transforms.push_back(tf);
+                tf_msg.transforms.push_back(tf);
+            }
         }
 
         tf_pub_->publish(tf_msg);
@@ -145,7 +150,7 @@ class TcpRobotListenerNode : public rclcpp::Node {
         int32_t sec = static_cast<int32_t>(d.stamp);
         uint32_t nanosec = static_cast<uint32_t>((d.stamp - sec) * 1e9);
         msg.header.stamp = rclcpp::Time(sec, nanosec);
-        //msg.header.stamp = this->now();
+        // msg.header.stamp = this->now();
 
         msg.header.frame_id = std::string(d.frame_id);
         msg.child_frame_id = std::string(d.child_frame_id);

@@ -12,7 +12,7 @@
 class TcpVelClientNode : public rclcpp::Node {
   public:
     TcpVelClientNode() : Node("tcp_vel_client"), socket_fd_(-1) {
-        // Parameter: IP und Port des Roboters (Server)
+        // Parameter: IP and Port of Robot/ROS1-PC
         this->declare_parameter<std::string>("robot_ip", "131.220.7.86");
         this->declare_parameter<int>("robot_port", 2205);
         this->get_parameter("robot_ip", robot_ip_);
@@ -20,7 +20,7 @@ class TcpVelClientNode : public rclcpp::Node {
 
         connect_to_robot();
 
-        // Subscriber für /cmd_vel
+        // Subscriber
         cmd_vel_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
             "/cmd_vel", 10,
             std::bind(&TcpVelClientNode::cmdVelCallback, this, std::placeholders::_1));
@@ -73,7 +73,7 @@ class TcpVelClientNode : public rclcpp::Node {
                                  "Not connected to robot, trying to reconnect...");
             connect_to_robot();
             if (socket_fd_ == -1) {
-                return; // Noch keine Verbindung
+                return;
             }
         }
 
