@@ -37,12 +37,20 @@ struct OdomData {
     double twist_cov[36];
 };
 
+struct CameraData {
+  double stamp;
+  char frame_id[64];
+  char encoding[32];
+  uint8_t data[1024*30];
+};
+
 struct CombinedData {
     LaserScanData laser_data;
     TFData tf_data_odom;
     TFData tf_data_base_foot;
     TFData tf_data_base_link;
     OdomData odom_data;
+    CameraData camera_data;
 };
 
 struct VelocityData {

@@ -99,6 +99,24 @@ void ObstacleMapWidget::setNav2Node(std::shared_ptr<Nav2Client> nav2_node) {
 }
 
 /**
+ * @brief stops inertia movement
+ */
+void ObstacleMapWidget::stopInertia() {
+    // Stop robot velocity immediately
+    geometry_msgs::msg::Twist stop;
+    stop.linear.x = 0;
+    stop.linear.y = 0;
+    stop.angular.z = 0;
+    m_robot_node->publish_velocity({stop.linear.x, stop.linear.y}, stop.angular.z);
+
+    // Stop inertia and timer if active
+    m_inertiaVelocity = QPointF(0, 0);
+    if (m_inertiaTimer.isActive()) {
+        m_inertiaTimer.stop();
+    }
+}
+
+/**
  * @brief Removes all user-drawn elements (paths and points) from the scene.
  *
  * This function clears temporary drawing items such as the currently drawn path
@@ -1306,9 +1324,9 @@ void ObstacleMapWidget::deleteGhosts() {
 /**
  * @brief Updates the speed trail by adding the current position and rendering a fading trail path.
  *
- * This function maintains a time-stamped history of recent positions and removes entries 
- * older than the configured lifetime. It constructs a QPainterPath connecting all valid points 
- * and updates a single QGraphicsPathItem in the scene to display the trail. The trail's color 
+ * This function maintains a time-stamped history of recent positions and removes entries
+ * older than the configured lifetime. It constructs a QPainterPath connecting all valid points
+ * and updates a single QGraphicsPathItem in the scene to display the trail. The trail's color
  * and width are set using the pen.
  *
  * @param currentPosition The current position of the robot in scene coordinates.

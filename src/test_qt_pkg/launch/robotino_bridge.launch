@@ -1,0 +1,31 @@
+<launch>
+
+<!-- University of Bonn, Department of Computer Science VI,  PG mobil Robotik -->
+<!-- Launch file for Laser driver, camera and odometry using the robotino -->
+
+<!-- start robotino_node node-->
+    <arg name="hostname" default="127.0.1.1" />
+  <node name="robotino_node" pkg="robotino_node" type="robotino_node" output="screen">
+    <param name="hostname" value="$(arg hostname)" />
+    <param name="min_linear_vel" value="0.01" />
+    <param name="min_angular_vel" value="0.01" />
+    <remap from="robotino_joint_states" to="joint_states" />
+    <remap from="image_raw" to="image"/>
+  </node>
+
+ <node name="robotino_odometry_node" pkg="robotino_node" type="robotino_odometry_node" output="screen">
+        <param name="hostname" value="$(arg hostname)" />
+    </node>
+
+
+<!-- start laser driver node -->
+        <node pkg="sick300_driver" type="sick300_driver" output="screen" name="sick300" >
+        </node>
+
+    <node name="robotino_camera_node" pkg="robotino_node" type="robotino_camera_node" output="screen">
+        <param name="hostname" value="$(arg hostname)" />
+        <param name="cameraNumber" value="0" />
+    </node>
+
+
+</launch>

@@ -49,6 +49,7 @@ set(SOURCES
   src/control_widget_wrapper.cpp
   src/tcp_vel_client.cpp
   src/tcp_robot_listener.cpp
+  src/compressed_to_raw.cpp
 )
 
 set(HEADERS
@@ -143,8 +144,17 @@ ament_target_dependencies(tcp_robot_listener_node
 add_executable(tcp_vel_client_node src/tcp_vel_client.cpp)
 ament_target_dependencies(tcp_vel_client_node
   rclcpp
+  sensor_msgs
+  cv_bridge
+)
+
+# CompressedToRaw Node
+add_executable(compressed_to_raw_node src/compressed_to_raw.cpp)
+ament_target_dependencies(compressed_to_raw_node
+  rclcpp
   std_msgs
   sensor_msgs
+  cv_bridge
 )
 
 # Header files für die executables
@@ -152,6 +162,8 @@ target_include_directories(gui_main PUBLIC include/test_qt_pkg ${CMAKE_CURRENT_B
 target_include_directories(camera_node PUBLIC include/test_qt_pkg)
 target_include_directories(tcp_robot_listener_node PUBLIC include/test_qt_pkg)
 target_include_directories(tcp_vel_client_node PUBLIC include/test_qt_pkg)
+target_include_directories(compressed_to_raw_node PUBLIC include/test_qt_pkg)
+
 
 # Installation
 install(TARGETS
@@ -159,6 +171,7 @@ install(TARGETS
   camera_node
   tcp_robot_listener_node
   tcp_vel_client_node
+  compressed_to_raw_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

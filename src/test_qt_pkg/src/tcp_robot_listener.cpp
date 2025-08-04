@@ -1,6 +1,8 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/compressed_image.hpp>
+#include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/laser_scan.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 
@@ -21,6 +23,8 @@ class TcpRobotListenerNode : public rclcpp::Node {
         laser_pub_ = this->create_publisher<sensor_msgs::msg::LaserScan>("/base_scan", 10);
         tf_pub_ = this->create_publisher<tf2_msgs::msg::TFMessage>("/tf", 10);
         odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
+        camera_pub_ = this->create_publisher<sensor_msgs::msg::CompressedImage>(
+            "/camera/image_raw/compressed", 10);
 
         socket_fd_ = connect_to_server("172.26.1.1", 2077);
         if (socket_fd_ < 0) {
@@ -44,6 +48,7 @@ class TcpRobotListenerNode : public rclcpp::Node {
     rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr laser_pub_;
     rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr tf_pub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
+    rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr camera_pub_;
 
     int connect_to_server(const std::string& ip, int port) {
         int sock = socket(AF_INET, SOCK_STREAM, 0);
@@ -67,7 +72,7 @@ class TcpRobotListenerNode : public rclcpp::Node {
         while (rclcpp::ok()) {
             CombinedData data;
             if (!recv_all((char*)&data, sizeof(data))) {
-                RCLCPP_WARN(this->get_logger(), "Fehler beim Empfang von CombinedData");
+                RCLCPP_INFO(this->get_logger(), "Fehler beim Empfang von CombinedData");
                 break;
             }
 
@@ -77,6 +82,7 @@ class TcpRobotListenerNode : public rclcpp::Node {
                                           data.tf_data_base_link};
             publish_tfs(tf_vec);
             publish_odom(data.odom_data);
+            publish_camera(data.camera_data);
         }
     }
 
@@ -183,6 +189,22 @@ class TcpRobotListenerNode : public rclcpp::Node {
         }
 
         odom_pub_->publish(msg);
+    }
+
+    void publish_camera(const CameraData& d) {
+        sensor_msgs::msg::CompressedImage msg;
+
+        int32_t sec = static_cast<int32_t>(d.stamp);
+        uint32_t nanosec = static_cast<uint32_t>((d.stamp - sec) * 1e9);
+        msg.header.stamp = rclcpp::Time(sec, nanosec);
+        msg.header.frame_id = std::string(d.frame_id);
+
+        msg.format = std::string(d.encoding);
+
+        size_t max_size = sizeof(d.data);
+        msg.data = std::vector<uint8_t>(d.data, d.data + max_size);
+
+        camera_pub_->publish(msg);
     }
 };
 

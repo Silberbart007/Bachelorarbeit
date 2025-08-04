@@ -171,6 +171,8 @@ class ObstacleMapWidget : public QWidget {
 
     // ====== Other public methods ======
 
+    void stopInertia();
+
     /**
      * @brief Callback for handling new laser scan data (called in RobotNode).
      * @param msg Shared pointer to the received LaserScan message.

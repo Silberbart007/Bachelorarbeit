@@ -36,12 +36,6 @@ def generate_launch_description():
     ])
 
     # Eigene Nodes
-    camera_node = Node(
-        package='test_qt_pkg',
-        executable='camera_node',
-        name='camera_node',
-        output='screen'
-    )
     gui_main_node = Node(
         package='test_qt_pkg',
         executable='gui_main',
@@ -58,6 +52,12 @@ def generate_launch_description():
         package='test_qt_pkg',
         executable='tcp_vel_client_node',
         name='tcp_vel_client_node',
+        output='screen'
+    )
+    compressed_to_raw_node = Node(
+        package='test_qt_pkg',
+        executable='compressed_to_raw_node',
+        name='compressed_to_raw_node',
         output='screen'
     )
 
@@ -81,7 +81,7 @@ def generate_launch_description():
         # ),
 
         # Eigene Nodes starten
-        camera_node,
+        compressed_to_raw_node,
         gui_main_node,
         tcp_robot_listener_node,
         tcp_vel_client_node,
