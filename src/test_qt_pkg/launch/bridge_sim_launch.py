@@ -60,6 +60,12 @@ def generate_launch_description():
         name='compressed_to_raw_node',
         output='screen'
     )
+    cmd_vel_relay_node = Node(
+        package='test_qt_pkg',
+        executable='cmd_vel_relay_node',
+        name='cmd_vel_relay_node',
+        output='screen'
+    )
 
     return LaunchDescription([
         # Nav2 bringup inkludieren
@@ -81,8 +87,9 @@ def generate_launch_description():
         # ),
 
         # Eigene Nodes starten
-        compressed_to_raw_node,
         gui_main_node,
+        cmd_vel_relay_node,
+        compressed_to_raw_node,
         tcp_robot_listener_node,
         tcp_vel_client_node,
     ])

@@ -50,6 +50,7 @@ set(SOURCES
   src/tcp_vel_client.cpp
   src/tcp_robot_listener.cpp
   src/compressed_to_raw.cpp
+  src/cmd_vel_relay.cpp
 )
 
 set(HEADERS
@@ -157,12 +158,20 @@ ament_target_dependencies(compressed_to_raw_node
   cv_bridge
 )
 
+# CmdVelRelay Node
+add_executable(cmd_vel_relay_node src/cmd_vel_relay.cpp)
+ament_target_dependencies(cmd_vel_relay_node
+  rclcpp
+  geometry_msgs
+)
+
 # Header files für die executables
 target_include_directories(gui_main PUBLIC include/test_qt_pkg ${CMAKE_CURRENT_BINARY_DIR})
 target_include_directories(camera_node PUBLIC include/test_qt_pkg)
 target_include_directories(tcp_robot_listener_node PUBLIC include/test_qt_pkg)
 target_include_directories(tcp_vel_client_node PUBLIC include/test_qt_pkg)
 target_include_directories(compressed_to_raw_node PUBLIC include/test_qt_pkg)
+target_include_directories(cmd_vel_relay_node PUBLIC include/test_qt_pkg)
 
 
 # Installation
@@ -172,6 +181,7 @@ install(TARGETS
   tcp_robot_listener_node
   tcp_vel_client_node
   compressed_to_raw_node
+  cmd_vel_relay_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
