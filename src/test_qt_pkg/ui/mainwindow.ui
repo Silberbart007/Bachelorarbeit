@@ -78,7 +78,7 @@
 	background-color: rgba(56,188,214,100);
 }</string>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,1">
+      <layout class="QHBoxLayout" name="horizontalLayout_6" stretch="0,1,1,1">
        <property name="spacing">
         <number>6</number>
        </property>
@@ -353,6 +353,16 @@ border-radius: 10px;
                  <set>ItemIsSelectable|ItemIsUserCheckable|ItemIsEnabled</set>
                 </property>
                </item>
+               <item>
+                <property name="text">
+                 <string>Ego</string>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>20</pointsize>
+                 </font>
+                </property>
+               </item>
               </widget>
              </item>
              <item>
@@ -556,6 +566,48 @@ border-radius: 10px;
          <zorder>laser_distance_label</zorder>
          <zorder>timer_buttons_layout</zorder>
          <zorder>timer_label</zorder>
+        </widget>
+       </item>
+       <item>
+        <widget class="QWidget" name="ego_widget_container" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QWidget#ego_widget {
+background-color: rgba(146, 56, 214, 100);
+border: 2px solid rgb(91, 32, 135);
+border-radius: 10px;
+}
+</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_9">
+          <item>
+           <widget class="EgoWidget" name="ego_widget" native="true">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>1500</width>
+              <height>500</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
        <item>
@@ -2284,6 +2336,12 @@ border-radius: 10px;
    <class>CustomTouchSliderHorizontal</class>
    <extends>QWidget</extends>
    <header>touch_slider_horizontal.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>EgoWidget</class>
+   <extends>QWidget</extends>
+   <header>include/test_qt_pkg/ego_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -51,6 +51,7 @@ set(SOURCES
   src/tcp_robot_listener.cpp
   src/compressed_to_raw.cpp
   src/cmd_vel_relay.cpp
+  src/ego_widget.cpp
 )
 
 set(HEADERS
@@ -69,6 +70,7 @@ set(HEADERS
   include/test_qt_pkg/stop_button.h
   include/test_qt_pkg/control_widget_wrapper.h
   include/test_qt_pkg/bridge_protocol.h
+  include/test_qt_pkg/ego_widget.h
 )
 
 set(UIS
@@ -91,6 +93,7 @@ add_executable(gui_main
   src/touch_slider_horizontal.cpp
   src/stop_button.cpp
   src/control_widget_wrapper.cpp
+  src/ego_widget.cpp
   ui/mainwindow.ui
   ${HEADERS}
 )

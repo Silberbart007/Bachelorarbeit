@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget* parent)
     };
     m_robot_node->on_scan_received = [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
         m_ui->obstacle_map_widget->laser_callback(msg);
+        m_ui->ego_widget->laser_callback(msg);
     };
 
     // ===== Assign Nodes to UI Widgets =====
@@ -97,7 +98,8 @@ MainWindow::MainWindow(QWidget* parent)
     // (e.g. for displaying the default stop button)
     std::vector<QWidget**> controls = {&m_ui->buttons_container, &m_ui->sliders,
                                        &m_ui->JoystickLayout,    &m_ui->WheelsLayout,
-                                       &m_ui->cam_widget,        &m_ui->ObstacleMapLayout};
+                                       &m_ui->cam_widget,        &m_ui->ObstacleMapLayout,
+                                       &m_ui->ego_widget_container};
     for (QWidget** pw : controls) {
         QWidget* oldWidget = *pw;
         QWidget* parent = oldWidget->parentWidget();
@@ -163,6 +165,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_ui->mode_list_2->setCurrentRow(0);
     m_ui->mode_list_view->item(0)->setSelected(true);
     m_ui->mode_list_view->item(1)->setSelected(true);
+    m_ui->mode_list_view->item(2)->setSelected(false);
     m_ui->lock_options_list->setCurrentRow(1);
     m_ui->lock_options_list->item(1)->setSelected(true);
 
@@ -202,7 +205,8 @@ MainWindow::MainWindow(QWidget* parent)
                                         m_ui->follow_checkBox,
                                         m_ui->trail_color_button,
                                         m_ui->trail_lifetime_slider,
-                                        m_ui->cam_label};
+                                        m_ui->cam_label,
+                                        m_ui->ego_widget_container};
 
     for (QWidget* w : widgetsToMonitor) {
         w->installEventFilter(this);
@@ -405,6 +409,7 @@ void MainWindow::on_mode_list_view_itemSelectionChanged() {
     // Flags to determine which display widgets to show
     bool showCam = false;
     bool showMap = false;
+    bool showEgo = false;
 
     // Check selected items and set visibility flags
     for (QListWidgetItem* item : selectedItems) {
@@ -413,12 +418,15 @@ void MainWindow::on_mode_list_view_itemSelectionChanged() {
             showCam = true;
         } else if (text == "Map") {
             showMap = true;
+        } else if (text == "Ego") {
+            showEgo = true;
         }
     }
 
     // Show or hide display widgets accordingly
     m_ui->cam_widget->setVisible(showCam);
     m_ui->ObstacleMapLayout->setVisible(showMap);
+    m_ui->ego_widget_container->setVisible(showEgo);
 
     m_ui->cam_label->clear();
     m_ui->cam_label->updateGeometry();
