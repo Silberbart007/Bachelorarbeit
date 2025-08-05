@@ -18,15 +18,15 @@ amcl:
     laser_min_range: 0.05
     laser_model_type: "likelihood_field"
     max_beams: 180
-    max_particles: 5000
-    min_particles: 1000
+    max_particles: 57000
+    min_particles: 3000
     odom_frame_id: "odom"
-    pf_err: 0.05
-    pf_z: 0.99
+    pf_err: 0.02
+    pf_z: 0.995
     recovery_alpha_slow: 0.001
     recovery_alpha_fast: 0.1
     resample_interval: 1
-    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    robot_model_type: "nav2_amcl::OmniMotionModel"
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: true

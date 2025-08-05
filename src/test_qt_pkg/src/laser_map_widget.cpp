@@ -58,7 +58,7 @@ void LaserMapWidget::paintEvent(QPaintEvent* event) {
     }
 
     // Draw Fov Barriers
-    painter.setPen(QPen(Qt::white, 2.0, Qt::SolidLine));
+    painter.setPen(QPen(Qt::gray, 2.0, Qt::SolidLine));
 
     float fov_length = scan.range_max;
 

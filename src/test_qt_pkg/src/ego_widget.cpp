@@ -36,7 +36,7 @@ void EgoWidget::paintEvent(QPaintEvent* event) {
             continue;
 
         float angle = scan.angle_min + i * scan.angle_increment;
-        float frontal_r = r * std::cos(angle * 0.8f);
+        float frontal_r = r * std::cos(angle * 1.0f);
         float norm = std::exp(-frontal_r * 0.6f);
         norm = std::clamp(norm, 0.0f, 1.0f);
         float bar_height = norm * (h / 2.0f);
