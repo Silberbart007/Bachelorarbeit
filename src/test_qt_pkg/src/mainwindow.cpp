@@ -115,7 +115,7 @@ MainWindow::MainWindow(QWidget* parent)
 
         if (layout) {
             layout->addWidget(wrapper);
-            if (*pw != m_ui->cam_widget && *pw != m_ui->ObstacleMapLayout)
+            if (*pw != m_ui->cam_widget && *pw != m_ui->ObstacleMapLayout && *pw != m_ui->ego_widget_container)
                 layout->setAlignment(wrapper, Qt::AlignHCenter);
         }
 

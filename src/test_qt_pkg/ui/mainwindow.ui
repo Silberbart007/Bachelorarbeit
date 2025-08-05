@@ -601,10 +601,11 @@ border-radius: 10px;
             </property>
             <property name="minimumSize">
              <size>
-              <width>1500</width>
-              <height>500</height>
+              <width>0</width>
+              <height>0</height>
              </size>
             </property>
+            <layout class="QVBoxLayout" name="verticalLayout_10"/>
            </widget>
           </item>
          </layout>
@@ -1437,7 +1438,7 @@ QScrollBar::handle:horizontal {
              <number>541</number>
             </property>
             <property name="value">
-             <number>541</number>
+             <number>540</number>
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>

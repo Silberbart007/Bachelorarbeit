@@ -18,7 +18,7 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     m_beam_color = Qt::red;
     m_ghost_color = Qt::yellow;
     m_trail_color = Qt::cyan;
-    m_laser_number = 270;
+    m_laser_number = 540;
     m_curve_gain = 1.25;
     m_ghost_duration = 2.0;
 
