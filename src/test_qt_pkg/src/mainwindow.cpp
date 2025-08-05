@@ -35,6 +35,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_robot_node->on_scan_received = [this](const sensor_msgs::msg::LaserScan::SharedPtr msg) {
         m_ui->obstacle_map_widget->laser_callback(msg);
         m_ui->ego_widget->laser_callback(msg);
+        m_ui->laser_map_widget->laser_callback(msg);
     };
 
     // ===== Assign Nodes to UI Widgets =====
@@ -96,10 +97,12 @@ MainWindow::MainWindow(QWidget* parent)
 
     // ===== Wrap all control widgets ======
     // (e.g. for displaying the default stop button)
-    std::vector<QWidget**> controls = {&m_ui->buttons_container, &m_ui->sliders,
-                                       &m_ui->JoystickLayout,    &m_ui->WheelsLayout,
-                                       &m_ui->cam_widget,        &m_ui->ObstacleMapLayout,
-                                       &m_ui->ego_widget_container};
+    std::vector<QWidget**> controls = {
+        &m_ui->buttons_container,    &m_ui->sliders,
+        &m_ui->JoystickLayout,       &m_ui->WheelsLayout,
+        &m_ui->cam_widget,           &m_ui->ObstacleMapLayout,
+        &m_ui->ego_widget_container, &m_ui->laser_map_widget_container};
+
     for (QWidget** pw : controls) {
         QWidget* oldWidget = *pw;
         QWidget* parent = oldWidget->parentWidget();
@@ -115,7 +118,8 @@ MainWindow::MainWindow(QWidget* parent)
 
         if (layout) {
             layout->addWidget(wrapper);
-            if (*pw != m_ui->cam_widget && *pw != m_ui->ObstacleMapLayout && *pw != m_ui->ego_widget_container)
+            if (*pw != m_ui->cam_widget && *pw != m_ui->ObstacleMapLayout &&
+                *pw != m_ui->ego_widget_container && *pw != m_ui->laser_map_widget_container)
                 layout->setAlignment(wrapper, Qt::AlignHCenter);
         }
 
@@ -206,7 +210,8 @@ MainWindow::MainWindow(QWidget* parent)
                                         m_ui->trail_color_button,
                                         m_ui->trail_lifetime_slider,
                                         m_ui->cam_label,
-                                        m_ui->ego_widget_container};
+                                        m_ui->ego_widget_container,
+                                        m_ui->laser_map_widget_container};
 
     for (QWidget* w : widgetsToMonitor) {
         w->installEventFilter(this);
@@ -410,6 +415,7 @@ void MainWindow::on_mode_list_view_itemSelectionChanged() {
     bool showCam = false;
     bool showMap = false;
     bool showEgo = false;
+    bool showLaserMap = false;
 
     // Check selected items and set visibility flags
     for (QListWidgetItem* item : selectedItems) {
@@ -420,6 +426,8 @@ void MainWindow::on_mode_list_view_itemSelectionChanged() {
             showMap = true;
         } else if (text == "Ego") {
             showEgo = true;
+        } else if (text == "Laser Map") {
+            showLaserMap = true;
         }
     }
 
@@ -427,6 +435,7 @@ void MainWindow::on_mode_list_view_itemSelectionChanged() {
     m_ui->cam_widget->setVisible(showCam);
     m_ui->ObstacleMapLayout->setVisible(showMap);
     m_ui->ego_widget_container->setVisible(showEgo);
+    m_ui->laser_map_widget_container->setVisible(showLaserMap);
 
     m_ui->cam_label->clear();
     m_ui->cam_label->updateGeometry();

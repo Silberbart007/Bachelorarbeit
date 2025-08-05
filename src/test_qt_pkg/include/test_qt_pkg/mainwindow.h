@@ -45,6 +45,8 @@
 #include "nav2client.h"
 #include "robot_node.h"
 #include "wheel.h"
+#include "laser_map_widget.h"
+#include "ego_widget.h"
 
 // Forward declarations
 class Nav2Client;
