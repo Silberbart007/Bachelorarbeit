@@ -1132,7 +1132,10 @@ void ObstacleMapWidget::generateLaserBeams() {
                 continue;
 
             // Get current min_distance for collision warning modes
-            m_min_laser_distance = std::min(m_min_laser_distance, dist);
+            // Filter out the widest lasers
+            if (i < (numRays - 30) && i > 30) {
+                m_min_laser_distance = std::min(m_min_laser_distance, dist);
+            }
 
             float theta = angle + m_robot_theta_rad;
 
