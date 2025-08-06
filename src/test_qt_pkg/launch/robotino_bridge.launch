@@ -27,5 +27,10 @@
         <param name="cameraNumber" value="0" />
     </node>
 
+    <node name="listener_node" pkg="minirosbridge" type="listener_node" output="screen">
+    </node>
+    <node name="receiver_node" pkg="minirosbridge" type="receiver_node" output="screen">
+    </node>
+
 
 </launch>
