@@ -61,10 +61,9 @@ void EgoWidget::paintEvent(QPaintEvent* event) {
         float bar_width = 5.0f;
         float x_left = u - bar_width / 2.0f;
         float y_top = cy - bar_height;
-        float y_bottom = cy;
-
+        
         // Farbgebung nach Tiefe
-        float norm = std::exp(-x * 0.3f);
+        float norm = std::exp(-r * 1.0f);
         norm = std::clamp(norm, 0.0f, 1.0f);
         float hue = norm * 0.7f;
         QColor color = QColor::fromHsvF(hue, 1.0, 1.0);

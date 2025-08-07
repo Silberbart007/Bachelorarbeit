@@ -301,7 +301,6 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
 
         // Only handle taps on the camera label when tap control mode is active
         if (obj == m_ui->cam_label && m_tapControlMode) {
-            // Ignore deprecated warnings for pixmap
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
@@ -315,28 +314,32 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event) {
             QSize pixmapSize = pixmap->size();
             QSize scaledSize = pixmapSize.scaled(labelSize, Qt::KeepAspectRatio);
 
-            // Calculate offset for centered pixmap display within label
             int offsetX = (labelSize.width() - scaledSize.width()) / 2;
+            int offsetY = (labelSize.height() - scaledSize.height()) / 2;
 
-            // Calculate click position relative to displayed pixmap
             int relativeX = clickPos.x() - offsetX;
+            int relativeY = clickPos.y() - offsetY;
 
-            // Ignore clicks outside the visible pixmap area
-            if (relativeX < 0 || relativeX >= scaledSize.width())
+            if (relativeX < 0 || relativeX >= scaledSize.width() || relativeY < 0 ||
+                relativeY >= scaledSize.height())
                 return false;
 
             // Normalize horizontal click position to range [-1.0, 1.0]
             double dx = (relativeX - scaledSize.width() / 2.0) / (scaledSize.width() / 2.0);
             dx = std::clamp(dx, -1.0, 1.0);
 
-            // Publish velocity command to robot: fixed forward speed, steering based on tap
-            // position
+            double dy = static_cast<double>(clickPos.y()) / scaledSize.height();
+            dy = std::clamp(dy, 0.0, 1.0);
+
+            // Umgekehrte Logik: oben schnell, unten langsam
+            float max_speed = 1.0f;
+            float linear = (1.0 - dy) * max_speed;
+
             if (m_robot_node) {
-                float linear = 0.2f;
                 m_robot_node->publish_velocity({linear, 0.0}, dx);
             }
 
-            return true; // Event handled
+            return true;
         }
     }
     // Default event processing
@@ -984,7 +987,7 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg) {
 
             // === Parking assist lane lines visualization ===
             if (m_parkingMode) {
-                double wheel_base = 50.0;             // Distance between front and rear wheels (cm)
+                double wheel_base = 10.0;             // Distance between front and rear wheels (cm)
                 double max_steering_angle = M_PI / 4; // Max steering angle (45°)
                 double steering_angle = rotation_value * max_steering_angle;
 
@@ -994,10 +997,12 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg) {
                 double cx = frame.cols / 2.0;
                 double cy = frame.rows / 2.0;
 
-                double camera_height = 50.0; // Camera height in cm
+                double camera_height = 60.0; // Camera height in cm
 
                 // Max lane line length in depth direction, scales with speed
                 double max_z = std::min(150.0, 60.0 + std::abs(speed_value.x) * 100);
+                // Always same length
+                max_z = 300.0;
 
                 int num_points = 30;  // Number of points to generate lane lines
                 double offset = 25.0; // Offset between left/right lane lines in cm
