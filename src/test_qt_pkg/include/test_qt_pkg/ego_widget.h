@@ -2,6 +2,8 @@
 
 #include <QWidget>
 #include <QPainter>
+#include <QtMath>
+#include <QDebug>
 #include <sensor_msgs/msg/laser_scan.hpp>
 
 class EgoWidget : public QWidget

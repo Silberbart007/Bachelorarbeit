@@ -16,6 +16,74 @@ void EgoWidget::paintEvent(QPaintEvent* event) {
 
     QPainter painter(this);
     painter.fillRect(rect(), Qt::black);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    if (!m_scan_available)
+        return;
+
+    const auto& scan = m_current_scan;
+
+    // Bildabmessungen
+    float w = width();
+    float h = height();
+    float cx = w / 2.0f; // Bildmitte horizontal
+    float cy = h / 2.0f; // Bildmitte vertikal
+
+    // Sichtfeld des Lasers (FOV)
+    float fov = scan.angle_max - scan.angle_min;
+
+    // "Brennweite" der virtuellen Kamera in Pixel
+    float f = w / (2.0f * std::tan(fov / 2.0f));
+
+    size_t start = 25;
+    size_t end = scan.ranges.size() - start;
+
+    for (size_t i = start; i < end; ++i) {
+        float r = scan.ranges[i];
+        if (!std::isfinite(r) || r < scan.range_min || r > scan.range_max)
+            continue;
+
+        float angle = scan.angle_min + i * scan.angle_increment;
+
+        // Punkt im Roboter-KS (x = vorne, y = seitlich)
+        float x = r * std::cos(angle); // vorwärts
+        float y = r * std::sin(angle); // seitlich
+
+        // Perspektivische Projektion: horizontale Position auf dem Bildschirm
+        float zoom = 0.9f;
+        float u = f * (y / x) * zoom + cx;
+
+        // Perspektivische Höhe: je näher, desto größer
+        float bar_height = 400.0f / x; // anpassbar
+        bar_height = std::clamp(bar_height, 2.0f, h);
+
+        // Positionen im Bildraum
+        float bar_width = 5.0f;
+        float x_left = u - bar_width / 2.0f;
+        float y_top = cy - bar_height;
+        float y_bottom = cy;
+
+        // Farbgebung nach Tiefe
+        float norm = std::exp(-x * 0.3f);
+        norm = std::clamp(norm, 0.0f, 1.0f);
+        float hue = norm * 0.7f;
+        QColor color = QColor::fromHsvF(hue, 1.0, 1.0);
+
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(color);
+
+        // Balken oben
+        y_top = cy - bar_height / 2.0f;
+        painter.drawRect(QRectF(x_left, y_top, bar_width, bar_height));
+    }
+}
+
+/*
+void EgoWidget::paintEvent(QPaintEvent* event) {
+    Q_UNUSED(event);
+
+    QPainter painter(this);
+    painter.fillRect(rect(), Qt::black);
 
     if (!m_scan_available)
         return;
@@ -56,4 +124,4 @@ void EgoWidget::paintEvent(QPaintEvent* event) {
         QRectF rect_bottom(x, mid_y, column_width, bar_height);
         painter.drawRect(rect_bottom);
     }
-}
+}*/
