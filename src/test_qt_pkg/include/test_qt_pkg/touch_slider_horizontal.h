@@ -1,37 +1,45 @@
 #ifndef TOUCH_SLIDER_HORIZONTAL_H
 #define TOUCH_SLIDER_HORIZONTAL_H
 
-#include <QWidget>
-#include <QTouchEvent>
+#include "mainwindow.h"
 #include <QMouseEvent>
 #include <QPainter>
-#include "mainwindow.h"
+#include <QTouchEvent>
+#include <QWidget>
 
-class CustomTouchSliderHorizontal : public QWidget
-{
+class CustomTouchSliderHorizontal : public QWidget {
     Q_OBJECT
 
-public:
-    explicit CustomTouchSliderHorizontal(QWidget *parent = nullptr);
+  public:
+    explicit CustomTouchSliderHorizontal(QWidget* parent = nullptr);
 
-    int getValue() const;  // Gibt den aktuellen Sliderwert zurück
-    void setValue(double newValue);  // Setzt den Sliderwert und aktualisiert das Widget
-    void setRobotNode(std::shared_ptr<RobotNode> robot_node) { m_robot_node = robot_node; };
+    int getValue() const;           // Gibt den aktuellen Sliderwert zurück
+    void setValue(double newValue); // Setzt den Sliderwert und aktualisiert das Widget
+    void setRobotNode(std::shared_ptr<RobotNode> robot_node) {
+        m_robot_node = robot_node;
+    };
 
-protected:
-    void paintEvent(QPaintEvent *) override;  // Zum Zeichnen des Sliders
-    bool event(QEvent *event) override;  // Zum Verarbeiten von Touch- und Maus-Ereignissen
-    void mousePressEvent(QMouseEvent *event) override;  // Verarbeitet Maus-Press-Ereignisse
-    void mouseMoveEvent(QMouseEvent *event) override;  // Verarbeitet Maus-Bewegungs-Ereignisse
-    void mouseReleaseEvent(QMouseEvent *) override;  // Optional für Release-Events
+  protected:
+    void paintEvent(QPaintEvent*) override; // Zum Zeichnen des Sliders
+    bool event(QEvent* event) override;     // Zum Verarbeiten von Touch- und Maus-Ereignissen
+    void mousePressEvent(QMouseEvent* event) override; // Verarbeitet Maus-Press-Ereignisse
+    void mouseMoveEvent(QMouseEvent* event) override;  // Verarbeitet Maus-Bewegungs-Ereignisse
+    void mouseReleaseEvent(QMouseEvent*) override;     // Optional für Release-Events
 
-private:
-    double m_value;  // Der aktuelle Wert des Sliders
+  private:
+    double m_value; // Der aktuelle Wert des Sliders
+
+    // For sending velocity while holding widget
+    QTimer* m_velocityTimer;
+
     std::shared_ptr<RobotNode> m_robot_node;
 
-    double mapToSliderValue(double x);  // Mapped die X-Position auf den Sliderwert
+    double mapToSliderValue(double x); // Mapped die X-Position auf den Sliderwert
     double sliderValueToPixels(double value) const;
     void lockIn(double absValue); // Resets value to 0 if |value| < absValue
+
+    // For timer that sends current velocity while holding widget
+    void sendCurrentVelocity();
 };
 
 #endif // TOUCH_SLIDER_HORIZONTAL_H

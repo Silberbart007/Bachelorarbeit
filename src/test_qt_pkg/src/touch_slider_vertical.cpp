@@ -5,6 +5,11 @@
 CustomTouchSliderVertical::CustomTouchSliderVertical(QWidget* parent)
     : QWidget(parent), m_value(0.0) {
     setAttribute(Qt::WA_AcceptTouchEvents, true); // Touch-Ereignisse akzeptieren
+
+    // Init velocity timer for sending current velocity every few ms while holding widget
+    m_velocityTimer = new QTimer(this);
+    connect(m_velocityTimer, &QTimer::timeout, this,
+            &CustomTouchSliderVertical::sendCurrentVelocity);
 }
 
 int CustomTouchSliderVertical::getValue() const {
@@ -71,6 +76,8 @@ bool CustomTouchSliderVertical::event(QEvent* event) {
                     setValue(newValue);
                 }
             }
+
+            m_velocityTimer->start(100);
         }
         // Lock in
         else if (event->type() == QEvent::TouchEnd) {
@@ -78,6 +85,8 @@ bool CustomTouchSliderVertical::event(QEvent* event) {
                 lockIn(0.1);
             else if (MainWindow::s_statLock)
                 lockIn(1.0);
+
+            m_velocityTimer->stop();
         }
         return true; // Touch-Ereignis wurde verarbeitet
     }
@@ -89,6 +98,8 @@ void CustomTouchSliderVertical::mousePressEvent(QMouseEvent* event) {
         double newValue =
             mapToSliderValue(event->y()); // Berechnet den neuen Wert basierend auf der X-Position
         setValue(newValue);
+
+        m_velocityTimer->start(100);
     }
 }
 
@@ -107,6 +118,8 @@ void CustomTouchSliderVertical::mouseReleaseEvent(QMouseEvent*) {
         lockIn(0.1);
     else if (MainWindow::s_statLock)
         lockIn(1.0);
+
+    m_velocityTimer->stop();
 }
 
 double CustomTouchSliderVertical::mapToSliderValue(double y) {
@@ -164,4 +177,14 @@ void CustomTouchSliderVertical::lockIn(double absValue) {
 
         update();
     }
+}
+
+void CustomTouchSliderVertical::sendCurrentVelocity() {
+    // Roboterdaten kriegen
+    RobotNode::RobotSpeed currentSpeed = m_robot_node->getSpeedNormalized();
+    double currentRot = m_robot_node->getRotationNormalized();
+
+    // Korrekte Daten publishen
+    currentSpeed.x = m_value;
+    m_robot_node->publish_velocity(currentSpeed, currentRot);
 }

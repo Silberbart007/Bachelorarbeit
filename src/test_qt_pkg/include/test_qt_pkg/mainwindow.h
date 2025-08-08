@@ -18,11 +18,11 @@
 #include <QDebug>
 #include <QImage>
 #include <QMainWindow>
+#include <QMutex>
 #include <QPixmap>
 #include <QSlider>
 #include <QTimer>
 #include <QTouchEvent>
-#include <QMutex>
 
 // ROS2 includes
 #include "sensor_msgs/msg/image.hpp"
@@ -41,12 +41,12 @@
 
 // Own project includes
 #include "control_widget_wrapper.h"
+#include "ego_widget.h"
 #include "joystick.h"
+#include "laser_map_widget.h"
 #include "nav2client.h"
 #include "robot_node.h"
 #include "wheel.h"
-#include "laser_map_widget.h"
-#include "ego_widget.h"
 
 // Forward declarations
 class Nav2Client;
@@ -155,12 +155,14 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Slot triggered when the fast button is clicked.
      */
-    void on_fast_button_clicked();
+    void on_fast_button_pressed();
+    void on_fast_button_released();
 
     /**
      * @brief Slot triggered when the slow button is clicked.
      */
-    void on_slow_button_clicked();
+    void on_slow_button_pressed();
+    void on_slow_button_released();
 
     /**
      * @brief Slot triggered when the stop button is clicked.
@@ -175,32 +177,38 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Slot triggered when the back slow button is clicked.
      */
-    void on_back_slow_button_clicked();
+    void on_back_slow_button_pressed();
+    void on_back_slow_button_released();
 
     /**
      * @brief Slot triggered when the back fast button is clicked.
      */
-    void on_back_fast_button_clicked();
+    void on_back_fast_button_pressed();
+    void on_back_fast_button_released();
 
     /**
      * @brief Slot triggered when the clockwise slow button is clicked.
      */
-    void on_clockwise_slow_button_clicked();
+    void on_clockwise_slow_button_pressed();
+    void on_clockwise_slow_button_released();
 
     /**
      * @brief Slot triggered when the clockwise fast button is clicked.
      */
-    void on_clockwise_fast_button_clicked();
+    void on_clockwise_fast_button_pressed();
+    void on_clockwise_fast_button_released();
 
     /**
      * @brief Slot triggered when the anticlockwise slow button is clicked.
      */
-    void on_anticlockwise_slow_button_clicked();
+    void on_anticlockwise_slow_button_pressed();
+    void on_anticlockwise_slow_button_released();
 
     /**
      * @brief Slot triggered when the anticlockwise fast button is clicked.
      */
-    void on_anticlockwise_fast_button_clicked();
+    void on_anticlockwise_fast_button_pressed();
+    void on_anticlockwise_fast_button_released();
 
     // ===== Reset Rotation Button =====
 
@@ -313,6 +321,14 @@ class MainWindow : public QMainWindow {
     /// Shared pointer to the Nav2Client for navigation commands
     std::shared_ptr<Nav2Client> m_nav2_node;
 
+    // For sending velocity while holding widget
+    QTimer* m_velocityTimer;
+
+    // Current speeds of buttons
+    double m_button_linear_x = 0.0;
+    double m_button_linear_y = 0.0;
+    double m_button_angular_z = 0.0;
+
     // ===== Camera Modes =====
 
     /// True if parking mode is active
@@ -339,7 +355,7 @@ class MainWindow : public QMainWindow {
     /// Struct for capturing current interaction with GUI (for logging)
     struct Interaction {
         QString widgetName;
-        QPointF position; 
+        QPointF position;
     };
 
     /// Collection of current interactions with GUI (for logging)
@@ -365,6 +381,9 @@ class MainWindow : public QMainWindow {
 
     /// All logging functionality
     void logEvent();
+
+    // For timer that sends velocity every few ms
+    void sendCurrentVelocity();
 
     // ===== Callbacks =====
 

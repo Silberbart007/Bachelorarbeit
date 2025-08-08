@@ -8,6 +8,10 @@
 WheelWidget::WheelWidget(QWidget* parent) : QWidget(parent) {
     setMinimumSize(150, 150);
     setAttribute(Qt::WA_AcceptTouchEvents, true); // Touch-Ereignisse akzeptieren
+
+    // Init velocity timer for sending current velocity every few ms while holding widget
+    m_velocityTimer = new QTimer(this);
+    connect(m_velocityTimer, &QTimer::timeout, this, &WheelWidget::sendCurrentVelocity);
 }
 
 void WheelWidget::paintEvent(QPaintEvent*) {
@@ -115,13 +119,15 @@ bool WheelWidget::event(QEvent* event) {
                 m_startAngle = angle;
                 m_lastAngle = m_currentAngle;
                 m_isDragging = true;
+
+                m_velocityTimer->start(100);
             }
             // Lenkrad wird bewegt
             else if (event->type() == QEvent::TouchUpdate && m_isDragging) {
                 qreal deltaDeg = (angle - m_startAngle) * 180.0 / M_PI;
                 deltaDeg =
                     qBound(-10.0, deltaDeg, 10.0); // Hier kann man 5.0 höher/runter machen, je
-                                                 // nachdem wie schnell das Lenkrad drehen soll
+                                                   // nachdem wie schnell das Lenkrad drehen soll
 
                 m_currentAngle = m_lastAngle + deltaDeg;
                 m_currentAngle = qBound(-m_style.maxAngle, m_currentAngle,
@@ -141,6 +147,7 @@ bool WheelWidget::event(QEvent* event) {
             // Finger wird hochgehoben
             else if (event->type() == QEvent::TouchEnd) {
                 m_isDragging = false;
+                m_velocityTimer->stop();
             }
         }
 
@@ -160,6 +167,8 @@ void WheelWidget::mousePressEvent(QMouseEvent* event) {
     m_startAngle = qAtan2(-dy, dx); // in Radiant
     m_lastAngle = m_currentAngle;   // in Grad
     m_isDragging = true;
+
+    m_velocityTimer->start(100);
 }
 
 // Wenn Maus bewegt wird
@@ -199,6 +208,7 @@ void WheelWidget::mouseMoveEvent(QMouseEvent* event) {
 // Wenn Maus losgelassen wird
 void WheelWidget::mouseReleaseEvent(QMouseEvent*) {
     m_isDragging = false; // Ende des Ziehens
+    m_velocityTimer->stop();
 }
 
 // Value (von außerhalb dieses Skripts) setzen
@@ -212,4 +222,10 @@ void WheelWidget::setValue(double newValue) {
 void WheelWidget::setStyle(const WheelStyle& style) {
     m_style = style;
     update(); // neu zeichnen
+}
+
+void WheelWidget::sendCurrentVelocity() {
+    double rotation = -m_currentAngle / m_style.maxAngle;
+
+    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), rotation);
 }

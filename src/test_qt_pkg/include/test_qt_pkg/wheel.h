@@ -9,6 +9,7 @@
 #include <QPointF>
 #include <QTouchEvent>
 #include <QWidget>
+#include <QTimer>
 
 class WheelWidget : public QWidget {
     Q_OBJECT
@@ -50,6 +51,12 @@ class WheelWidget : public QWidget {
 
     // Style des Lenkrads
     WheelStyle m_style;
+
+    // For sending velocity while holding widget
+    QTimer* m_velocityTimer;
+
+    // For timer that sends current velocity while holding widget
+    void sendCurrentVelocity();
 };
 
 #endif // WHEEL_H

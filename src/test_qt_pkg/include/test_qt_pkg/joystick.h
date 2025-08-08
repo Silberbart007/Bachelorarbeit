@@ -4,6 +4,7 @@
 #include "robot_node.h"
 #include <QPointF>
 #include <QWidget>
+#include <QTimer>
 
 class JoystickWidget : public QWidget {
     Q_OBJECT
@@ -37,6 +38,12 @@ class JoystickWidget : public QWidget {
     bool m_omni = true;
 
     std::shared_ptr<RobotNode> m_robot_node;
+
+    // For sending velocity while holding widget
+    QTimer* m_velocityTimer;
+
+    // For timer that sends current velocity while holding widget
+    void sendCurrentVelocity();
 
     void updateKnob(const QPointF& pos);
 };

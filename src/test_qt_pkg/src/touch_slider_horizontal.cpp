@@ -5,6 +5,11 @@
 CustomTouchSliderHorizontal::CustomTouchSliderHorizontal(QWidget* parent)
     : QWidget(parent), m_value(0.0) {
     setAttribute(Qt::WA_AcceptTouchEvents, true); // Touch-Ereignisse akzeptieren
+
+    // Init velocity timer for sending current velocity every few ms while holding widget
+    m_velocityTimer = new QTimer(this);
+    connect(m_velocityTimer, &QTimer::timeout, this,
+            &CustomTouchSliderHorizontal::sendCurrentVelocity);
 }
 
 int CustomTouchSliderHorizontal::getValue() const {
@@ -73,6 +78,7 @@ bool CustomTouchSliderHorizontal::event(QEvent* event) {
                     setValue(newValue);
                 }
             }
+            m_velocityTimer->start(100);
         }
         // Lock in
         else if (event->type() == QEvent::TouchEnd) {
@@ -80,6 +86,8 @@ bool CustomTouchSliderHorizontal::event(QEvent* event) {
                 lockIn(0.1);
             else if (MainWindow::s_statLock)
                 lockIn(1.0);
+
+            m_velocityTimer->stop();
         }
         return true; // Touch-Ereignis wurde verarbeitet
     }
@@ -91,6 +99,7 @@ void CustomTouchSliderHorizontal::mousePressEvent(QMouseEvent* event) {
         double newValue =
             mapToSliderValue(event->x()); // Berechnet den neuen Wert basierend auf der X-Position
         setValue(newValue);
+        m_velocityTimer->start(100);
     }
 }
 
@@ -109,6 +118,8 @@ void CustomTouchSliderHorizontal::mouseReleaseEvent(QMouseEvent*) {
         lockIn(0.1);
     else if (MainWindow::s_statLock)
         lockIn(1.0);
+
+    m_velocityTimer->stop();
 }
 
 double CustomTouchSliderHorizontal::mapToSliderValue(double x) {
@@ -163,4 +174,10 @@ void CustomTouchSliderHorizontal::lockIn(double absValue) {
 
         update();
     }
+}
+
+void CustomTouchSliderHorizontal::sendCurrentVelocity() {
+    // An Roboter publishen
+    RobotNode::RobotSpeed currentSpeed = m_robot_node->getSpeedNormalized();
+    m_robot_node->publish_velocity(currentSpeed, m_value);
 }

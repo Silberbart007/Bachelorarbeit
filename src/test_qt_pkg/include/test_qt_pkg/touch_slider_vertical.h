@@ -28,11 +28,18 @@ class CustomTouchSliderVertical : public QWidget {
 
   private:
     double m_value; // Der aktuelle Wert des Sliders
+
+    // For sending velocity while holding widget
+    QTimer* m_velocityTimer;
+
     std::shared_ptr<RobotNode> m_robot_node;
 
     double mapToSliderValue(double y); // Mapped die X-Position auf den Sliderwert
     double sliderValueToPixels(double value) const;
     void lockIn(double absValue); // Resets value to 0 if |value| < absValue
+
+    // For timer that sends current velocity while holding widget
+    void sendCurrentVelocity();
 };
 
 #endif // TOUCH_SLIDER_VERTICAL_H
