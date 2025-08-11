@@ -267,6 +267,12 @@ class MainWindow : public QMainWindow {
     void on_laser_number_slider_valueChanged(int value);
 
     /**
+     * @brief Slot triggered when the zoom factor slider value changes.
+     * @param value New slider value.
+     */
+    void on_zoom_factor_slider_valueChanged(int value);
+
+    /**
      * @brief Slot triggered when the trail lifetime slider value changes.
      * @param value New slider value.
      */

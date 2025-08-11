@@ -2,6 +2,8 @@
 #include <cmath>
 
 EgoWidget::EgoWidget(QWidget* parent) : QWidget(parent) {
+    m_zoom_factor = 1.0f;
+
     // setMinimumSize(2000, 500); // Kannst du beliebig anpassen
 }
 
@@ -50,7 +52,7 @@ void EgoWidget::paintEvent(QPaintEvent* event) {
         float y = r * std::sin(angle); // seitlich
 
         // Perspektivische Projektion: horizontale Position auf dem Bildschirm
-        float zoom = 0.9f;
+        float zoom = m_zoom_factor;
         float u = f * (y / x) * zoom + cx;
 
         // Perspektivische Höhe: je näher, desto größer
@@ -61,7 +63,7 @@ void EgoWidget::paintEvent(QPaintEvent* event) {
         float bar_width = 5.0f;
         float x_left = u - bar_width / 2.0f;
         float y_top = cy - bar_height;
-        
+
         // Farbgebung nach Tiefe
         float norm = std::exp(-r * 1.0f);
         norm = std::clamp(norm, 0.0f, 1.0f);

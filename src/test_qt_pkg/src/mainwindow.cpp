@@ -159,6 +159,7 @@ MainWindow::MainWindow(QWidget* parent)
     m_ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(1.0));
     m_ui->laser_number_label->setText(QString("Laser number: %1").arg(540));
     m_ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(2.0));
+    m_ui->zoom_factor_label->setText(QString("Zoom factor: %1").arg(1.0));
 
     m_ui->rotation_slider->setValue(0.0);
     m_ui->speed_slider->setValue(0.0);
@@ -803,6 +804,18 @@ void MainWindow::on_ghost_duration_slider_valueChanged(int value) {
 void MainWindow::on_laser_number_slider_valueChanged(int value) {
     m_ui->obstacle_map_widget->setLaserNumber(value);
     m_ui->laser_number_label->setText(QString("Laser number: %1").arg(value));
+}
+
+/**
+ * @brief Called when the zoom factor slider value changes.
+ *
+ * Updates the zoom factor of Ego view
+ *
+ * @param value The new zoom factor.
+ */
+void MainWindow::on_zoom_factor_slider_valueChanged(int value) {
+    m_ui->ego_widget->setZoomFactor(static_cast<double>(value) / 100.0);
+    m_ui->zoom_factor_label->setText(QString("Zoom factor: %1").arg(m_ui->ego_widget->getZoomFactor()));
 }
 
 /**
