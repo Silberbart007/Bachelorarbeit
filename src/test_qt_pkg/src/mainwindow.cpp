@@ -156,7 +156,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     // ===== Initialize Parameter Labels and Sliders =====
     m_ui->curve_gain_label->setText(QString("Curve Gain: %1").arg(1.25));
-    m_ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(1.0));
+    m_ui->ghost_duration_label->setText(QString("Ghost duration: %1 s").arg(2.0));
     m_ui->laser_number_label->setText(QString("Laser number: %1").arg(540));
     m_ui->trail_lifetime_label->setText(QString("Trail lifetime: %1 s").arg(2.0));
     m_ui->zoom_factor_label->setText(QString("Zoom factor: %1").arg(1.0));

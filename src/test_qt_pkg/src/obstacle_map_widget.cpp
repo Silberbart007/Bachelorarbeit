@@ -944,8 +944,8 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta) {
         double current_speed = m_robot_node->getSpeed().x * 100.0; // convert to cm/s
         double current_steering = m_robot_node->getRotation();
 
-        if (std::abs(m_last_speed - current_speed) > 1e-2 ||
-            std::abs(m_last_steering - current_steering) > 1e-2) {
+        if (std::abs(m_last_speed - current_speed) > 5 ||
+            std::abs(m_last_steering - current_steering) > 1e-1) {
             startGhostAnimation(current_speed, -current_steering);
             m_last_speed = current_speed;
             m_last_steering = current_steering;
@@ -1143,8 +1143,14 @@ void ObstacleMapWidget::generateLaserBeams() {
             float endY = m_robot_y_pixels - dist * m_pixels_per_meter * std::sin(theta);
 
             if (m_beamMode) {
-                QGraphicsLineItem* line = m_scene->addLine(m_robot_x_pixels, m_robot_y_pixels, endX,
-                                                           endY, QPen(m_beam_color));
+                float offset_meters = 0.2f;
+                float offset_pixels = offset_meters * m_pixels_per_meter;
+
+                float startX = m_robot_x_pixels + offset_pixels * std::cos(m_robot_theta_rad);
+                float startY = m_robot_y_pixels - offset_pixels * std::sin(m_robot_theta_rad);
+
+                QGraphicsLineItem* line =
+                    m_scene->addLine(startX, startY, endX, endY, QPen(m_beam_color));
                 line->setZValue(0);
                 m_beam_items.push_back(line);
             }
@@ -1235,7 +1241,7 @@ void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_v
 
     // Compute predicted ghost trajectory based on current parameters
     m_ghost_trajectory = computeGhostTrajectoryDiffDrive(speed_cm_s, steering_value,
-                                                         m_ghost_duration, 60, m_robot_theta_rad);
+                                                         m_ghost_duration, 30, m_robot_theta_rad);
     m_ghost_frame_index = 0;
 
     // Remove existing ghost items from the scene to avoid duplicates
@@ -1251,7 +1257,7 @@ void ObstacleMapWidget::startGhostAnimation(double speed_cm_s, double steering_v
 
         // Set the ghost color with transparency for visualization
         QColor transparent_color = m_ghost_color;
-        transparent_color.setAlpha(100);
+        transparent_color.setAlpha(30);
         ghost->setBrush(transparent_color);
         ghost->setPen(Qt::NoPen);
 
@@ -1291,9 +1297,12 @@ void ObstacleMapWidget::updateGhostAnimation(double x_pos, double y_pos) {
     const auto& pose = m_ghost_trajectory[m_ghost_frame_index];
 
     // Calculate position relative to the current robot location (meters to pixels)
-    double base_x = x_pos + pose.x / m_pixels_per_meter;
-    double base_y = y_pos + pose.y / m_pixels_per_meter;
-    double theta = m_robot_theta_rad + pose.theta;
+    double pose_x_meters = pose.x / 100.0;
+    double pose_y_meters = pose.y / 100.0;
+    double base_x = x_pos + pose_x_meters;
+    double base_y = y_pos + pose_y_meters;
+
+    double theta = pose.theta;
 
     // Convert to Qt scene coordinates
     QPointF pos_px = worldToScene(base_x, base_y);

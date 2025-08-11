@@ -13,8 +13,8 @@ RobotNode::RobotNode() : Node("robot_node") {
     m_speed.x = 0.0;
     m_speed.y = 0.0;
     m_rot = 0.0;
-    m_max_speed.x = 0.4;
-    m_max_speed.y = 0.4;
+    m_max_speed.x = 0.2;
+    m_max_speed.y = 0.2;
     m_max_rotation = 0.8;
 
     // Create publisher for velocity commands
