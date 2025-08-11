@@ -546,7 +546,7 @@ void ObstacleMapWidget::handleInertia() {
     constexpr double friction = 0.99; // Friction factor to reduce velocity each step
 
     // Stop inertia if velocity is very small or inertia mode is disabled
-    if ((std::abs(m_inertiaVelocity.x()) < 0.001 && std::abs(m_inertiaVelocity.y()) < 0.001) ||
+    if ((std::abs(m_inertiaVelocity.x()) < 0.01 && std::abs(m_inertiaVelocity.y()) < 0.01) ||
         !m_inertiaMode) {
         m_inertiaTimer.stop();
 
@@ -944,7 +944,7 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta) {
         double current_speed = m_robot_node->getSpeed().x * 100.0; // convert to cm/s
         double current_steering = m_robot_node->getRotation();
 
-        if (std::abs(m_last_speed - current_speed) > 5 ||
+        if (std::abs(m_last_speed - current_speed) > 2 ||
             std::abs(m_last_steering - current_steering) > 1e-1) {
             startGhostAnimation(current_speed, -current_steering);
             m_last_speed = current_speed;
