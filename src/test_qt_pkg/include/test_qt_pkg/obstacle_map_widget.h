@@ -523,6 +523,12 @@ class ObstacleMapWidget : public QWidget {
     void setupStaticObstacles();
 
     /**
+     * @brief Adds a rotaed obstacle to the map scene
+     */
+    void addRotatedObstacle(float x, float y, float width, float height, float angleDeg,
+                            QColor color);
+
+    /**
      * @brief Checks whether a point is near an obstacle.
      * @param x X coordinate.
      * @param y Y coordinate.

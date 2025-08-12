@@ -18,7 +18,7 @@ def generate_launch_description():
     custom_params_path = PathJoinSubstitution([
         FindPackageShare('test_qt_pkg'),
         'config',
-        'custom_nav2_params.yaml'
+        'custom_nav2_params_fun_map.yaml'
     ])
 
     # Pfad zum bringup-Launchfile

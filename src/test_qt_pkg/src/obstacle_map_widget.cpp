@@ -51,9 +51,6 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     // ====== Trail Mode setup ======
     m_trailItem = new QGraphicsPathItem();
     m_scene->addItem(m_trailItem);
-
-    // ===== Optional: Add test/static obstacles for debugging =====
-    // setupStaticObstacles();
 }
 
 /**
@@ -891,7 +888,7 @@ QVector<QPointF> ObstacleMapWidget::resamplePath(const QVector<QPointF>& origina
  * and adds it to the graphics scene for visualization.
  *
  * @param x The x-coordinate of the obstacle's top-left corner in scene coordinates.
- * @param y The y-coordinate of the obstacle's top-left corner in scene coordinates.
+ * @param y The y-coordinate of the obstacle's top-left corner in scene coordinates.Ja ne d
  * @param width The width of the obstacle rectangle.
  * @param height The height of the obstacle rectangle.
  */
@@ -910,6 +907,9 @@ void ObstacleMapWidget::addObstacle(double x, double y, double width, double hei
  */
 void ObstacleMapWidget::updateObstacles() {
     updateObstaclesFromMap();
+
+    // ===== Optional: Add test/static obstacles for debugging =====
+    setupStaticObstacles();
 }
 
 /**
@@ -974,22 +974,81 @@ void ObstacleMapWidget::updateRobotPosition(double x, double y, double theta) {
 }
 
 /**
- * @brief Sets up a predefined static obstacle course for testing and visualization.
+ * @brief Sets up the static obstacles on the map as pairs of rotated stripes.
  *
- * Adds walls around the perimeter and several obstacles inside the area.
- * Positions and sizes can be adjusted to create different test environments.
+ * This function generates multiple obstacle pairs (like narrow gates) made up of
+ * two parallel, rotated rectangles. Each pair is placed at a random position on the map
+ * with a random rotation, forcing the tester to navigate between the stripes.
  */
 void ObstacleMapWidget::setupStaticObstacles() {
-    // Example course: walls and obstacles (positions and sizes can be adjusted)
-    addObstacle(100, 100, 600, 20); // Top wall
-    addObstacle(100, 480, 600, 20); // Bottom wall
-    addObstacle(100, 100, 20, 400); // Left wall
-    addObstacle(680, 100, 20, 400); // Right wall
+    const int numPairs = 5;
+    const int stripWidth = 5;
+    const int stripHeight = 150;
+    const int gapBetweenStrips = 200;
+    double resolution = m_map.info.resolution;
+    double cellSize = resolution * m_pixels_per_meter;
 
-    // Some internal obstacles
-    addObstacle(300, 200, 50, 150);
-    addObstacle(450, 350, 100, 30);
-    addObstacle(550, 150, 20, 150);
+    // Predefined positions (center points between stripes)
+    struct ObstaclePair {
+        int cx;
+        int cy;
+        float angleDeg;
+    };
+
+    std::array<ObstaclePair, numPairs> positions = {{{500, -300, 0.0f},
+                                                     {400, -250, 45.0f},
+                                                     {800, -400, 90.0f},
+                                                     {700, -100, 135.0f},
+                                                     {550, -150, 270.0f}}};
+
+    // Predefined colors (1 color per pair)
+    std::array<QColor, numPairs> colors = {{Qt::red, Qt::green, Qt::blue, Qt::yellow, Qt::magenta}};
+
+    for (size_t i = 0; i < positions.size(); ++i) {
+        const auto& pair = positions[i];
+        const QColor& color = colors[i];
+
+        float angleRad = qDegreesToRadians(pair.angleDeg);
+
+        // Offset along the rotation direction
+        float dx = (gapBetweenStrips / 2.0f) * qCos(angleRad);
+        float dy = (gapBetweenStrips / 2.0f) * qSin(angleRad);
+
+        float x1 = pair.cx * cellSize - dx;
+        float y1 = pair.cy * cellSize - dy;
+        float x2 = pair.cx * cellSize + dx;
+        float y2 = pair.cy * cellSize + dy;
+
+        addRotatedObstacle(x1, y1, stripWidth, stripHeight, pair.angleDeg, color);
+        addRotatedObstacle(x2, y2, stripWidth, stripHeight, pair.angleDeg, color);
+    }
+}
+
+/**
+ * @brief Adds a rotated rectangular obstacle to the map.
+ *
+ * This function creates a rectangle centered at the specified (x, y) position,
+ * rotated by the given angle. The rectangle is added to the scene and rendered
+ * as a red obstacle.
+ *
+ * @param x The x-coordinate of the center of the obstacle.
+ * @param y The y-coordinate of the center of the obstacle.
+ * @param width The width of the obstacle.
+ * @param height The height of the obstacle.
+ * @param angleDeg The rotation angle in degrees (clockwise).
+ */
+void ObstacleMapWidget::addRotatedObstacle(float x, float y, float width, float height,
+                                           float angleDeg, QColor color) {
+    // Create a rectangle centered at (0, 0)
+    QGraphicsRectItem* rect = new QGraphicsRectItem(-width / 2.0, -height / 2.0, width, height);
+    rect->setBrush(QBrush(color)); // Represent the obstacle with a red fill
+
+    // Move and rotate the item
+    rect->setPos(x, y);
+    rect->setRotation(angleDeg);
+
+    // Add it to the scene
+    m_scene->addItem(rect);
 }
 
 /**

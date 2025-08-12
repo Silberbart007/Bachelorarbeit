@@ -1204,10 +1204,6 @@ void MainWindow::logEvent() {
                           << "," << view.rot << "," << view.zoom << "\n";
         m_laser_logStream.flush();
     }
-
-    qDebug() << "ViewData:"
-             << "X =" << view.pos.x() << "Y =" << view.pos.y() << "Rotation =" << view.rot
-             << "Zoom =" << view.zoom;
 }
 
 // Sending current Velocity of buttons
