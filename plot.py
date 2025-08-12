@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 from collections import Counter
 import matplotlib.image as mpimg
+import numpy as np
 
 def parse_timer(timer_str):
     # Entfernt das "Timer: " Prefix und wandelt dann um
@@ -45,6 +46,12 @@ pos_y = []
 interaction_names_raw = []
 interaction_positions_raw = []
 timer_seconds = []
+avg_distances = []
+map_pos_x = []
+map_pos_y = []
+map_rot_deg = []
+map_zoom = []
+
 
 with open(csv_filename, "r") as file:
     reader = csv.DictReader(file)
@@ -52,6 +59,7 @@ with open(csv_filename, "r") as file:
         try:
             timestamps.append(datetime.fromisoformat(row["Timestamp"]))
             min_distances.append(float(row["MinDistance [m]"]))
+            avg_distances.append(float(row["AvgDistance [m]"]))  # NEU
             vel_x.append(float(row["linear velocity (x)[m/s]"]))
             vel_y.append(float(row["linear velocity(y) [m/s]"]))
             omega_z.append(float(row["angular velocity (z) [m/s]"]))
@@ -60,10 +68,15 @@ with open(csv_filename, "r") as file:
             interaction_names_raw.append(row.get("Interaction names", ""))
             interaction_positions_raw.append(row.get("Interaction positions [pixels]", ""))
             timer_sec = parse_timer(row["Timer [min:s.100ms]"])
+            map_pos_x.append(float(row["Map Pos (x)"]))
+            map_pos_y.append(float(row["Map Pos (y)"]))
+            map_rot_deg.append(float(row["Map Rot (Deg)"]))
+            map_zoom.append(float(row["Map zoom (Factor)"]))
             if timer_sec is not None:
                 timer_seconds.append(timer_sec)
         except Exception as e:
             print(f"Fehler in Zeile: {e}")
+
 
 # aktive Zeitbereiche erkennen: sobald sich der Timer merklich verändert
 active_periods = []
@@ -105,63 +118,41 @@ for start_i, end_i in merged_periods:
         filtered_periods.append((start_i, end_i))
 
 
-# Plot 1: Minimale Distanz über Zeit
+# Plot 1: Minimale + Durchschnittsdistanz über Zeit
 plt.figure(figsize=(10, 4))
 plt.plot(timestamps, min_distances, label="Minimale Distanz [m]")
+plt.plot(timestamps, avg_distances, label="Durchschnittsdistanz [m]", linestyle="--")
 plt.xlabel("Zeit")
 plt.ylabel("Distanz [m]")
-plt.title("Minimale Hindernisdistanz über Zeit")
+plt.title("Minimale und Durchschnitts-Hindernisdistanz über Zeit")
+plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, "min_distance_over_time.png"))
+plt.savefig(os.path.join(plot_dir, "min_avg_distance_over_time.png"))
 plt.close()
 
-# Plot 1.5: Minimale Distanz über Zeit mit Timer
-label_spacing = 100.0  # Sekundenschritte für Zwischenlabels
-max_dist = max(min_distances)  # y-Max für Textpositionierung
-
-def find_closest_index(timer_seconds, start_i, end_i, target):
-    subset = timer_seconds[start_i:end_i+1]
-    closest_idx_rel = min(range(len(subset)), key=lambda i: abs(subset[i] - target))
-    return start_i + closest_idx_rel
-
+# Plot 1.5: Mit Timer-Phasen
+max_dist = max(max(min_distances), max(avg_distances))
 plt.figure(figsize=(20, 8))
 plt.plot(timestamps, min_distances, label="Minimale Distanz [m]")
+plt.plot(timestamps, avg_distances, label="Durchschnittsdistanz [m]", linestyle="--")
 
 for start_i, end_i in filtered_periods:
-    # Gelber Hintergrundbereich
     plt.axvspan(timestamps[start_i], timestamps[end_i], color='yellow', alpha=0.3)
-
-    # Vertikale Linien für Start und Ende
     plt.axvline(timestamps[start_i], color='orange', linestyle='--', alpha=0.7)
     plt.axvline(timestamps[end_i], color='orange', linestyle='--', alpha=0.7)
-
-    # Start- und End-Label
     plt.text(timestamps[start_i], max_dist * 0.95,
-             f"{timer_seconds[start_i]:.1f}s", ha='left', va='top',
-             fontsize=8, color='black')
+             f"{timer_seconds[start_i]:.1f}s", ha='left', va='top', fontsize=8)
     plt.text(timestamps[end_i], max_dist * 0.95,
-             f"{timer_seconds[end_i]:.1f}s", ha='right', va='top',
-             fontsize=8, color='black')
-
-    # # Zwischenlabels und Linien alle ~2 Sekunden
-    # t = timer_seconds[start_i] + label_spacing
-    # while t < timer_seconds[end_i]:
-    #     mid_i = find_closest_index(timer_seconds, start_i, end_i, t)
-    #     plt.axvline(timestamps[mid_i], color='orange', linestyle=':', alpha=0.5)
-    #     plt.text(timestamps[mid_i], max_dist * 0.9,
-    #              f"{timer_seconds[mid_i]:.1f}s", ha='center', va='top',
-    #              fontsize=7, color='black')
-    #     t += label_spacing
-
+             f"{timer_seconds[end_i]:.1f}s", ha='right', va='top', fontsize=8)
 
 plt.xlabel("Zeit")
 plt.ylabel("Distanz [m]")
-plt.title("Minimale Hindernisdistanz mit aktiven Timerphasen")
+plt.title("Minimale & Durchschnittsdistanz mit aktiven Timerphasen")
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, "min_distance_over_time_with_timer.png"))
+plt.savefig(os.path.join(plot_dir, "min_avg_distance_over_time_with_timer.png"))
 plt.close()
 
 
@@ -189,19 +180,31 @@ plt.tight_layout()
 plt.savefig(os.path.join(plot_dir, "angular_velocity_over_time.png"))
 plt.close()
 
-# Plot 3.5 Geschwindigkeit über Zeit
+# Plot 3.5 Geschwindigkeit über Zeit + Timer
+max_vel = max(max(vel_x), max(vel_y), max(omega_z))
 plt.figure(figsize=(10, 4))
 plt.plot(timestamps, vel_x, label="linear velocity x [m/s]")
 plt.plot(timestamps, vel_y, label="linear velocity y [m/s]")
 plt.plot(timestamps, omega_z, label="angular velocity z [m/s]")
+
+for start_i, end_i in filtered_periods:
+    plt.axvspan(timestamps[start_i], timestamps[end_i], color='yellow', alpha=0.3)
+    plt.axvline(timestamps[start_i], color='orange', linestyle='--', alpha=0.7)
+    plt.axvline(timestamps[end_i], color='orange', linestyle='--', alpha=0.7)
+    plt.text(timestamps[start_i], max_vel * 0.95,
+             f"{timer_seconds[start_i]:.1f}s", ha='left', va='top', fontsize=8)
+    plt.text(timestamps[end_i], max_vel * 0.95,
+             f"{timer_seconds[end_i]:.1f}s", ha='right', va='top', fontsize=8)
+
 plt.xlabel("Zeit")
 plt.ylabel("Geschwindigkeit [m/s]")
-plt.title("Geschwindigkeit über Zeit")
+plt.title("Geschwindigkeit über Zeit mit aktiven Timerphasen")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.savefig(os.path.join(plot_dir, "velocity_over_time.png"))
+plt.savefig(os.path.join(plot_dir, "velocity_over_time_with_timer.png"))
 plt.close()
+
 
 # Plot 4: Roboter Trajektorie (x,y)
 
@@ -319,3 +322,95 @@ plt.savefig(os.path.join(plot_dir, "widget_interactions_pie.png"))
 plt.close()
 
 print(f"Alle Plots wurden erstellt und im Ordner '{plot_dir}/' gespeichert.")
+
+
+# Plot 8 - Multi Touch Aufgabe
+
+POS_TOL = 200      # z.B. 200 Meter (oder deine Einheit)
+ROT_TOL = 10       # Grad
+ZOOM_TOL = 0.1     # Zoom-Faktor
+
+def is_task_reached(x, y, rot, zoom, target):
+    # Positionsfehler (euklidische Distanz)
+    pos_err = ((x - target["x"])**2 + (y - target["y"])**2)**0.5
+    if pos_err > POS_TOL:
+        return False
+
+    # Rotationsfehler: kleinster Abstand zum erlaubten Winkel (0-360° Zyklus beachten)
+    rot_norm = rot % 360
+    rot_errors = [abs((rot_norm - r + 180) % 360 - 180) for r in target["rot"]]
+    if min(rot_errors) > ROT_TOL:
+        return False
+
+    # Zoomfehler
+    zoom_err = abs(zoom - target["zoom"])
+    if zoom_err > ZOOM_TOL:
+        return False
+
+    return True
+
+targets = {
+    "Magenta": {"x": 2750, "y": -750,  "rot": [90, 270], "zoom": 12.27},
+    "Rot":     {"x": 2500, "y": -1500, "rot": [0],       "zoom": 12.27},
+    "Grün":    {"x": 2000, "y": -1250, "rot": [45],      "zoom": 12.27},
+    "Blau":    {"x": 4000, "y": -2000, "rot": [90, 270], "zoom": 12.27},
+    "Gelb":    {"x": 3500, "y": -500,  "rot": [135],     "zoom": 12.27},
+}
+
+results = []
+
+for task_name, target in targets.items():
+    start_time = None
+    end_time = None
+    min_pos_err = float("inf")
+    min_rot_err = float("inf")
+    min_zoom_err = float("inf")
+
+    for i in range(len(timestamps)):
+        x = map_pos_x[i]
+        y = map_pos_y[i]
+        rot = map_rot_deg[i] % 360
+        zoom = map_zoom[i]
+        t = timestamps[i]
+
+        pos_err = ((x - target["x"])**2 + (y - target["y"])**2)**0.5
+        rot_diffs = [abs((rot - r + 180) % 360 - 180) for r in target["rot"]]
+        rot_err = min(rot_diffs)
+        zoom_err = abs(zoom - target["zoom"])
+
+        if pos_err < min_pos_err:
+            min_pos_err = pos_err
+        if rot_err < min_rot_err:
+            min_rot_err = rot_err
+        if zoom_err < min_zoom_err:
+            min_zoom_err = zoom_err
+
+        if is_task_reached(x, y, rot, zoom, target):
+            if start_time is None:
+                start_time = t
+            end_time = t
+
+    if start_time is not None and end_time is not None:
+        duration = (end_time - start_time).total_seconds()
+    else:
+        duration = None  # oder 0 oder np.nan
+
+    results.append({
+        "Aufgabe": task_name,
+        "Dauer (s)": duration,
+        "Min. Pos Fehler (m)": min_pos_err,
+        "Min. Rot Fehler (°)": min_rot_err,
+        "Min. Zoom Fehler": min_zoom_err
+    })
+
+with open("multi_touch_results.csv", mode="w", newline="") as csvfile:
+    fieldnames = ["Aufgabe", "Dauer (s)", "Min. Pos Fehler (m)", "Min. Rot Fehler (°)", "Min. Zoom Fehler"]
+    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+
+    writer.writeheader()
+    for row in results:
+        writer.writerow(row)
+
+
+
+

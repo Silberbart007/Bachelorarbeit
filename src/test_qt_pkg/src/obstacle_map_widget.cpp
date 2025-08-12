@@ -1220,7 +1220,7 @@ void ObstacleMapWidget::generateLaserBeams() {
             float endY = m_robot_y_pixels - dist * m_pixels_per_meter * std::sin(theta);
 
             if (m_beamMode) {
-                float offset_meters = 0.2f;
+                float offset_meters = 0.3f;
                 float offset_pixels = offset_meters * m_pixels_per_meter;
 
                 float startX = m_robot_x_pixels + offset_pixels * std::cos(m_robot_theta_rad);
