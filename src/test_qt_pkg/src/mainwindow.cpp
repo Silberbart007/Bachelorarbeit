@@ -815,7 +815,8 @@ void MainWindow::on_laser_number_slider_valueChanged(int value) {
  */
 void MainWindow::on_zoom_factor_slider_valueChanged(int value) {
     m_ui->ego_widget->setZoomFactor(static_cast<double>(value) / 100.0);
-    m_ui->zoom_factor_label->setText(QString("Zoom factor: %1").arg(m_ui->ego_widget->getZoomFactor()));
+    m_ui->zoom_factor_label->setText(
+        QString("Zoom factor: %1").arg(m_ui->ego_widget->getZoomFactor()));
 }
 
 /**
@@ -970,7 +971,8 @@ void MainWindow::initLogging() {
                              "[m/s],linear velocity"
                              "(y) [m/s],angular velocity (z) [m/s],Robot amcl-position (x)"
                              "[m],Robot amcl-position (y) [m],Robot amcl-theta (x) "
-                             "[rad],Interaction names,Interaction positions [pixels]\n";
+                             "[rad],Interaction names,Interaction positions [pixels],Map Pos (x),"
+                             "Map Pos (y),Map Rot (Deg),Map zoom (Factor)\n";
     } else {
         qWarning() << "Cannot open logfile!";
     }
@@ -1168,6 +1170,8 @@ void MainWindow::logEvent() {
     geometry_msgs::msg::Twist vel = m_robot_node->getLastCmdVel();
     ObstacleMapWidget::Pose2D robot_pos = m_ui->obstacle_map_widget->getRobotPositionMeters();
 
+    ObstacleMapWidget::ViewData view = m_ui->obstacle_map_widget->getViewData();
+
     m_ui->laser_distance_label->setText("Smallest distance: " + QString::number(min, 'f', 2) +
                                         " m");
 
@@ -1194,9 +1198,14 @@ void MainWindow::logEvent() {
                           << only_time_text << "," << vel.linear.x << "," << vel.linear.y << ","
                           << vel.angular.z << "," << robot_pos.x << "," << robot_pos.y << ","
                           << robot_pos.theta << "," << interactionNames << ","
-                          << interactionPositions << "\n";
+                          << interactionPositions << "," << view.pos.x() << "," << view.pos.y()
+                          << "," << view.rot << "," << view.zoom << "\n";
         m_laser_logStream.flush();
     }
+
+    qDebug() << "ViewData:"
+             << "X =" << view.pos.x() << "Y =" << view.pos.y() << "Rotation =" << view.rot
+             << "Zoom =" << view.zoom;
 }
 
 // Sending current Velocity of buttons

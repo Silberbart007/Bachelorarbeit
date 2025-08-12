@@ -152,6 +152,18 @@ void ObstacleMapWidget::laser_callback(const sensor_msgs::msg::LaserScan::Shared
     m_scan_available = true;
 }
 
+/**
+ * @brief Getter for GraphicsView Information
+ *
+ */
+ObstacleMapWidget::ViewData ObstacleMapWidget::getViewData() const {
+    ViewData view;
+    view.pos = m_view->mapToScene(m_view->viewport()->rect().center());
+    view.rot = m_currentRotation_view;
+    view.zoom = m_currentScale_view;
+    return view;
+}
+
 // =====================
 // Protected Methods
 // =====================

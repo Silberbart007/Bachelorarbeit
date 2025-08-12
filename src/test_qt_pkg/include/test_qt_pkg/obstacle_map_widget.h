@@ -78,6 +78,12 @@ class ObstacleMapWidget : public QWidget {
         double theta;
     };
 
+    struct ViewData {
+        QPointF pos;
+        qreal rot;
+        qreal zoom;
+    };
+
     // ====== Constructor / Destructor ======
     explicit ObstacleMapWidget(QWidget* parent = nullptr);
     ~ObstacleMapWidget();
@@ -168,6 +174,8 @@ class ObstacleMapWidget : public QWidget {
     QGraphicsView* view() const {
         return m_view;
     }
+
+    ViewData getViewData() const;
 
     // ====== Other public methods ======
 
