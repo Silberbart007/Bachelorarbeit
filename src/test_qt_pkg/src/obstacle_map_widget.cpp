@@ -322,6 +322,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
             QTouchEvent* touchEvent = static_cast<QTouchEvent*>(event);
             const auto& touchPoints = touchEvent->touchPoints();
+            m_current_finger_count = touchPoints.count();
 
             // === 1-Finger Touch Panning (when no special mode is active) ===
             if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode) {
@@ -336,20 +337,16 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                     }
 
                     if (event->type() == QEvent::TouchUpdate && m_touchPanningActive) {
-                        // Calculate movement delta
-                        QPointF delta = m_lastTouchPos - point.pos();
+                        QPointF currentPos = touchPoints.first().pos();
+                        QPointF delta = currentPos - m_lastTouchPos;
 
-                        // Convert view delta to scene delta
-                        QPointF deltaScene = m_view->mapToScene(QPointF(0, 0).toPoint()) -
-                                             m_view->mapToScene(delta.toPoint());
+                        auto* hBar = m_view->horizontalScrollBar();
+                        auto* vBar = m_view->verticalScrollBar();
 
-                        // Move the view's center by the scene delta
-                        QPointF currentCenter =
-                            m_view->mapToScene(m_view->viewport()->rect().center());
-                        m_view->centerOn(currentCenter - deltaScene);
+                        hBar->setValue(hBar->value() - delta.x());
+                        vBar->setValue(vBar->value() - delta.y());
 
-                        // Update last touch position
-                        m_lastTouchPos = point.pos();
+                        m_lastTouchPos = currentPos;
                         return true;
                     }
 
@@ -358,6 +355,9 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                         m_touchPanningActive = false;
                         return true;
                     }
+                } else {
+                    const auto& point = touchPoints.first();
+                    m_lastTouchPos = point.pos();
                 }
             }
 

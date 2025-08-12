@@ -267,6 +267,8 @@ class ObstacleMapWidget : public QWidget {
     /// Track panning
     bool m_touchPanningActive = false;
 
+    int m_current_finger_count = 0;
+
     // ===== Robot State and Parameters =====
 
     /// Robot position in pixels
