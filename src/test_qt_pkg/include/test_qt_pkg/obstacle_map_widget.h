@@ -167,6 +167,10 @@ class ObstacleMapWidget : public QWidget {
         return m_min_laser_distance;
     }
 
+    float getAvgLaserDistance() {
+        return m_avg_laser_distance;
+    }
+
     Pose2D getRobotPositionMeters() {
         return {m_robot_x_meters, m_robot_y_meters, m_robot_theta_rad};
     }
@@ -402,6 +406,9 @@ class ObstacleMapWidget : public QWidget {
 
     /// Smallest laser distance
     float m_min_laser_distance = 0.0f;
+
+    // Average distance
+    float m_avg_laser_distance = 0.0f;
 
     // ===== Zone Mode =====
 

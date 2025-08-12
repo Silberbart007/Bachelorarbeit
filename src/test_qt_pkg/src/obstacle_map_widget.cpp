@@ -1123,6 +1123,11 @@ QPointF ObstacleMapWidget::sceneToMapCoordinates(const QPointF& scene_pos) {
  */
 void ObstacleMapWidget::generateLaserBeams() {
     if (m_scan_available) {
+
+        // For minimal and average laser distance
+        int filter = 30;
+        float dist_sum = 0;
+
         // Clear previous beams
         for (auto item : m_beam_items) {
             m_scene->removeItem(item);
@@ -1145,8 +1150,9 @@ void ObstacleMapWidget::generateLaserBeams() {
 
             // Get current min_distance for collision warning modes
             // Filter out the widest lasers
-            if (i < (numRays - 30) && i > 30) {
+            if (i < (numRays - filter) && i > filter) {
                 m_min_laser_distance = std::min(m_min_laser_distance, dist);
+                dist_sum += dist;
             }
 
             float theta = angle + m_robot_theta_rad;
@@ -1167,6 +1173,9 @@ void ObstacleMapWidget::generateLaserBeams() {
                 m_beam_items.push_back(line);
             }
         }
+
+        m_avg_laser_distance = dist_sum / (numRays - 2 * filter);
+
     } else {
         // Remove all beams if beam mode is off or no scan data
         for (auto item : m_beam_items) {

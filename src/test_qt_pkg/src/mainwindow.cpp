@@ -967,12 +967,13 @@ void MainWindow::initLogging() {
     m_laser_logFile.setFileName(filename);
     if (m_laser_logFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
         m_laser_logStream.setDevice(&m_laser_logFile);
-        m_laser_logStream << "Timestamp,MinDistance [m],Timer [min:s.100ms],linear velocity (x)"
-                             "[m/s],linear velocity"
-                             "(y) [m/s],angular velocity (z) [m/s],Robot amcl-position (x)"
-                             "[m],Robot amcl-position (y) [m],Robot amcl-theta (x) "
-                             "[rad],Interaction names,Interaction positions [pixels],Map Pos (x),"
-                             "Map Pos (y),Map Rot (Deg),Map zoom (Factor)\n";
+        m_laser_logStream
+            << "Timestamp,MinDistance [m],AvgDistance [m],Timer [min:s.100ms],linear velocity (x)"
+               "[m/s],linear velocity"
+               "(y) [m/s],angular velocity (z) [m/s],Robot amcl-position (x)"
+               "[m],Robot amcl-position (y) [m],Robot amcl-theta (x) "
+               "[rad],Interaction names,Interaction positions [pixels],Map Pos (x),"
+               "Map Pos (y),Map Rot (Deg),Map zoom (Factor)\n";
     } else {
         qWarning() << "Cannot open logfile!";
     }
@@ -1165,6 +1166,7 @@ void MainWindow::image_callback(const sensor_msgs::msg::Image::SharedPtr msg) {
 
 void MainWindow::logEvent() {
     float min = m_ui->obstacle_map_widget->getMinLaserDistance();
+    float avgDist = m_ui->obstacle_map_widget->getAvgLaserDistance();
     QString timer_text = m_ui->timer_label->text();
     QString only_time_text = timer_text.mid(7);
     geometry_msgs::msg::Twist vel = m_robot_node->getLastCmdVel();
@@ -1195,9 +1197,9 @@ void MainWindow::logEvent() {
     // Write in logfile
     if (m_laser_logFile.isOpen()) {
         m_laser_logStream << QDateTime::currentDateTime().toString(Qt::ISODate) << "," << min << ","
-                          << only_time_text << "," << vel.linear.x << "," << vel.linear.y << ","
-                          << vel.angular.z << "," << robot_pos.x << "," << robot_pos.y << ","
-                          << robot_pos.theta << "," << interactionNames << ","
+                          << avgDist << "," << only_time_text << "," << vel.linear.x << ","
+                          << vel.linear.y << "," << vel.angular.z << "," << robot_pos.x << ","
+                          << robot_pos.y << "," << robot_pos.theta << "," << interactionNames << ","
                           << interactionPositions << "," << view.pos.x() << "," << view.pos.y()
                           << "," << view.rot << "," << view.zoom << "\n";
         m_laser_logStream.flush();
