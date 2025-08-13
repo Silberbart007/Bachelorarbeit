@@ -390,7 +390,6 @@ border-radius: 10px;
                 <property name="font">
                  <font>
                   <pointsize>20</pointsize>
-                  <weight>75</weight>
                   <bold>true</bold>
                   <underline>true</underline>
                  </font>
@@ -469,7 +468,6 @@ border-radius: 10px;
             <property name="font">
              <font>
               <pointsize>26</pointsize>
-              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -541,7 +539,6 @@ border-radius: 10px;
            <widget class="QLabel" name="timer_label">
             <property name="font">
              <font>
-              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -560,7 +557,6 @@ border-radius: 10px;
             </property>
             <property name="font">
              <font>
-              <weight>75</weight>
               <bold>true</bold>
              </font>
             </property>
@@ -1126,7 +1122,6 @@ QScrollBar::handle:horizontal {
              <property name="font">
               <font>
                <pointsize>25</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
                <underline>true</underline>
                <strikeout>false</strikeout>
@@ -1269,12 +1264,39 @@ QScrollBar::handle:horizontal {
             </item>
             <item>
              <property name="text">
+              <string>Jakob</string>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>20</pointsize>
+              </font>
+             </property>
+             <property name="background">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>102</red>
+                <green>0</green>
+                <blue>175</blue>
+               </color>
+              </brush>
+             </property>
+             <property name="foreground">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>255</red>
+                <green>255</green>
+                <blue>112</blue>
+               </color>
+              </brush>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string>VISUAL</string>
              </property>
              <property name="font">
               <font>
                <pointsize>25</pointsize>
-               <weight>75</weight>
                <bold>true</bold>
                <underline>true</underline>
               </font>
@@ -2149,7 +2171,6 @@ border-radius: 10px;
                <property name="font">
                 <font>
                  <pointsize>20</pointsize>
-                 <weight>75</weight>
                  <bold>true</bold>
                  <underline>true</underline>
                 </font>
@@ -2236,7 +2257,6 @@ border-radius: 10px;
                <property name="font">
                 <font>
                  <pointsize>20</pointsize>
-                 <weight>75</weight>
                  <bold>true</bold>
                  <underline>true</underline>
                 </font>
@@ -2370,7 +2390,7 @@ border-radius: 10px;
      <x>0</x>
      <y>0</y>
      <width>2425</width>
-     <height>34</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

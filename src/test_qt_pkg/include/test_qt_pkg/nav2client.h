@@ -29,6 +29,8 @@
 #include "mainwindow.h"
 #include "obstacle_map_widget.h"
 
+#include "test_qt_pkg/srv/plan_path.hpp"
+
 #include <functional>
 
 class ObstacleMapWidget;

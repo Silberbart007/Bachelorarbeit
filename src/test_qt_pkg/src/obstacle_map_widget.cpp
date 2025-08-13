@@ -221,6 +221,10 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                 m_inertiaTimer.stop();
                 m_inertiaStart = m_view->mapToScene(mouseEvent->pos());
                 m_inertiaStartTime = QTime::currentTime();
+            } else if (m_jakobMode) {
+                deleteAllDrawings();
+                QPointF scenePos = m_view->mapToScene(mouseEvent->pos());
+                qDebug() << "POSITION VON JAKOB: " << scenePos;
             }
 
             return true; // Event handled
@@ -325,7 +329,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
             m_current_finger_count = touchPoints.count();
 
             // === 1-Finger Touch Panning (when no special mode is active) ===
-            if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode) {
+            if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode && !m_jakobMode) {
                 if (touchPoints.count() == 1) {
                     const auto& point = touchPoints.first();
 
@@ -501,7 +505,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
             // Handle pinch gesture for zoom and rotation
             if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
-                if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode) {
+                if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode && !m_jakobMode) {
                     QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
 
                     if (pinch->state() == Qt::GestureStarted) {
@@ -1183,7 +1187,7 @@ QPointF ObstacleMapWidget::sceneToMapCoordinates(const QPointF& scene_pos) {
 void ObstacleMapWidget::generateLaserBeams() {
     if (m_scan_available) {
 
-        // For minimal and average laser distance
+        // For minimal and averaeg laser distance
         int filter = 30;
         float dist_sum = 0;
 

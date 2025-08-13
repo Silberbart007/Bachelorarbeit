@@ -20,7 +20,25 @@ find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(rclcpp_action REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 
+rosidl_generate_interfaces(${PROJECT_NAME}
+"msg/ExploredPtPlus.msg"
+"msg/ExtendedMap.msg"
+"msg/FoundPath.msg"
+"msg/GeneratedPoint.msg"
+"msg/RobotDescription.msg"
+
+"srv/PlanPath.srv"
+"srv/ProcessMap.srv"
+
+DEPENDENCIES
+std_msgs
+sensor_msgs
+geometry_msgs
+builtin_interfaces
+)
 
 # Qt5
 set(CMAKE_AUTOMOC ON)
@@ -101,11 +119,6 @@ add_executable(gui_main
   ${HEADERS}
 )
 
-target_link_libraries(gui_main
-  Qt5::Widgets
-  ${OpenCV_LIBS}
-)
-
 ament_target_dependencies(gui_main
   rclcpp
   std_msgs
@@ -120,8 +133,17 @@ ament_target_dependencies(gui_main
   nav2_amcl
   nav2_map_server
   rclcpp_action
+  rosidl_default_generators
 )
 
+
+rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+target_link_libraries(gui_main
+  Qt5::Widgets
+  ${OpenCV_LIBS}
+  "${cpp_typesupport_target}"
+)
 
 # Camera Node
 add_executable(camera_node src/cam.cpp)

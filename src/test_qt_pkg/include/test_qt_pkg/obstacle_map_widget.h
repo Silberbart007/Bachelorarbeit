@@ -134,6 +134,9 @@ class ObstacleMapWidget : public QWidget {
     void setMapFollow(bool isEnabled) {
         m_mapFollow = isEnabled;
     }
+    void setJakobMode(bool isEnabled) {
+        m_jakobMode = isEnabled;
+    }
 
     // ====== Parameter Setters ======
     /**
@@ -303,6 +306,7 @@ class ObstacleMapWidget : public QWidget {
     bool m_collisionBorderMode = false;
     bool m_zoneMode = false;
     bool m_mapFollow = false;
+    bool m_jakobMode = false;
 
     // ===== Path Drawing Mode =====
 
