@@ -27,6 +27,9 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QtMath>
+#include <QStringList>
+#include <QTextStream>
+#include <QFile>
 
 // ROS2-includes
 #include <tf2/LinearMath/Matrix3x3.hpp>
@@ -35,6 +38,7 @@
 
 // C++-includes
 #include <algorithm>
+#include <optional>
 
 // Other own files
 #include "mainwindow.h"
@@ -82,6 +86,11 @@ class ObstacleMapWidget : public QWidget {
         QPointF pos;
         qreal rot;
         qreal zoom;
+    };
+
+    struct Pose3D {
+        double x, y, z;
+        double qx, qy, qz, qw;
     };
 
     // ====== Constructor / Destructor ======
@@ -650,6 +659,11 @@ class ObstacleMapWidget : public QWidget {
     void deleteZones();
 
     /// @} // end of Collision Warning border Mode Utility
+
+    /**
+     * @brief Read Jakob Target pose from csv
+     */
+    std::optional<Pose3D> readSingleJakobPose(const QString& filePath);
 };
 
 #endif // OBSTACLEMAPWIDGET_H

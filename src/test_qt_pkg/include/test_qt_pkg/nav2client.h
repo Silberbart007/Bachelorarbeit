@@ -32,6 +32,8 @@
 #include "test_qt_pkg/srv/plan_path.hpp"
 
 #include <functional>
+#include <random> 
+#include <ctime>
 
 class ObstacleMapWidget;
 
@@ -101,6 +103,12 @@ class Nav2Client : public rclcpp::Node {
         onPathFinishedCallback = cb;
     }
 
+    /**
+     * @brief Calculate Jakob Poses and get future response
+     */
+    void callJakob(geometry_msgs::msg::PoseStamped& start_pose,
+                   geometry_msgs::msg::PoseStamped& target_pose);
+
   private:
     /// Pointer to the obstacle map widget for UI integration (can be nullptr).
     ObstacleMapWidget* m_obstacle_map;
@@ -113,6 +121,8 @@ class Nav2Client : public rclcpp::Node {
 
     /// Handle to the currently active NavigateToPose goal, if any
     rclcpp_action::Client<NavigateToPose>::GoalHandle::SharedPtr m_current_goal_handle;
+
+    rclcpp::Client<test_qt_pkg::srv::PlanPath>::SharedPtr m_jakob_client;
 
     /**
      * @brief Callback triggered when the goal is either accepted or rejected by the server.

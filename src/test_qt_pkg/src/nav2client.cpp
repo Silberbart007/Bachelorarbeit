@@ -20,6 +20,8 @@ Nav2Client::Nav2Client(const rclcpp::NodeOptions& options) : Node("nav2_client",
     // Create the action client for FollowPath
     m_path_client = rclcpp_action::create_client<FollowPath>(this, "follow_path");
 
+    m_jakob_client = this->create_client<test_qt_pkg::srv::PlanPath>("plan_path");
+
     // Wait for the NavigateToPose action server to be available
     if (!m_pose_client->wait_for_action_server(std::chrono::seconds(5))) {
         RCLCPP_ERROR(this->get_logger(), "Action server (navigate_to_pose) not available!");
@@ -270,4 +272,46 @@ void Nav2Client::resultCallback(const GoalHandleNavigateToPose::WrappedResult& r
         RCLCPP_ERROR(this->get_logger(), "Unknown navigation result");
         break;
     }
+}
+
+void Nav2Client::callJakob(geometry_msgs::msg::PoseStamped& start_pose,
+                           geometry_msgs::msg::PoseStamped& target_pose) {
+    // if (!m_jakob_client->wait_for_service(std::chrono::seconds(5))) {
+    //     qWarning() << "PlanPath Service nicht verfügbar.";
+    //     return;
+    // }
+
+    // Seed einmalig setzen (z. B. im Konstruktor oder beim ersten Aufruf)
+    static bool seeded = false;
+    if (!seeded) {
+        std::srand(std::time(nullptr));
+        seeded = true;
+    }
+
+    // Einfachen Zufallswert erzeugen
+    int32_t random_seed = std::rand();
+
+    // Request erstellen
+    auto request = std::make_shared<test_qt_pkg::srv::PlanPath::Request>();
+
+    request->start = start_pose.pose;
+    request->goal = target_pose.pose;
+
+    // Beispielwerte – kannst du dynamisch setzen
+    request->algo_nr = 2;
+    request->rng_seed = random_seed;
+
+    // Asynchronen Request senden
+    auto future = m_jakob_client->async_send_request(
+        request, [this](rclcpp::Client<test_qt_pkg::srv::PlanPath>::SharedFuture response) {
+            qDebug() << "Antwort vom Jakob-Service erhalten.";
+
+            auto result = response.get();
+            const auto& plan = result->plan;
+
+            // Beispielausgabe
+            qDebug() << "Pfad mit" << plan.path.size() << "Posen empfangen.";
+
+            // → Du kannst hier deine GUI aktualisieren, etc.
+        });
 }

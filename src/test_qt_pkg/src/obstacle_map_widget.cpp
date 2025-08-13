@@ -222,9 +222,42 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                 m_inertiaStart = m_view->mapToScene(mouseEvent->pos());
                 m_inertiaStartTime = QTime::currentTime();
             } else if (m_jakobMode) {
-                deleteAllDrawings();
-                QPointF scenePos = m_view->mapToScene(mouseEvent->pos());
-                qDebug() << "POSITION VON JAKOB: " << scenePos;
+                auto jakobPose =
+                    readSingleJakobPose("/home/user/vtulkinm0/Ros_workspaces/Bachelorarbeit/src/"
+                                        "test_qt_pkg/config/jakob_pos/emptyMap2000_corners.csv");
+                const auto& jakob = jakobPose.value();
+
+                // Zielpose
+                geometry_msgs::msg::PoseStamped target_pose;
+                target_pose.header.stamp = rclcpp::Clock().now();
+                target_pose.header.frame_id = "map";
+                target_pose.pose.position.x = jakob.x;
+                target_pose.pose.position.y = jakob.y;
+                target_pose.pose.position.z = jakob.z;
+                target_pose.pose.orientation.x = jakob.qx;
+                target_pose.pose.orientation.y = jakob.qy;
+                target_pose.pose.orientation.z = jakob.qz;
+                target_pose.pose.orientation.w = jakob.qw;
+
+                // Startpose (aus Robot-Variablen)
+                geometry_msgs::msg::PoseStamped start_pose;
+                start_pose.header.stamp = rclcpp::Clock().now();
+                start_pose.header.frame_id = "map";
+                start_pose.pose.position.x = m_robot_x_meters;
+                start_pose.pose.position.y = m_robot_y_meters;
+                start_pose.pose.position.z = 0.0;
+
+                // Yaw (m_robot_theta_rad) → Quaternion umrechnen
+                tf2::Quaternion q;
+                q.setRPY(0, 0, m_robot_theta_rad); // Roll, Pitch, Yaw
+
+                start_pose.pose.orientation.x = q.x();
+                start_pose.pose.orientation.y = q.y();
+                start_pose.pose.orientation.z = q.z();
+                start_pose.pose.orientation.w = q.w();
+
+                // Jetzt Service aufrufen
+                m_nav2_node->callJakob(start_pose, target_pose);
             }
 
             return true; // Event handled
@@ -505,7 +538,8 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
             // Handle pinch gesture for zoom and rotation
             if (QGesture* g = gestureEvent->gesture(Qt::PinchGesture)) {
-                if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode && !m_jakobMode) {
+                if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode &&
+                    !m_jakobMode) {
                     QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
 
                     if (pinch->state() == Qt::GestureStarted) {
@@ -1527,4 +1561,60 @@ void ObstacleMapWidget::deleteZones() {
             ++it;
         }
     }
+}
+
+/**
+ * @brief Reads the first pose from the Jakob csv
+ */
+std::optional<ObstacleMapWidget::Pose3D>
+ObstacleMapWidget::readSingleJakobPose(const QString& filePath) {
+    QFile file(filePath);
+
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qWarning() << "File not found:" << file.errorString();
+        return std::nullopt;
+    }
+
+    QTextStream in(&file);
+    QString line = in.readLine().trimmed();
+    file.close();
+
+    if (line.isEmpty()) {
+        qWarning() << "File empty.";
+        return std::nullopt;
+    }
+
+    QStringList parts = line.split(',');
+
+    if (parts.size() != 7) {
+        qWarning() << "Bad Pose line:" << line;
+        return std::nullopt;
+    }
+
+    Pose3D p;
+    bool ok = true;
+
+    p.x = parts[0].toDouble(&ok);
+    if (!ok)
+        return std::nullopt;
+    p.y = parts[1].toDouble(&ok);
+    if (!ok)
+        return std::nullopt;
+    p.z = parts[2].toDouble(&ok);
+    if (!ok)
+        return std::nullopt;
+    p.qx = parts[3].toDouble(&ok);
+    if (!ok)
+        return std::nullopt;
+    p.qy = parts[4].toDouble(&ok);
+    if (!ok)
+        return std::nullopt;
+    p.qz = parts[5].toDouble(&ok);
+    if (!ok)
+        return std::nullopt;
+    p.qw = parts[6].toDouble(&ok);
+    if (!ok)
+        return std::nullopt;
+
+    return p;
 }
