@@ -281,6 +281,8 @@ class ObstacleMapWidget : public QWidget {
 
     int m_current_finger_count = 0;
 
+    bool m_ignoreNextSingleFingerPan = false;
+
     // ===== Robot State and Parameters =====
 
     /// Robot position in pixels

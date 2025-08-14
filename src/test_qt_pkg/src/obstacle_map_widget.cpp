@@ -227,7 +227,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                                         "test_qt_pkg/config/jakob_pos/emptyMap2000_corners.csv");
                 const auto& jakob = jakobPose.value();
 
-                // Zielpose
+                // target pose
                 geometry_msgs::msg::PoseStamped target_pose;
                 target_pose.header.stamp = rclcpp::Clock().now();
                 target_pose.header.frame_id = "map";
@@ -239,7 +239,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                 target_pose.pose.orientation.z = jakob.qz;
                 target_pose.pose.orientation.w = jakob.qw;
 
-                // Startpose (aus Robot-Variablen)
+                // start pose
                 geometry_msgs::msg::PoseStamped start_pose;
                 start_pose.header.stamp = rclcpp::Clock().now();
                 start_pose.header.frame_id = "map";
@@ -247,7 +247,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                 start_pose.pose.position.y = m_robot_y_meters;
                 start_pose.pose.position.z = 0.0;
 
-                // Yaw (m_robot_theta_rad) → Quaternion umrechnen
+                // Yaw (m_robot_theta_rad)
                 tf2::Quaternion q;
                 q.setRPY(0, 0, m_robot_theta_rad); // Roll, Pitch, Yaw
 
@@ -256,7 +256,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                 start_pose.pose.orientation.z = q.z();
                 start_pose.pose.orientation.w = q.w();
 
-                // Jetzt Service aufrufen
+                // call Jakob service
                 m_nav2_node->callJakob(start_pose, target_pose);
             }
 
@@ -361,20 +361,28 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
             const auto& touchPoints = touchEvent->touchPoints();
             m_current_finger_count = touchPoints.count();
 
+            // === Reset Pan Protection Flag ===
+            if (event->type() == QEvent::TouchBegin) {
+                if (touchPoints.count() > 1) {
+                    m_ignoreNextSingleFingerPan = true;
+                } else {
+                    m_ignoreNextSingleFingerPan = false;
+                }
+            }
+
             // === 1-Finger Touch Panning (when no special mode is active) ===
             if (!m_zoneMode && !m_drawPathMode && !m_inertiaMode && !m_followMode && !m_jakobMode) {
-                if (touchPoints.count() == 1) {
+                if (touchPoints.count() == 1 && !m_ignoreNextSingleFingerPan) {
                     const auto& point = touchPoints.first();
 
                     if (event->type() == QEvent::TouchBegin) {
-                        // Save the initial touch position
                         m_lastTouchPos = point.pos();
                         m_touchPanningActive = true;
                         return true;
                     }
 
                     if (event->type() == QEvent::TouchUpdate && m_touchPanningActive) {
-                        QPointF currentPos = touchPoints.first().pos();
+                        QPointF currentPos = point.pos();
                         QPointF delta = currentPos - m_lastTouchPos;
 
                         auto* hBar = m_view->horizontalScrollBar();
@@ -388,13 +396,14 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                     }
 
                     if (event->type() == QEvent::TouchEnd) {
-                        // End panning
                         m_touchPanningActive = false;
                         return true;
                     }
-                } else {
-                    const auto& point = touchPoints.first();
-                    m_lastTouchPos = point.pos();
+                }
+
+                // Wenn mehrere Finger, vergiss den Pan-Startpunkt
+                if (touchPoints.count() > 1) {
+                    m_touchPanningActive = false;
                 }
             }
 
@@ -543,6 +552,8 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                     QPinchGesture* pinch = static_cast<QPinchGesture*>(g);
 
                     if (pinch->state() == Qt::GestureStarted) {
+                        m_ignoreNextSingleFingerPan = true;
+
                         // Remember start rotation
                         m_startPinchRotation = pinch->rotationAngle();
 
