@@ -22,23 +22,7 @@ find_package(tf2_ros REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(builtin_interfaces REQUIRED)
-
-rosidl_generate_interfaces(${PROJECT_NAME}
-"msg/ExploredPtPlus.msg"
-"msg/ExtendedMap.msg"
-"msg/FoundPath.msg"
-"msg/GeneratedPoint.msg"
-"msg/RobotDescription.msg"
-
-"srv/PlanPath.srv"
-"srv/ProcessMap.srv"
-
-DEPENDENCIES
-std_msgs
-sensor_msgs
-geometry_msgs
-builtin_interfaces
-)
+find_package(path_planning_eval REQUIRED)
 
 # Qt5
 set(CMAKE_AUTOMOC ON)
@@ -134,10 +118,11 @@ ament_target_dependencies(gui_main
   nav2_map_server
   rclcpp_action
   rosidl_default_generators
+  path_planning_eval
 )
 
 
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+#rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 target_link_libraries(gui_main
   Qt5::Widgets

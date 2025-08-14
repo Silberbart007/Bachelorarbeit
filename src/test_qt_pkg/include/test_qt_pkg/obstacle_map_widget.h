@@ -15,6 +15,7 @@
 
 // Qt-includes
 #include <QDebug>
+#include <QFile>
 #include <QGesture>
 #include <QGraphicsRectItem>
 #include <QGraphicsScene>
@@ -23,13 +24,12 @@
 #include <QMouseEvent>
 #include <QRandomGenerator>
 #include <QScrollBar>
+#include <QStringList>
+#include <QTextStream>
 #include <QTimer>
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QtMath>
-#include <QStringList>
-#include <QTextStream>
-#include <QFile>
 
 // ROS2-includes
 #include <tf2/LinearMath/Matrix3x3.hpp>
@@ -109,6 +109,11 @@ class ObstacleMapWidget : public QWidget {
      * @param nav2_node Shared pointer to the Nav2Client.
      */
     void setNav2Node(std::shared_ptr<Nav2Client> nav2_node);
+
+    // Jakob Poses
+    void setJakobPoses(const std::vector<geometry_msgs::msg::Pose>& poses) {
+        m_jakobPoses = poses;
+    };
 
     // ====== Mode Setters ======
     /**
@@ -202,6 +207,8 @@ class ObstacleMapWidget : public QWidget {
      * @param msg Shared pointer to the received LaserScan message.
      */
     void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr msg);
+
+    void abortJakobDrive();
 
     // ===== Public slot methods =====
   public slots:
@@ -478,6 +485,12 @@ class ObstacleMapWidget : public QWidget {
     /// Check if amcl data is received
     bool has_amcl = false;
 
+    // Jakob Variables
+    std::vector<geometry_msgs::msg::Pose> m_jakobPoses;
+    bool m_jakobActive = false;
+    QTimer* m_jakobTimer = nullptr;
+    size_t m_jakobCurrentIndex = 0;
+
     // ===== Support Functions =====
 
     /// \name Support Functions
@@ -666,6 +679,13 @@ class ObstacleMapWidget : public QWidget {
      * @brief Read Jakob Target pose from csv
      */
     std::optional<Pose3D> readSingleJakobPose(const QString& filePath);
+
+    geometry_msgs::msg::Pose getCurrentRobotPose() const;
+
+    /**
+     * @brief Jakob Timer tick
+     */
+    void onJakobTimerTick();
 };
 
 #endif // OBSTACLEMAPWIDGET_H

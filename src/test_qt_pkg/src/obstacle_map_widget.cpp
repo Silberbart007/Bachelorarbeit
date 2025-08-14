@@ -48,6 +48,11 @@ ObstacleMapWidget::ObstacleMapWidget(QWidget* parent)
     m_inertiaTimer.setInterval(30); // Update interval in milliseconds (~33 FPS)
     connect(&m_inertiaTimer, &QTimer::timeout, this, &ObstacleMapWidget::handleInertia);
 
+    // Jakob Timer
+    m_jakobTimer = new QTimer(this);
+    connect(m_jakobTimer, &QTimer::timeout, this, &ObstacleMapWidget::onJakobTimerTick);
+    m_jakobTimer->start(100);
+
     // ====== Trail Mode setup ======
     m_trailItem = new QGraphicsPathItem();
     m_scene->addItem(m_trailItem);
@@ -161,6 +166,14 @@ ObstacleMapWidget::ViewData ObstacleMapWidget::getViewData() const {
     return view;
 }
 
+void ObstacleMapWidget::abortJakobDrive() {
+    m_jakobActive = false;
+    m_jakobCurrentIndex = 0;
+    m_jakobPoses.clear();
+    m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+    qDebug() << "Jakob path canceled.";
+}
+
 // =====================
 // Protected Methods
 // =====================
@@ -256,8 +269,30 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                 start_pose.pose.orientation.z = q.z();
                 start_pose.pose.orientation.w = q.w();
 
+                qDebug() << "Start Pose:";
+                qDebug() << "  Position: x =" << start_pose.pose.position.x
+                         << ", y =" << start_pose.pose.position.y
+                         << ", z =" << start_pose.pose.position.z;
+                qDebug() << "  Orientation: x =" << start_pose.pose.orientation.x
+                         << ", y =" << start_pose.pose.orientation.y
+                         << ", z =" << start_pose.pose.orientation.z
+                         << ", w =" << start_pose.pose.orientation.w;
+
+                // Target Pose ausgeben
+                qDebug() << "Target Pose:";
+                qDebug() << "  Position: x =" << target_pose.pose.position.x
+                         << ", y =" << target_pose.pose.position.y
+                         << ", z =" << target_pose.pose.position.z;
+                qDebug() << "  Orientation: x =" << target_pose.pose.orientation.x
+                         << ", y =" << target_pose.pose.orientation.y
+                         << ", z =" << target_pose.pose.orientation.z
+                         << ", w =" << target_pose.pose.orientation.w;
+
                 // call Jakob service
                 m_nav2_node->callJakob(start_pose, target_pose);
+                m_jakobActive = true;
+                m_jakobCurrentIndex = 0;
+                m_jakobPoses.clear();
             }
 
             return true; // Event handled
@@ -1628,4 +1663,96 @@ ObstacleMapWidget::readSingleJakobPose(const QString& filePath) {
         return std::nullopt;
 
     return p;
+}
+
+geometry_msgs::msg::Pose ObstacleMapWidget::getCurrentRobotPose() const {
+    geometry_msgs::msg::Pose pose;
+    pose.position.x = m_robot_x_meters;
+    pose.position.y = m_robot_y_meters;
+    pose.position.z = 0.0;
+
+    tf2::Quaternion q;
+    q.setRPY(0, 0, m_robot_theta_rad);
+
+    pose.orientation.x = q.x();
+    pose.orientation.y = q.y();
+    pose.orientation.z = q.z();
+    pose.orientation.w = q.w();
+
+    return pose;
+}
+
+double computeYaw(const geometry_msgs::msg::Pose& pose) {
+    tf2::Quaternion q(pose.orientation.x, pose.orientation.y, pose.orientation.z,
+                      pose.orientation.w);
+    tf2::Matrix3x3 m(q);
+    double roll, pitch, yaw;
+    m.getRPY(roll, pitch, yaw);
+    return yaw;
+}
+
+double angleDiff(double a, double b) {
+    double diff = a - b;
+    while (diff > M_PI)
+        diff -= 2 * M_PI;
+    while (diff < -M_PI)
+        diff += 2 * M_PI;
+    return diff;
+}
+
+void ObstacleMapWidget::onJakobTimerTick() {
+    if (!m_jakobActive || m_jakobPoses.empty())
+        return;
+
+    if (m_jakobCurrentIndex >= m_jakobPoses.size()) {
+        m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+        m_jakobActive = false;
+        qDebug() << "Jakob path finished.";
+        return;
+    }
+
+    qDebug() << "Jakob Index " << m_jakobCurrentIndex;
+
+    const auto& target_pose = m_jakobPoses[m_jakobCurrentIndex];
+    const auto current_pose = getCurrentRobotPose();
+
+    // Differenzen
+    double dx = target_pose.position.x - current_pose.position.x;
+    double dy = target_pose.position.y - current_pose.position.y;
+    double dist = std::hypot(dx, dy);
+
+    double target_yaw = computeYaw(target_pose);
+    double current_yaw = computeYaw(current_pose);
+    double yaw_error = angleDiff(target_yaw, current_yaw);
+
+    double max_speed = 1.0;
+    double gain = 2.0;
+
+    // Toleranzen
+    const double pos_tol = 0.05;
+    const double yaw_tol = 0.1;
+
+    bool at_pos = dist < pos_tol;
+    bool at_yaw = std::abs(yaw_error) < yaw_tol;
+
+    double vx = 0.0, vy = 0.0, angular_z = 0.0;
+
+    if (!at_yaw) {
+        angular_z = std::clamp(-yaw_error, -1.0, 1.0);
+    } else if (!at_pos) {
+        double norm = std::max(dist, 1e-6);
+        double speed = std::tanh(dist * gain) * max_speed;
+        vx = speed * dx / norm;
+        vy = speed * dy / norm;
+    } else {
+        m_jakobCurrentIndex++;
+        return;
+    }
+
+    qDebug() << "dx:" << dx << "dy:" << dy << "dist:" << dist;
+    qDebug() << "target_yaw:" << target_yaw << "current_yaw:" << current_yaw
+             << "yaw_error:" << yaw_error;
+    qDebug() << "at_pos:" << at_pos << "at_yaw:" << at_yaw;
+
+    m_robot_node->publish_velocity({vx, vy}, angular_z);
 }

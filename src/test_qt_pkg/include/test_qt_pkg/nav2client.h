@@ -29,7 +29,7 @@
 #include "mainwindow.h"
 #include "obstacle_map_widget.h"
 
-#include "test_qt_pkg/srv/plan_path.hpp"
+#include "path_planning_eval/srv/plan_path.hpp"
 
 #include <functional>
 #include <random> 
@@ -122,7 +122,7 @@ class Nav2Client : public rclcpp::Node {
     /// Handle to the currently active NavigateToPose goal, if any
     rclcpp_action::Client<NavigateToPose>::GoalHandle::SharedPtr m_current_goal_handle;
 
-    rclcpp::Client<test_qt_pkg::srv::PlanPath>::SharedPtr m_jakob_client;
+    rclcpp::Client<path_planning_eval::srv::PlanPath>::SharedPtr m_jakob_client;
 
     /**
      * @brief Callback triggered when the goal is either accepted or rejected by the server.

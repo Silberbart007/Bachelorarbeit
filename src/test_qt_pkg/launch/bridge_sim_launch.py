@@ -32,8 +32,7 @@ def generate_launch_description():
         FindPackageShare("test_qt_pkg"),
         "config",
         "custom_maps",
-        "Karten_IZ_überarbeitet_2",
-        "IZ_floor_0_5cm.yaml"
+        "IZ_floor_0_5cm_furnished.yaml"
     ])
 
     # Eigene Nodes

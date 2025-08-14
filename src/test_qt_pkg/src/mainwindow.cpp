@@ -545,6 +545,7 @@ void MainWindow::on_stop_full_button_2_clicked() {
     m_nav2_node->cancelGoalsPose();
     m_nav2_node->cancelGoalsFollow();
     m_ui->obstacle_map_widget->stopInertia();
+    m_ui->obstacle_map_widget->abortJakobDrive();
     m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
 }
 
