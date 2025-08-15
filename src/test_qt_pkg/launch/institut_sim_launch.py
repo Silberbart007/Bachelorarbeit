@@ -8,17 +8,17 @@ import os
 
 def generate_launch_description():
 
-    # stage_launch_path = os.path.join(
-    #     FindPackageShare('stage_ros2').find('stage_ros2'),
-    #     'launch',
-    #     'custom_fun_map.launch.py'
-    # )
+    stage_launch_path = os.path.join(
+        FindPackageShare('stage_ros2').find('stage_ros2'),
+        'launch',
+        'institut.launch.py'
+    )
 
     # Pfad zur custom bringup-yaml (Wo auch Amcl, Mapserver etc. gestartet wird)
     custom_params_path = PathJoinSubstitution([
         FindPackageShare('test_qt_pkg'),
         'config',
-        'custom_nav2_params_institut.yaml'
+        'custom_nav2_params_fun_map.yaml'
     ])
 
     # Pfad zum bringup-Launchfile
@@ -36,34 +36,16 @@ def generate_launch_description():
     ])
 
     # Eigene Nodes
+    camera_node = Node(
+        package='test_qt_pkg',
+        executable='camera_node',
+        name='camera_node',
+        output='screen'
+    )
     gui_main_node = Node(
         package='test_qt_pkg',
         executable='gui_main',
         name='gui_main',
-        output='screen'
-    )
-    tcp_robot_listener_node = Node(
-        package='test_qt_pkg',
-        executable='tcp_robot_listener_node',
-        name='minibridge_topic_receiver',
-        output='screen'
-    )
-    tcp_vel_client_node = Node(
-        package='test_qt_pkg',
-        executable='tcp_vel_client_node',
-        name='minibridge_topic_sender',
-        output='screen'
-    )
-    compressed_to_raw_node = Node(
-        package='test_qt_pkg',
-        executable='compressed_to_raw_node',
-        name='compressed_to_raw_node',
-        output='screen'
-    )
-    cmd_vel_relay_node = Node(
-        package='test_qt_pkg',
-        executable='cmd_vel_relay_node',
-        name='cmd_vel_relay_node',
         output='screen'
     )
 
@@ -73,23 +55,20 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(bringup_launch_path),
             launch_arguments={
                 'map': map_yaml_file,
-                'use_sim_time': 'false',
+                'use_sim_time': 'true',
                 'autostart': 'true',
                 'params_file': custom_params_path
             }.items()
         ),
 
-        # IncludeLaunchDescription(
-        #     PythonLaunchDescriptionSource(stage_launch_path),
-        #     launch_arguments={
-        #         'use_sim_time' : 'true'
-        #     }.items()
-        # ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(stage_launch_path),
+            launch_arguments={
+                'use_sim_time' : 'true'
+            }.items()
+        ),
 
         # Eigene Nodes starten
+        camera_node,
         gui_main_node,
-        cmd_vel_relay_node,
-        compressed_to_raw_node,
-        tcp_robot_listener_node,
-        tcp_vel_client_node,
     ])
