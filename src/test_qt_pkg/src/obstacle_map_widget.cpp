@@ -377,8 +377,16 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
                     constexpr double damping = 0.01;
                     velocity_mps *= damping;
+                    
+                    // Transform Map in robot vector
+                    double cos_theta = std::cos(-m_robot_theta_rad);
+                    double sin_theta = std::sin(-m_robot_theta_rad);
 
-                    m_inertiaVelocity = velocity_mps;
+                    double vx_robot = cos_theta * velocity_mps.x() - sin_theta * velocity_mps.y();
+                    double vy_robot = sin_theta * velocity_mps.x() + cos_theta * velocity_mps.y();
+
+                    m_inertiaVelocity = QPointF(vx_robot, vy_robot);
+
                     m_inertiaTimer.start(); // Start periodic inertia handling
                 }
 
@@ -1719,18 +1727,20 @@ void ObstacleMapWidget::onJakobTimerTick() {
     // Differenzen
     double dx = target_pose.position.x - current_pose.position.x;
     double dy = target_pose.position.y - current_pose.position.y;
-    double dist = std::hypot(dx, dy);
+    double dx_r = cos(m_robot_theta_rad) * dx + sin(m_robot_theta_rad) * dy;
+    double dy_r = -sin(m_robot_theta_rad) * dx + cos(m_robot_theta_rad) * dy;
+    double dist = std::hypot(dx_r, dy_r);
 
     double target_yaw = computeYaw(target_pose);
     double current_yaw = computeYaw(current_pose);
     double yaw_error = angleDiff(target_yaw, current_yaw);
 
     double max_speed = 1.0;
-    double gain = 2.0;
+    double gain = 4.0;
 
     // Toleranzen
-    const double pos_tol = 0.05;
-    const double yaw_tol = 0.1;
+    const double pos_tol = 0.07;
+    const double yaw_tol = 0.05;
 
     bool at_pos = dist < pos_tol;
     bool at_yaw = std::abs(yaw_error) < yaw_tol;
@@ -1742,8 +1752,11 @@ void ObstacleMapWidget::onJakobTimerTick() {
     } else if (!at_pos) {
         double norm = std::max(dist, 1e-6);
         double speed = std::tanh(dist * gain) * max_speed;
-        vx = speed * dx / norm;
-        vy = speed * dy / norm;
+        vx = speed * dx_r / norm;
+        vy = speed * dy_r / norm;
+        qDebug() << "Speed: " << speed;
+        qDebug() << "vx: " << vx;
+        qDebug() << "vy " << vy;
     } else {
         m_jakobCurrentIndex++;
         return;
@@ -1753,6 +1766,7 @@ void ObstacleMapWidget::onJakobTimerTick() {
     qDebug() << "target_yaw:" << target_yaw << "current_yaw:" << current_yaw
              << "yaw_error:" << yaw_error;
     qDebug() << "at_pos:" << at_pos << "at_yaw:" << at_yaw;
+    qDebug() << "\n";
 
     m_robot_node->publish_velocity({vx, vy}, angular_z);
 }
