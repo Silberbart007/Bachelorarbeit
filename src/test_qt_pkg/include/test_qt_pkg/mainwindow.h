@@ -167,12 +167,12 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Slot triggered when the stop button is clicked.
      */
-    void on_stop_button_clicked();
+    void on_stop_button_pressed();
 
     /**
      * @brief Slot triggered when the red stop button is clicked.
      */
-    void on_stop_full_button_2_clicked();
+    void on_stop_full_button_2_pressed();
 
     /**
      * @brief Slot triggered when the back slow button is clicked.
@@ -215,12 +215,12 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Slot triggered when the reset rotation button is clicked.
      */
-    void on_reset_rotation_button_clicked();
+    void on_reset_rotation_button_pressed();
 
     /**
      * @brief Slot triggered when the reset rotation button 2 (sliders) is clicked.
      */
-    void on_reset_rotation_button_2_clicked();
+    void on_reset_rotation_button_2_pressed();
 
     /**
      * @brief Slot triggered when the start timer button is clicked.

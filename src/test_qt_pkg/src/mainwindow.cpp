@@ -131,7 +131,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     for (StopButton* btn : buttons) {
         btn->installEventFilter(this);
-        connect(btn, &QPushButton::clicked, this, &MainWindow::on_stop_full_button_2_clicked);
+        connect(btn, &QPushButton::clicked, this, &MainWindow::on_stop_full_button_2_pressed);
     }
 
     // ===== Hide Optional UI Elements Initially =====
@@ -500,10 +500,9 @@ void MainWindow::on_fast_button_pressed() {
     m_button_linear_x = 1.0;
     m_button_linear_y = 0.0;
     m_button_angular_z = m_robot_node->getRotationNormalized();
-    RobotNode::RobotSpeed speed = {m_button_linear_x, m_button_linear_y};
 
-    m_robot_node->publish_velocity(speed, m_button_angular_z);
-    m_velocityTimer->start(100);
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 void MainWindow::on_fast_button_released() {
@@ -517,10 +516,9 @@ void MainWindow::on_slow_button_pressed() {
     m_button_linear_x = 0.5;
     m_button_linear_y = 0.0;
     m_button_angular_z = m_robot_node->getRotationNormalized();
-    RobotNode::RobotSpeed speed = {m_button_linear_x, m_button_linear_y};
 
-    m_robot_node->publish_velocity(speed, m_button_angular_z);
-    m_velocityTimer->start(100);
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 void MainWindow::on_slow_button_released() {
@@ -530,23 +528,32 @@ void MainWindow::on_slow_button_released() {
 /**
  * @brief Sends a stop command to the robot (zero velocity).
  */
-void MainWindow::on_stop_button_clicked() {
-    // qDebug() << "Speed button pressed: 0.0";
-    // m_robot_node->publish_velocity({0.0, 0.0}, m_robot_node->getRotationNormalized());
-    on_stop_full_button_2_clicked();
+void MainWindow::on_stop_button_pressed() {
+    m_button_linear_x = 0.0;
+    m_button_linear_y = 0.0;
+    m_button_angular_z = m_robot_node->getRotationNormalized();
+
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 /**
  * @brief Sends a full stop command to the robot (zero velocity AND rotation AND stop
  * followPath/Pose-Client).
  */
-void MainWindow::on_stop_full_button_2_clicked() {
+void MainWindow::on_stop_full_button_2_pressed() {
     m_velocityTimer->stop();
     m_nav2_node->cancelGoalsPose();
     m_nav2_node->cancelGoalsFollow();
     m_ui->obstacle_map_widget->stopInertia();
     m_ui->obstacle_map_widget->abortJakobDrive();
     m_robot_node->publish_velocity({0.0, 0.0}, 0.0);
+
+    // Button Velocities reset
+    m_button_linear_x = 0.0;
+    m_button_angular_z = 0.0;
+    m_button_linear_y = 0.0;
+    sendCurrentVelocity();
 }
 
 /**
@@ -556,10 +563,9 @@ void MainWindow::on_back_slow_button_pressed() {
     m_button_linear_x = -0.5;
     m_button_linear_y = 0.0;
     m_button_angular_z = m_robot_node->getRotationNormalized();
-    RobotNode::RobotSpeed speed = {m_button_linear_x, m_button_linear_y};
 
-    m_robot_node->publish_velocity(speed, m_button_angular_z);
-    m_velocityTimer->start(100);
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 void MainWindow::on_back_slow_button_released() {
@@ -573,10 +579,9 @@ void MainWindow::on_back_fast_button_pressed() {
     m_button_linear_x = -1.0;
     m_button_linear_y = 0.0;
     m_button_angular_z = m_robot_node->getRotationNormalized();
-    RobotNode::RobotSpeed speed = {m_button_linear_x, m_button_linear_y};
 
-    m_robot_node->publish_velocity(speed, m_button_angular_z);
-    m_velocityTimer->start(100);
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 void MainWindow::on_back_fast_button_released() {
@@ -588,10 +593,9 @@ void MainWindow::on_back_fast_button_released() {
  */
 void MainWindow::on_clockwise_slow_button_pressed() {
     m_button_angular_z = 0.5;
-    RobotNode::RobotSpeed speed = m_robot_node->getSpeedNormalized();
 
-    m_robot_node->publish_velocity(speed, m_button_angular_z);
-    m_velocityTimer->start(100);
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 void MainWindow::on_clockwise_slow_button_released() {
@@ -603,10 +607,9 @@ void MainWindow::on_clockwise_slow_button_released() {
  */
 void MainWindow::on_clockwise_fast_button_pressed() {
     m_button_angular_z = 1.0;
-    RobotNode::RobotSpeed speed = m_robot_node->getSpeedNormalized();
 
-    m_robot_node->publish_velocity(speed, m_button_angular_z);
-    m_velocityTimer->start(100);
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 void MainWindow::on_clockwise_fast_button_released() {
@@ -618,10 +621,9 @@ void MainWindow::on_clockwise_fast_button_released() {
  */
 void MainWindow::on_anticlockwise_slow_button_pressed() {
     m_button_angular_z = -0.5;
-    RobotNode::RobotSpeed speed = m_robot_node->getSpeedNormalized();
 
-    m_robot_node->publish_velocity(speed, m_button_angular_z);
-    m_velocityTimer->start(100);
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 void MainWindow::on_anticlockwise_slow_button_released() {
@@ -633,10 +635,9 @@ void MainWindow::on_anticlockwise_slow_button_released() {
  */
 void MainWindow::on_anticlockwise_fast_button_pressed() {
     m_button_angular_z = -1.0;
-    RobotNode::RobotSpeed speed = m_robot_node->getSpeedNormalized();
 
-    m_robot_node->publish_velocity(speed, m_button_angular_z);
-    m_velocityTimer->start(100);
+    sendCurrentVelocity();
+    m_velocityTimer->start(50);
 }
 
 void MainWindow::on_anticlockwise_fast_button_released() {
@@ -648,8 +649,9 @@ void MainWindow::on_anticlockwise_fast_button_released() {
  *
  * Keeps the current linear speed unchanged.
  */
-void MainWindow::on_reset_rotation_button_clicked() {
-    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
+void MainWindow::on_reset_rotation_button_pressed() {
+    m_button_angular_z = 0.0;
+    sendCurrentVelocity();
 }
 
 /**
@@ -657,8 +659,9 @@ void MainWindow::on_reset_rotation_button_clicked() {
  *
  * Keeps the current linear speed unchanged.
  */
-void MainWindow::on_reset_rotation_button_2_clicked() {
-    m_robot_node->publish_velocity(m_robot_node->getSpeedNormalized(), 0.0);
+void MainWindow::on_reset_rotation_button_2_pressed() {
+    m_button_angular_z = 0.0;
+    sendCurrentVelocity();
 }
 
 /**
@@ -1211,7 +1214,88 @@ void MainWindow::logEvent() {
     }
 }
 
+// For handling buttons
+struct AngularState {
+    bool clock_slow = false;
+    bool clock_fast = false;
+    bool anticlock_slow = false;
+    bool anticlock_fast = false;
+};
+
+struct LinearState {
+    bool forward_slow = false;
+    bool forward_fast = false;
+    bool back_slow = false;
+    bool back_fast = false;
+};
+
+// Support Method
+void updateAngularState(AngularState& state, double value) {
+    switch (int(value * 10)) {
+    case 5:
+        state.clock_slow = true;
+        break;
+    case 10:
+        state.clock_fast = true;
+        break;
+    case -5:
+        state.anticlock_slow = true;
+        break;
+    case -10:
+        state.anticlock_fast = true;
+        break;
+    }
+}
+
+void updateLinearState(LinearState& state, double value) {
+    switch (int(value * 10)) {
+    case 5:
+        state.forward_slow = true;
+        break;
+    case 10:
+        state.forward_fast = true;
+        break;
+    case -5:
+        state.back_slow = true;
+        break;
+    case -10:
+        state.back_fast = true;
+        break;
+    }
+}
+
+// Support method to set Button Style
+void setButtonStyle(QPushButton* button, bool condition, const QString& qss) {
+    button->setStyleSheet(condition ? qss : "");
+}
+
 // Sending current Velocity of buttons
 void MainWindow::sendCurrentVelocity() {
+
+    // Change style based on current activated button speeds
+    AngularState angular;
+    LinearState linear;
+
+    updateAngularState(angular, m_button_angular_z);
+    updateLinearState(linear, m_button_linear_x);
+
+    QColor color = QColor(QColorConstants::Svg::orange);
+    QString qss = QString("background-color: %1").arg(color.name());
+
+    std::vector<std::tuple<QPushButton*, bool>> buttons = {
+        {m_ui->clockwise_slow_button, angular.clock_slow},
+        {m_ui->clockwise_fast_button, angular.clock_fast},
+        {m_ui->anticlockwise_fast_button, angular.anticlock_fast},
+        {m_ui->anticlockwise_slow_button, angular.anticlock_slow},
+        {m_ui->slow_button, linear.forward_slow},
+        {m_ui->fast_button, linear.forward_fast},
+        {m_ui->back_slow_button, linear.back_slow},
+        {m_ui->back_fast_button, linear.back_fast},
+    };
+
+    for (const auto& [button, condition] : buttons) {
+        setButtonStyle(button, condition, qss);
+    }
+
     m_robot_node->publish_velocity({m_button_linear_x, m_button_linear_y}, m_button_angular_z);
 }
