@@ -1329,7 +1329,29 @@ void ObstacleMapWidget::generateLaserBeams() {
             }
         }
 
+        // Measure avg distance
         m_avg_laser_distance = dist_sum / (numRays - 2 * filter);
+
+        // Measure avg center distance
+        int center_window = 5; // Anzahl Strahlen links/rechts vom Zentrum
+        int center_index = numRays / 2;
+        float center_sum = 0;
+        int center_count = 0;
+
+        for (int i = center_index - center_window; i <= center_index + center_window; ++i) {
+            if (i >= 0 && i < numRays) {
+                float d = m_current_scan.ranges[i];
+                if (std::isfinite(d)) {
+                    center_sum += d;
+                    ++center_count;
+                }
+            }
+        }
+
+        if (center_count > 0)
+            m_avg_center_distance = center_sum / center_count;
+        else 
+            m_avg_center_distance = 0.0f;
 
     } else {
         // Remove all beams if beam mode is off or no scan data
