@@ -377,7 +377,7 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
 
                     constexpr double damping = 0.01;
                     velocity_mps *= damping;
-                    
+
                     // Transform Map in robot vector
                     double cos_theta = std::cos(-m_robot_theta_rad);
                     double sin_theta = std::sin(-m_robot_theta_rad);
@@ -1299,8 +1299,6 @@ void ObstacleMapWidget::generateLaserBeams() {
             if (!std::isfinite(dist))
                 continue;
 
-            // Get current min_distance for collision warning modes
-            // Filter out the widest lasers
             if (i < (numRays - filter) && i > filter) {
                 m_min_laser_distance = std::min(m_min_laser_distance, dist);
                 dist_sum += dist;
@@ -1308,15 +1306,21 @@ void ObstacleMapWidget::generateLaserBeams() {
 
             float theta = angle + m_robot_theta_rad;
 
-            float endX = m_robot_x_pixels + dist * m_pixels_per_meter * std::cos(theta);
-            float endY = m_robot_y_pixels - dist * m_pixels_per_meter * std::sin(theta);
-
             if (m_beamMode) {
-                float offset_meters = 0.3f;
+                float offset_meters = 0.2f;
                 float offset_pixels = offset_meters * m_pixels_per_meter;
 
-                float startX = m_robot_x_pixels + offset_pixels * std::cos(m_robot_theta_rad);
-                float startY = m_robot_y_pixels - offset_pixels * std::sin(m_robot_theta_rad);
+                float laser_dx = dist * m_pixels_per_meter * std::cos(theta);
+                float laser_dy = dist * m_pixels_per_meter * std::sin(theta);
+
+                float offsetX = offset_pixels * std::cos(m_robot_theta_rad);
+                float offsetY = offset_pixels * std::sin(m_robot_theta_rad);
+
+                float startX = m_robot_x_pixels + offsetX;
+                float startY = m_robot_y_pixels - offsetY;
+
+                float endX = startX + laser_dx;
+                float endY = startY - laser_dy;
 
                 QGraphicsLineItem* line =
                     m_scene->addLine(startX, startY, endX, endY, QPen(m_beam_color));
