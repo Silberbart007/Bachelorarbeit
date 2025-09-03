@@ -373,11 +373,25 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
                         QPointF(end.x() - m_inertiaStart.x(), m_inertiaStart.y() - end.y());
                     QPointF delta_meters = delta_pixels / m_pixels_per_meter;
 
-                    QPointF velocity_mps = delta_meters / dt;
+                    // Wischstrecke (Distanz) berechnen
+                    double distance = std::hypot(delta_meters.x(), delta_meters.y());
 
-                    constexpr double damping = 0.01;
-                    velocity_mps *= damping;
+                    // Basis-Geschwindigkeit berechnen
+                    double base_speed = distance / dt;
 
+                    // Distanzbasierte Dämpfung (Scale von 0 bis 1)
+                    constexpr double gesture_softening_factor = 1.0;
+                    double scale = std::min(1.0, distance * gesture_softening_factor);
+
+                    // Geschwindigkeit mit Scale dämpfen
+                    QPointF velocity_mps = (delta_meters / dt) * scale;
+
+                    // Maximale Geschwindigkeit begrenzen
+                    constexpr double max_inertia_speed = 1.0; // m/s
+                    double speed = std::hypot(velocity_mps.x(), velocity_mps.y());
+                    if (speed > max_inertia_speed) {
+                        velocity_mps *= max_inertia_speed / speed;
+                    }
                     // Transform Map in robot vector
                     double cos_theta = std::cos(-m_robot_theta_rad);
                     double sin_theta = std::sin(-m_robot_theta_rad);
@@ -643,8 +657,8 @@ bool ObstacleMapWidget::eventFilter(QObject* obj, QEvent* event) {
  * and stops the motion when the velocity is sufficiently small.
  */
 void ObstacleMapWidget::handleInertia() {
-    constexpr double max_speed = 0.4; // Maximum allowed speed (m/s)
-    constexpr double friction = 0.99; // Friction factor to reduce velocity each step
+    constexpr double max_speed = 1.0; // Maximum allowed speed
+    constexpr double friction = 0.98; // Friction factor to reduce velocity each step
 
     // Stop inertia if velocity is very small or inertia mode is disabled
     if ((std::abs(m_inertiaVelocity.x()) < 0.01 && std::abs(m_inertiaVelocity.y()) < 0.01) ||
@@ -1350,7 +1364,7 @@ void ObstacleMapWidget::generateLaserBeams() {
 
         if (center_count > 0)
             m_avg_center_distance = center_sum / center_count;
-        else 
+        else
             m_avg_center_distance = 0.0f;
 
     } else {
