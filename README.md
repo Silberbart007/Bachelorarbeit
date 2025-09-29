@@ -1,3 +1,6 @@
+Autor: Max Vtulkin
+Mail:  silberbart007@users.noreply.github.com    
+
 # Roboter Controller mit ROS 2, Nav2 & Multitouch-GUI
 
 Dieses Projekt nutzt **ROS 2** (*Jazzy*) und **Nav2**, um einen Roboter zu navigieren. Die Steuerung erfolgt über ein **Qt-basiertes Multitouch-GUI**. Zur Simulation wird `stage_ros2` verwendet.
