@@ -1,5 +1,6 @@
 Autor: Max Vtulkin
-Mail:  silberbart007@users.noreply.github.com    
+
+E-Mail:  maximal.mystery@gmail.com    
 
 # Roboter Controller mit ROS 2, Nav2 & Multitouch-GUI
 
